@@ -19,7 +19,7 @@ See 'CLI_GUIDE.md' for full documentation.
 import typer
 from rich.console import Console
 
-from cli.commands import init, status, escalations, logs, config, worker, run, resources, reflect
+from cli.commands import init, status, escalations, logs, config, worker, run, resources, reflect, operate
 
 # ASCII art for help - using 1KH which fits better
 BANNER = """
@@ -87,6 +87,12 @@ app.add_typer(
     status.app,
     name="status",
     help="[bold]System health[/bold] - Check tree health, metrics, and active branches"
+)
+
+app.add_typer(
+    operate.app,
+    name="operate",
+    help="[bold]OPERATE phase[/bold] - Transition to production with SLA monitoring"
 )
 
 # =============================================================================

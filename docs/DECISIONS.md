@@ -228,6 +228,45 @@ TASKS (specific build instructions: which factory + what artifact)
 
 ---
 
+## DECISION-011: Utility Subtypes and Natural KPIs
+
+**Decision:** For USER SYSTEMS, detect the utility subtype and suggest appropriate KPIs early.
+
+**Context:**
+Different utility types naturally gravitate toward different metrics. Detecting this early:
+- Helps users think about the right success criteria
+- Enables the system to suggest appropriate metrics
+- Determines whether hypothesis-driven testing is beneficial
+
+**Utility Subtypes:**
+
+| Subtype | Description | Primary KPI | Hypothesis-Driven? |
+|---------|-------------|-------------|-------------------|
+| POC | Proof of Concept | "IT JUST WORKS" (binary) | No |
+| MULTI_TENANT | Shared Service | Uptime, latency, isolation | Yes |
+| ORCHESTRATOR | Service Manager | Config ability, visibility | Yes |
+| SCHEDULER | Event-driven | Timing accuracy, throughput | Yes |
+| INTERNAL_TOOL | Productivity | Task completion, time saved | No |
+| LIBRARY | SDK/API | Time to first call, docs | No |
+| DATA_PIPELINE | ETL/Streaming | Throughput, accuracy | Yes |
+| AUTOMATION | Workflow | Success rate, MTTR | Yes |
+
+**Key Insight:**
+Infrastructure that serves other systems (like bix) is USER SYSTEM with MULTI_TENANT subtype.
+Its KPIs are reliability metrics, not adoption or revenue metrics.
+
+**Implementation:**
+1. After detecting USER SYSTEM + UTILITY north star, detect utility subtype
+2. Present suggested metrics to user
+3. If accepted, auto-populate success_metrics in north-star.md
+4. User can edit/customize in north-star.md after ceremony
+
+**Revisit If:**
+- New utility subtypes emerge that don't fit categories
+- Suggested metrics prove unhelpful or misleading
+
+---
+
 ## Decision Log
 
 | ID | Date | Decision | Status |
@@ -242,6 +281,7 @@ TASKS (specific build instructions: which factory + what artifact)
 | 008 | Current | Challenge Foundation triggers | Active |
 | 009 | Current | Deployment model | Active |
 | 010 | Current | Deferred items | Active |
+| 011 | Current | Utility subtypes and natural KPIs | Active |
 
 ---
 

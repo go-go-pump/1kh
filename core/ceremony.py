@@ -33,6 +33,8 @@ from core.models import (
     CommunicationChannel,
     SystemType,
     NorthStarType,
+    UtilitySubtype,
+    UTILITY_SUBTYPE_METRICS,
 )
 from core.claude_client import ClaudeClient
 
@@ -90,6 +92,13 @@ class InitialCeremony:
         # Phase 4.6: North Star Type Confirmation
         state = self._phase_4_6_north_star_confirmation(state)
         self._save_state(state)
+
+        # Phase 4.7: Utility Subtype Detection (for USER systems with utility north star)
+        if (state.system_type == SystemType.USER and
+            state.north_star and
+            state.north_star.north_star_type == NorthStarType.UTILITY):
+            state = self._phase_4_7_utility_subtype_detection(state)
+            self._save_state(state)
 
         return state
 
@@ -484,6 +493,110 @@ class InitialCeremony:
 
         return state
 
+    def _phase_4_7_utility_subtype_detection(self, state: CeremonyState) -> CeremonyState:
+        """Detect utility subtype and suggest appropriate metrics for USER systems."""
+        self.console.print()
+        self.console.print("[dim]Phase 4.7: Utility Type Detection[/dim]")
+        self.console.print()
+
+        # Use Claude to detect utility subtype
+        with Status("[bold blue]Analyzing utility type...", console=self.console):
+            detection = self.claude.detect_utility_subtype(state.raw_input)
+
+        suggested_subtype = detection.get("utility_subtype", "poc")
+        confidence = detection.get("confidence", 0.5)
+        reasoning = detection.get("reasoning", "")
+
+        # Map to enum
+        subtype_map = {
+            "poc": UtilitySubtype.POC,
+            "multi_tenant": UtilitySubtype.MULTI_TENANT,
+            "orchestrator": UtilitySubtype.ORCHESTRATOR,
+            "scheduler": UtilitySubtype.SCHEDULER,
+            "internal_tool": UtilitySubtype.INTERNAL_TOOL,
+            "library": UtilitySubtype.LIBRARY,
+            "data_pipeline": UtilitySubtype.DATA_PIPELINE,
+            "automation": UtilitySubtype.AUTOMATION,
+            "custom": UtilitySubtype.CUSTOM,
+        }
+
+        detected_subtype = subtype_map.get(suggested_subtype, UtilitySubtype.POC)
+        subtype_info = UTILITY_SUBTYPE_METRICS.get(detected_subtype, UTILITY_SUBTYPE_METRICS[UtilitySubtype.POC])
+
+        # Present detection
+        self.console.print(Panel(
+            f"[bold cyan]Detected Utility Type: {detected_subtype.value.upper()}[/bold cyan]\n\n"
+            f"[dim]{subtype_info['description']}[/dim]\n\n"
+            f"[dim]Reasoning: {reasoning}[/dim]\n\n"
+            f"[bold]Primary KPI:[/bold] {subtype_info['primary_kpi']}\n\n"
+            "[bold]Suggested Metrics:[/bold]",
+            title="Utility Type Analysis",
+            border_style="blue",
+        ))
+
+        for metric in subtype_info.get("suggested_metrics", []):
+            self.console.print(f"  • {metric}")
+
+        self.console.print()
+
+        if subtype_info.get("hypothesis_driven"):
+            self.console.print("[dim]This utility type benefits from hypothesis-driven improvement.[/dim]")
+        else:
+            self.console.print("[dim]This utility type is primarily feature-driven.[/dim]")
+
+        self.console.print()
+
+        # Confirm or override
+        self.console.print("[bold]Select utility type:[/bold]")
+        self.console.print()
+        self.console.print("  [cyan]poc[/cyan]          = Proof of concept - 'IT JUST WORKS'")
+        self.console.print("  [cyan]multi_tenant[/cyan] = Shared service - reliability, tenant isolation")
+        self.console.print("  [cyan]orchestrator[/cyan] = Service manager - config, visibility, interfaces")
+        self.console.print("  [cyan]scheduler[/cyan]    = Event-driven - timing, throughput")
+        self.console.print("  [cyan]internal_tool[/cyan]= Productivity tool - task completion, time saved")
+        self.console.print("  [cyan]library[/cyan]      = SDK/API - developer experience")
+        self.console.print("  [cyan]data_pipeline[/cyan]= ETL/streaming - throughput, accuracy")
+        self.console.print("  [cyan]automation[/cyan]   = Workflow automation - success rate")
+        self.console.print("  [cyan]custom[/cyan]       = Something else (you'll define)")
+        self.console.print()
+
+        choices = ["poc", "multi_tenant", "orchestrator", "scheduler",
+                   "internal_tool", "library", "data_pipeline", "automation", "custom"]
+
+        selected = Prompt.ask(
+            "Utility type",
+            choices=choices,
+            default=suggested_subtype if suggested_subtype in choices else "poc",
+        )
+
+        final_subtype = subtype_map.get(selected, UtilitySubtype.CUSTOM)
+        final_info = UTILITY_SUBTYPE_METRICS.get(final_subtype, UTILITY_SUBTYPE_METRICS[UtilitySubtype.CUSTOM])
+
+        # Update state
+        if state.north_star:
+            state.north_star.utility_subtype = final_subtype
+
+            # Ask if they want to use suggested metrics
+            self.console.print()
+            if final_info.get("suggested_metrics") and Confirm.ask(
+                "Use suggested metrics as starting point?", default=True
+            ):
+                # Merge suggested metrics with any existing ones
+                existing = set(state.north_star.success_metrics)
+                for metric in final_info["suggested_metrics"]:
+                    if metric not in existing:
+                        state.north_star.success_metrics.append(metric)
+                self.console.print(f"[green]✓[/green] Added {len(final_info['suggested_metrics'])} suggested metrics")
+                self.console.print("[dim]   You can edit these in north-star.md after ceremony completes.[/dim]")
+            else:
+                self.console.print("[dim]You can define your own metrics in north-star.md[/dim]")
+
+        self.console.print()
+        self.console.print(f"[green]✓[/green] Utility type set to: [bold]{selected.upper()}[/bold]")
+        self.console.print(f"[dim]   Primary KPI: {final_info['primary_kpi']}[/dim]")
+
+        return state
+
     def commit_foundation(self, state: CeremonyState) -> None:
         """Write foundation documents to the project."""
         # FIRST: Save raw input (this is the most important - don't lose user's words)
@@ -747,6 +860,20 @@ class InitialCeremony:
         if north_star.north_star_type:
             lines.extend([
                 f"**North Star Type:** {north_star.north_star_type.value.upper()}",
+                "",
+            ])
+
+        # Add utility subtype for USER systems
+        if north_star.utility_subtype:
+            subtype_info = UTILITY_SUBTYPE_METRICS.get(
+                north_star.utility_subtype,
+                {"description": "Custom utility type", "primary_kpi": "User-defined"}
+            )
+            lines.extend([
+                f"**Utility Subtype:** {north_star.utility_subtype.value.upper()}",
+                f"*{subtype_info['description']}*",
+                "",
+                f"**Primary KPI:** {subtype_info['primary_kpi']}",
                 "",
             ])
 

@@ -106,6 +106,126 @@ class NorthStarType(str, Enum):
     CUSTOM = "custom"            # User-defined metric
 
 
+class UtilitySubtype(str, Enum):
+    """
+    Subtype of USER SYSTEM utility.
+
+    Different utility types naturally gravitate toward different KPIs.
+    This helps the system suggest appropriate metrics early.
+    """
+    POC = "poc"                          # Proof of concept - "IT JUST WORKS"
+    MULTI_TENANT = "multi_tenant"        # Shared service - reliability, isolation
+    ORCHESTRATOR = "orchestrator"        # Service manager - config, visibility
+    SCHEDULER = "scheduler"              # Event-driven - timing, throughput
+    INTERNAL_TOOL = "internal_tool"      # Productivity - task completion, time saved
+    LIBRARY = "library"                  # SDK/API - clarity, integration ease
+    DATA_PIPELINE = "data_pipeline"      # ETL/streaming - throughput, accuracy
+    AUTOMATION = "automation"            # Workflow - success rate, error handling
+    CUSTOM = "custom"                    # User-defined
+
+
+# Suggested metrics for each utility subtype
+UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
+    UtilitySubtype.POC: {
+        "description": "Proof of Concept - Binary success",
+        "primary_kpi": "Feature checklist completion",
+        "suggested_metrics": [
+            "Core feature complete (yes/no)",
+            "Demo-able to stakeholders (yes/no)",
+            "Known limitations documented",
+        ],
+        "hypothesis_driven": False,
+    },
+    UtilitySubtype.MULTI_TENANT: {
+        "description": "Multi-tenant/Shared Service - Reliability & Isolation",
+        "primary_kpi": "Service reliability and tenant isolation",
+        "suggested_metrics": [
+            "Uptime percentage (target: 99.9%)",
+            "P95 latency (target: <Xms)",
+            "Zero cross-tenant data leaks",
+            "Tenant onboarding time",
+            "Error rate per tenant",
+        ],
+        "hypothesis_driven": True,  # Can test reliability improvements
+    },
+    UtilitySubtype.ORCHESTRATOR: {
+        "description": "Service Manager/Orchestrator - Visibility & Control",
+        "primary_kpi": "Configuration ability and system visibility",
+        "suggested_metrics": [
+            "Services manageable via config",
+            "Dashboard visibility coverage",
+            "Time to deploy new service",
+            "Config change propagation time",
+            "Interface response time",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.SCHEDULER: {
+        "description": "Scheduler/Event-driven - Timing & Throughput",
+        "primary_kpi": "Event accuracy and throughput",
+        "suggested_metrics": [
+            "Schedule accuracy (% on-time)",
+            "Event throughput (events/sec)",
+            "Queue depth / backlog",
+            "Failed event retry success rate",
+            "End-to-end event latency",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.INTERNAL_TOOL: {
+        "description": "Internal Tool - Productivity",
+        "primary_kpi": "Task completion and time saved",
+        "suggested_metrics": [
+            "Tasks completed per session",
+            "Time saved vs manual process",
+            "Error rate in task completion",
+            "User satisfaction score",
+        ],
+        "hypothesis_driven": False,  # Usually feature-driven
+    },
+    UtilitySubtype.LIBRARY: {
+        "description": "Library/SDK - Developer Experience",
+        "primary_kpi": "API clarity and integration ease",
+        "suggested_metrics": [
+            "Time to first successful API call",
+            "Documentation coverage",
+            "Breaking changes per release",
+            "Integration test pass rate",
+        ],
+        "hypothesis_driven": False,
+    },
+    UtilitySubtype.DATA_PIPELINE: {
+        "description": "Data Pipeline - Throughput & Accuracy",
+        "primary_kpi": "Data throughput and accuracy",
+        "suggested_metrics": [
+            "Records processed per second",
+            "Data accuracy rate",
+            "Pipeline latency (end-to-end)",
+            "Failed record handling rate",
+            "Backfill completion time",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.AUTOMATION: {
+        "description": "Automation/Workflow - Success Rate",
+        "primary_kpi": "Workflow success rate and error handling",
+        "suggested_metrics": [
+            "Workflow success rate (%)",
+            "Mean time to recovery (MTTR)",
+            "Manual intervention rate",
+            "End-to-end completion time",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.CUSTOM: {
+        "description": "Custom utility type",
+        "primary_kpi": "User-defined",
+        "suggested_metrics": [],
+        "hypothesis_driven": False,
+    },
+}
+
+
 # ============================================================================
 # Foundation Models (from Initial Ceremony)
 # ============================================================================
@@ -129,6 +249,7 @@ class NorthStar(BaseModel):
     """
     version: str = "1.0"
     north_star_type: Optional[NorthStarType] = None  # What KIND of goal
+    utility_subtype: Optional[UtilitySubtype] = None  # For USER systems: what KIND of utility
     objectives: list[dict[str, Any]] = Field(default_factory=list)
     deadline: Optional[datetime] = None
     success_metrics: list[str] = Field(default_factory=list)

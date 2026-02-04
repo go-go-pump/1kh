@@ -340,6 +340,136 @@ Return ONLY valid JSON:
             print(f"Claude API error: {e}")
             return self._fallback_system_type_detection(raw_input)
 
+    def detect_utility_subtype(self, raw_input: str) -> dict[str, Any]:
+        """
+        Detect what kind of utility system is being built.
+
+        For USER SYSTEMS, different utility types have different natural KPIs:
+        - POC: "IT JUST WORKS" (binary feature checklist)
+        - Multi-tenant: Reliability, uptime, tenant isolation
+        - Orchestrator: Configuration, visibility, interfaces
+        - Scheduler: Event timing, throughput
+        - Internal Tool: Task completion, time saved
+        - Library: API clarity, developer experience
+        - Data Pipeline: Throughput, accuracy
+        - Automation: Success rate, error handling
+
+        Returns dict with:
+        - utility_subtype: one of the above
+        - confidence: 0.0-1.0
+        - reasoning: explanation
+        """
+        if not self.is_available():
+            return self._fallback_utility_subtype_detection(raw_input)
+
+        system_prompt = """You are analyzing a project description to determine what KIND of utility system is being built.
+
+Utility subtypes and their characteristics:
+
+1. POC (Proof of Concept)
+   - Keywords: prototype, demo, test, experiment, MVP, proof, validate
+   - Goal: Prove something works
+   - KPI: Binary - "IT JUST WORKS"
+
+2. MULTI_TENANT (Shared Service)
+   - Keywords: multi-tenant, SaaS infrastructure, shared, tenant, isolation
+   - Goal: Reliable service for multiple users/orgs
+   - KPI: Uptime, latency, tenant isolation
+
+3. ORCHESTRATOR (Service Manager)
+   - Keywords: orchestration, manage services, deploy, configure, dashboard, visibility
+   - Goal: Control and view other systems
+   - KPI: Configuration ability, interface quality
+
+4. SCHEDULER (Event-driven)
+   - Keywords: schedule, cron, events, queue, jobs, timing, async
+   - Goal: Execute things at the right time
+   - KPI: Timing accuracy, throughput
+
+5. INTERNAL_TOOL (Productivity)
+   - Keywords: internal, productivity, admin, backoffice, tool for team
+   - Goal: Help people do tasks faster
+   - KPI: Task completion, time saved
+
+6. LIBRARY (SDK/API)
+   - Keywords: library, SDK, API, package, module, framework
+   - Goal: Make it easy for developers to integrate
+   - KPI: Time to first call, documentation
+
+7. DATA_PIPELINE (ETL/Streaming)
+   - Keywords: pipeline, ETL, transform, ingest, stream, data flow
+   - Goal: Move and transform data reliably
+   - KPI: Throughput, accuracy, latency
+
+8. AUTOMATION (Workflow)
+   - Keywords: automation, workflow, bot, automate, scripted
+   - Goal: Do repetitive things automatically
+   - KPI: Success rate, error handling
+
+9. CUSTOM
+   - Doesn't fit above categories
+
+Return ONLY valid JSON:
+{
+    "utility_subtype": "poc|multi_tenant|orchestrator|scheduler|internal_tool|library|data_pipeline|automation|custom",
+    "confidence": 0.0-1.0,
+    "reasoning": "Brief explanation",
+    "key_signals": ["signal1", "signal2"]
+}"""
+
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1024,
+                system=system_prompt,
+                messages=[{"role": "user", "content": f"Analyze this project description:\n\n{raw_input}"}],
+            )
+
+            content = response.content[0].text
+            if "```" in content:
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+            return json.loads(content.strip())
+
+        except Exception as e:
+            print(f"Claude API error: {e}")
+            return self._fallback_utility_subtype_detection(raw_input)
+
+    def _fallback_utility_subtype_detection(self, raw_input: str) -> dict[str, Any]:
+        """Fallback utility subtype detection when Claude is unavailable."""
+        raw_lower = raw_input.lower()
+
+        # Subtype signals (order matters - check more specific first)
+        subtype_signals = {
+            "multi_tenant": ["multi-tenant", "tenant", "saas", "shared service", "isolation"],
+            "orchestrator": ["orchestrat", "manage service", "deploy", "dashboard", "visibility"],
+            "scheduler": ["schedule", "cron", "event", "queue", "job", "timing", "async"],
+            "data_pipeline": ["pipeline", "etl", "transform", "ingest", "stream", "data flow"],
+            "library": ["library", "sdk", "api", "package", "module", "framework"],
+            "automation": ["automat", "workflow", "bot", "script"],
+            "internal_tool": ["internal", "admin", "backoffice", "tool for"],
+            "poc": ["prototype", "demo", "test", "experiment", "mvp", "proof", "validate"],
+        }
+
+        for subtype, signals in subtype_signals.items():
+            count = sum(1 for s in signals if s in raw_lower)
+            if count >= 2:
+                return {
+                    "utility_subtype": subtype,
+                    "confidence": min(0.5 + (count * 0.1), 0.8),
+                    "reasoning": f"Detected {subtype} signals in input",
+                    "key_signals": [s for s in signals if s in raw_lower][:3]
+                }
+
+        # Default to POC
+        return {
+            "utility_subtype": "poc",
+            "confidence": 0.3,
+            "reasoning": "Defaulting to POC - no strong utility subtype signals detected",
+            "key_signals": []
+        }
+
     def _fallback_system_type_detection(self, raw_input: str) -> dict[str, Any]:
         """Fallback system type detection when Claude is unavailable."""
         raw_lower = raw_input.lower()

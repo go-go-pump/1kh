@@ -1,0 +1,497 @@
+{
+  "course_title": "Power Keto Fundamentals",
+  "course_description": "The real reason you can't lose weight after 40, and the three-phase system that fixes it. No fad diet BS\u2014just the metabolic truth your doctor won't tell you.",
+  "total_estimated_time": "55 minutes",
+  "prerequisites": [],
+  "modules": [
+    {
+      "module_number": 1,
+      "module_title": "Why Everything You've Tried Has Failed",
+      "module_objective": "Understand the real problem: insulin resistance, not willpower",
+      "estimated_time": "15 minutes",
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "lesson_title": "The Calorie Trap",
+          "lesson_objective": "Recognize why calories-in-calories-out fails after 40",
+          "slides": [
+            {
+              "slide_number": 1,
+              "slide_type": "title",
+              "headline": "The Calorie Trap",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "If you've tried counting calories and it worked for a while then stopped, this lesson explains why. It's not your fault, and it's not about willpower."
+            },
+            {
+              "slide_number": 2,
+              "slide_type": "content",
+              "headline": "You've Been Solving The Wrong Problem",
+              "content_outline": "Standard advice: eat less, move more | Why it works short-term | Why it fails after 40",
+              "speaker_notes": "Every doctor, trainer, and diet program tells you the same thing: calories in, calories out. Eat less than you burn. And they're not wrong about thermodynamics. But they're missing something critical that changes when you hit 40.",
+              "visual_suggestion": "Simple balance scale, then show it breaking"
+            },
+            {
+              "slide_number": 3,
+              "slide_type": "content",
+              "headline": "Your Metabolism Isn't Broken\u2014It's Hijacked",
+              "content_outline": "Metabolism doesn't just slow down | It gets confused about what to burn | The real culprit: insulin",
+              "speaker_notes": "Your metabolism didn't just slow down. It got hijacked. Your body stopped listening to the signals that tell it to burn fat. Instead, it's locked in fat-storage mode, no matter how little you eat.",
+              "visual_suggestion": "Car with crossed wires or hijacked steering wheel"
+            },
+            {
+              "slide_number": 4,
+              "slide_type": "example",
+              "headline": "Why You Hit The Weight Loss Wall",
+              "content_outline": "Example: First 2 weeks great, then plateau | Eating less makes it worse | Exercise stops working",
+              "speaker_notes": "Here's what happened: You started a diet, lost 5-10 pounds in the first two weeks, then hit a wall. So you ate even less. Maybe added more cardio. And the scale didn't budge. Sound familiar?",
+              "visual_suggestion": "Graph showing initial weight loss then flat plateau"
+            }
+          ]
+        },
+        {
+          "lesson_number": 2,
+          "lesson_title": "Meet Your Real Enemy: Insulin Resistance",
+          "lesson_objective": "Understand what insulin resistance is and how it develops",
+          "slides": [
+            {
+              "slide_number": 5,
+              "slide_type": "title",
+              "headline": "Meet Your Real Enemy: Insulin Resistance",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "The real reason you can't lose weight isn't calories. It's not willpower. It's insulin resistance. And once you understand this, everything else makes sense."
+            },
+            {
+              "slide_number": 6,
+              "slide_type": "content",
+              "headline": "Insulin: Your Body's Storage Manager",
+              "content_outline": "Insulin's job: move energy into cells | When working: burns fat between meals | When broken: stores everything as fat",
+              "speaker_notes": "Think of insulin as your body's storage manager. Its job is to move energy from your blood into your cells. When it's working right, you burn fat between meals. When it's broken, everything gets stored as fat.",
+              "visual_suggestion": "Warehouse manager directing traffic, then chaos"
+            },
+            {
+              "slide_number": 7,
+              "slide_type": "content",
+              "headline": "How Insulin Resistance Develops",
+              "content_outline": "Years of frequent eating | Constant insulin spikes | Cells stop listening | Body makes more insulin",
+              "speaker_notes": "Here's how it happens: Years of frequent meals and snacks keep spiking your insulin. Eventually, your cells get tired of listening\u2014like a car alarm that goes off too often. So your body makes even more insulin to force the message through.",
+              "visual_suggestion": "Person yelling louder and louder at someone with headphones"
+            },
+            {
+              "slide_number": 8,
+              "slide_type": "content",
+              "headline": "The Fat Lock Effect",
+              "content_outline": "High insulin = fat storage mode | Can't access stored fat | Always hungry | Energy crashes",
+              "speaker_notes": "High insulin locks you in fat storage mode. You literally can't access your stored fat for energy. So you're hungry all the time, even though you're carrying around 50,000+ calories of stored energy. It's like being locked out of your own house.",
+              "visual_suggestion": "Padlock on a fat cell, keys out of reach"
+            },
+            {
+              "slide_number": 9,
+              "slide_type": "summary",
+              "headline": "The Real Problem Revealed",
+              "content_outline": "Insulin resistance, not calories | Body stuck in storage mode | Standard diets make it worse",
+              "speaker_notes": "So that's the real problem. Not calories. Not willpower. Insulin resistance has locked you in fat storage mode. And standard low-calorie diets? They actually make insulin resistance worse by keeping you eating frequently and spiking insulin all day."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 2,
+      "module_title": "The Power Keto Solution",
+      "module_objective": "Understand how Power Keto reverses insulin resistance",
+      "estimated_time": "12 minutes",
+      "lessons": [
+        {
+          "lesson_number": 3,
+          "lesson_title": "How Keto Fixes What Dieting Broke",
+          "lesson_objective": "Understand the mechanism behind keto's effectiveness",
+          "slides": [
+            {
+              "slide_number": 10,
+              "slide_type": "title",
+              "headline": "How Keto Fixes What Dieting Broke",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Now that you understand the real problem, let's talk about the real solution. Keto doesn't just change what you eat\u2014it fixes how your body processes energy."
+            },
+            {
+              "slide_number": 11,
+              "slide_type": "content",
+              "headline": "Keto: Insulin's Off Switch",
+              "content_outline": "Very low carbs = very low insulin | Gives cells a break from constant signals | Fat becomes primary fuel",
+              "speaker_notes": "Keto is insulin's off switch. When you eat very few carbs, insulin drops to baseline levels. This gives your cells a break from constant insulin signaling. For the first time in years, they can start listening again.",
+              "visual_suggestion": "Dimmer switch being turned down, lights getting brighter"
+            },
+            {
+              "slide_number": 12,
+              "slide_type": "content",
+              "headline": "Your Body Rediscovers Fat Burning",
+              "content_outline": "Low insulin unlocks fat stores | Body learns to make ketones | Steady energy without food",
+              "speaker_notes": "With insulin low, your body can finally access stored fat. It starts making ketones\u2014a clean-burning fuel that your brain and muscles love. You get steady energy without constantly needing food.",
+              "visual_suggestion": "Lock opening, energy flowing from fat cells"
+            },
+            {
+              "slide_number": 13,
+              "slide_type": "example",
+              "headline": "What This Feels Like",
+              "content_outline": "Less hunger between meals | More stable energy | Mental clarity | Effortless weight loss",
+              "speaker_notes": "Here's what this feels like: You're not hungry between meals. Your energy doesn't crash at 3 PM. Your thinking is clearer. And weight comes off without feeling like you're starving yourself.",
+              "visual_suggestion": "Person looking energized and confident"
+            }
+          ]
+        },
+        {
+          "lesson_number": 4,
+          "lesson_title": "Why Power Keto vs Regular Keto",
+          "lesson_objective": "Understand what makes Power Keto different and more effective",
+          "slides": [
+            {
+              "slide_number": 14,
+              "slide_type": "title",
+              "headline": "Why Power Keto vs Regular Keto",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "You might be thinking, 'I tried keto before and it didn't work' or 'Isn't this just another keto diet?' Power Keto is different. Here's why."
+            },
+            {
+              "slide_number": 15,
+              "slide_type": "content",
+              "headline": "Regular Keto's Problems",
+              "content_outline": "Too complicated (macro counting) | Keto flu discourages people | No clear progression plan | Easy to plateau",
+              "speaker_notes": "Regular keto has problems. It's complicated\u2014people get obsessed with hitting exact macro percentages. The keto flu hits hard because there's no transition plan. And most people plateau after a few months because they never progress beyond the basics.",
+              "visual_suggestion": "Complicated calculator with frustrated person"
+            },
+            {
+              "slide_number": 16,
+              "slide_type": "content",
+              "headline": "Power Keto's Three Advantages",
+              "content_outline": "Phased approach (easier start) | Optimized for insulin resistance | Built-in progression system",
+              "speaker_notes": "Power Keto fixes these problems with three key advantages: First, a phased approach that makes starting easier. Second, it's specifically optimized for insulin-resistant men over 40. Third, it has a built-in progression system so you never plateau.",
+              "visual_suggestion": "Three-step staircase with clear progression"
+            },
+            {
+              "slide_number": 17,
+              "slide_type": "summary",
+              "headline": "Power Keto = Keto That Actually Works",
+              "content_outline": "Addresses insulin resistance specifically | Easier to start and stick with | Designed for long-term success",
+              "speaker_notes": "Think of Power Keto as keto that actually works for real people with real lives. It's not just about eating fat and avoiding carbs. It's a complete system for reversing insulin resistance and taking control of your metabolism."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 3,
+      "module_title": "The Three-Phase System",
+      "module_objective": "Understand each phase and why the progression matters",
+      "estimated_time": "15 minutes",
+      "lessons": [
+        {
+          "lesson_number": 5,
+          "lesson_title": "Phase 1: Reset (Weeks 1-2)",
+          "lesson_objective": "Understand the purpose and approach of Phase 1",
+          "slides": [
+            {
+              "slide_number": 18,
+              "slide_type": "title",
+              "headline": "Phase 1: Reset (Weeks 1-2)",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Phase 1 is called Reset because that's exactly what you're doing\u2014hitting the reset button on your metabolism. This is where you break the insulin cycle and start burning fat again."
+            },
+            {
+              "slide_number": 19,
+              "slide_type": "content",
+              "headline": "Phase 1 Goal: Break the Insulin Cycle",
+              "content_outline": "Drop insulin to baseline | Deplete glycogen stores | Start ketone production | Avoid keto flu",
+              "speaker_notes": "The goal is simple: break the insulin cycle that's been keeping you in fat storage mode. You'll deplete your glycogen stores, start producing ketones, and do it in a way that avoids the keto flu that stops most people.",
+              "visual_suggestion": "Chain breaking, reset button being pressed"
+            },
+            {
+              "slide_number": 20,
+              "slide_type": "content",
+              "headline": "Phase 1 Strategy: Strict but Simple",
+              "content_outline": "Under 20g carbs daily | Focus on whole foods | Don't count calories yet | Add electrolytes",
+              "speaker_notes": "The strategy is strict but simple. Under 20 grams of carbs per day. Focus on whole foods\u2014meat, eggs, vegetables, healthy fats. Don't worry about calories yet. And make sure you're getting enough electrolytes to avoid feeling terrible.",
+              "visual_suggestion": "Simple food groups clearly marked"
+            },
+            {
+              "slide_number": 21,
+              "slide_type": "content",
+              "headline": "What to Expect in Phase 1",
+              "content_outline": "Days 1-3: Adjustment period | Days 4-7: Energy stabilizes | Week 2: Mental clarity kicks in | 3-8 pounds lost",
+              "speaker_notes": "Here's what to expect: Days 1-3 might feel rough as your body adjusts. Days 4-7, your energy stabilizes. By week 2, mental clarity kicks in and you'll feel like a different person. Most guys lose 3-8 pounds, mostly water weight, but that's good\u2014it means insulin is dropping.",
+              "visual_suggestion": "Timeline with energy curve going up"
+            }
+          ]
+        },
+        {
+          "lesson_number": 6,
+          "lesson_title": "Phase 2: Optimize (Weeks 3-8)",
+          "lesson_objective": "Understand how Phase 2 builds on the reset",
+          "slides": [
+            {
+              "slide_number": 22,
+              "slide_type": "title",
+              "headline": "Phase 2: Optimize (Weeks 3-8)",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Phase 2 is where the magic happens. You're now fat-adapted, so we optimize everything\u2014your food, your timing, your results. This is where you see the dramatic changes."
+            },
+            {
+              "slide_number": 23,
+              "slide_type": "content",
+              "headline": "Phase 2 Goal: Maximize Fat Burning",
+              "content_outline": "Fine-tune macros for your body | Add intermittent fasting | Optimize meal timing | Build sustainable habits",
+              "speaker_notes": "Now we maximize fat burning. We'll fine-tune your macros based on how your body responds. Add intermittent fasting to extend fat burning periods. Optimize meal timing. And build habits that will stick long-term.",
+              "visual_suggestion": "Fine-tuning dials on a machine for optimal performance"
+            },
+            {
+              "slide_number": 24,
+              "slide_type": "content",
+              "headline": "Phase 2 Strategy: Personalized Precision",
+              "content_outline": "Track and adjust macros | 16:8 intermittent fasting | Carb cycling (maybe) | Listen to your body",
+              "speaker_notes": "The strategy becomes personalized precision. You'll track and adjust your macros based on results. Try 16:8 intermittent fasting. Maybe add some strategic carb cycling if your body responds well. The key is listening to your body and adjusting.",
+              "visual_suggestion": "Dashboard with various metrics being optimized"
+            },
+            {
+              "slide_number": 25,
+              "slide_type": "content",
+              "headline": "What to Expect in Phase 2",
+              "content_outline": "Consistent 1-2 lbs per week loss | Clothes fitting better | Better sleep | Stable energy all day",
+              "speaker_notes": "Phase 2 is where you see consistent 1-2 pound per week fat loss. Your clothes start fitting better. Sleep improves. Energy stays stable all day without caffeine crashes. This is what metabolic health feels like.",
+              "visual_suggestion": "Steady downward trend graph with positive indicators"
+            }
+          ]
+        },
+        {
+          "lesson_number": 7,
+          "lesson_title": "Phase 3: Sustain (Week 9+)",
+          "lesson_objective": "Understand the long-term sustainability approach",
+          "slides": [
+            {
+              "slide_number": 26,
+              "slide_type": "title",
+              "headline": "Phase 3: Sustain (Week 9+)",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Phase 3 is about making this sustainable for life. You've fixed your metabolism. Now we make sure it stays fixed while giving you the flexibility to live like a normal human being."
+            },
+            {
+              "slide_number": 27,
+              "slide_type": "content",
+              "headline": "Phase 3 Goal: Metabolic Flexibility",
+              "content_outline": "Handle occasional carbs without damage | Maintain insulin sensitivity | Enjoy social situations | Stay lean without obsessing",
+              "speaker_notes": "The goal is metabolic flexibility. You can handle occasional carbs without undoing everything. Your insulin sensitivity stays high. You can enjoy social situations without stress. And you stay lean without obsessing over every bite.",
+              "visual_suggestion": "Flexible person bending without breaking"
+            },
+            {
+              "slide_number": 28,
+              "slide_type": "content",
+              "headline": "Phase 3 Strategy: Strategic Flexibility",
+              "content_outline": "80/20 rule (strict 80% of time) | Strategic refeeds | Social occasion guidelines | Regular check-ins",
+              "speaker_notes": "The strategy is strategic flexibility. Follow the 80/20 rule\u2014strict about 80% of the time, flexible 20%. Use strategic refeeds to boost metabolism. Have clear guidelines for social occasions. And do regular check-ins to make sure you're staying on track.",
+              "visual_suggestion": "Balance scale with structure and flexibility"
+            },
+            {
+              "slide_number": 29,
+              "slide_type": "summary",
+              "headline": "Three Phases = Permanent Change",
+              "content_outline": "Phase 1: Break the cycle | Phase 2: Optimize the system | Phase 3: Live your life",
+              "speaker_notes": "That's the three-phase system. Phase 1 breaks the insulin cycle. Phase 2 optimizes your fat-burning system. Phase 3 lets you live your life while maintaining the results. It's not a diet\u2014it's a permanent upgrade to your metabolism."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 4,
+      "module_title": "Phase 1 Deep Dive: What to Eat",
+      "module_objective": "Know exactly what to eat and avoid in Phase 1",
+      "estimated_time": "13 minutes",
+      "lessons": [
+        {
+          "lesson_number": 8,
+          "lesson_title": "The Phase 1 Food Lists",
+          "lesson_objective": "Know which foods to eat, avoid, and moderate",
+          "slides": [
+            {
+              "slide_number": 30,
+              "slide_type": "title",
+              "headline": "The Phase 1 Food Lists",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Enough theory. Let's get practical. Here are the exact foods to eat, avoid, and moderate in Phase 1. Print this out, put it on your fridge, and follow it for two weeks."
+            },
+            {
+              "slide_number": 31,
+              "slide_type": "content",
+              "headline": "Green Light: Eat Freely",
+              "content_outline": "All meats and fish | Eggs (whole) | Leafy greens | Cruciferous vegetables | Healthy fats (avocado, olive oil, nuts)",
+              "speaker_notes": "Green light foods\u2014eat these freely. All meats and fish. Whole eggs. Leafy greens like spinach and arugula. Cruciferous vegetables like broccoli and cauliflower. Healthy fats like avocado, olive oil, and nuts. These foods won't spike insulin.",
+              "visual_suggestion": "Green checkmarks next to food images"
+            },
+            {
+              "slide_number": 32,
+              "slide_type": "content",
+              "headline": "Yellow Light: Measure and Moderate",
+              "content_outline": "Other low-carb vegetables | Berries (small amounts) | Full-fat dairy | Nuts and seeds",
+              "speaker_notes": "Yellow light foods\u2014measure and moderate these. Other low-carb vegetables like bell peppers and zucchini. Small amounts of berries. Full-fat dairy if you tolerate it well. Nuts and seeds in measured portions\u2014they add up fast.",
+              "visual_suggestion": "Yellow caution signs with measuring cups"
+            },
+            {
+              "slide_number": 33,
+              "slide_type": "content",
+              "headline": "Red Light: Avoid Completely",
+              "content_outline": "All grains and bread | Sugar and sweeteners | Fruit (except small berries) | Starchy vegetables | Processed foods",
+              "speaker_notes": "Red light foods\u2014avoid completely in Phase 1. All grains and bread, even 'healthy' ones. Sugar and artificial sweeteners. Fruit except small amounts of berries. Starchy vegetables like potatoes. And anything processed or packaged.",
+              "visual_suggestion": "Red X marks over prohibited foods"
+            },
+            {
+              "slide_number": 34,
+              "slide_type": "example",
+              "headline": "Sample Phase 1 Day",
+              "content_outline": "Breakfast: Eggs with spinach and avocado | Lunch: Grilled chicken salad with olive oil | Dinner: Salmon with roasted broccoli | Snack: Handful of almonds",
+              "speaker_notes": "Here's what a sample Phase 1 day looks like. Breakfast: scrambled eggs with spinach and half an avocado. Lunch: grilled chicken salad with olive oil dressing. Dinner: salmon with roasted broccoli. If you need a snack: a small handful of almonds.",
+              "visual_suggestion": "Timeline of meals throughout the day"
+            }
+          ]
+        },
+        {
+          "lesson_number": 9,
+          "lesson_title": "Phase 1 Success Strategies",
+          "lesson_objective": "Learn the tactics that make Phase 1 easier and more effective",
+          "slides": [
+            {
+              "slide_number": 35,
+              "slide_type": "title",
+              "headline": "Phase 1 Success Strategies",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Knowing what to eat isn't enough. Here are the strategies that separate the guys who succeed from those who quit after three days."
+            },
+            {
+              "slide_number": 36,
+              "slide_type": "content",
+              "headline": "Strategy 1: Electrolyte Insurance",
+              "content_outline": "Why electrolytes matter | Sodium: 2-3g daily | Potassium and magnesium supplements | Sea salt in water",
+              "speaker_notes": "Strategy 1: Electrolyte insurance. When you drop carbs, you lose water and electrolytes fast. This is what causes keto flu. Get 2-3 grams of sodium daily, plus potassium and magnesium supplements. Simple trick: sea salt in water throughout the day.",
+              "visual_suggestion": "Person drinking electrolyte water, looking energized"
+            },
+            {
+              "slide_number": 37,
+              "slide_type": "content",
+              "headline": "Strategy 2: Fat First",
+              "content_outline": "Don't fear dietary fat | Fat keeps you full | Fat doesn't spike insulin | Start meals with fat",
+              "speaker_notes": "Strategy 2: Fat first. Don't fear dietary fat\u2014it's your new best friend. Fat keeps you full, doesn't spike insulin, and teaches your body to burn fat for fuel. Start each meal with some fat to avoid hunger later.",
+              "visual_suggestion": "Avocado, olive oil, nuts arranged prominently"
+            },
+            {
+              "slide_number": 38,
+              "slide_type": "content",
+              "headline": "Strategy 3: Prepare for Pushback",
+              "content_outline": "Family and friends will question you | Restaurants will be challenging | Social pressure is real | Have your responses ready",
+              "speaker_notes": "Strategy 3: Prepare for pushback. Family and friends will question what you're doing. Restaurants will be challenging. Social pressure is real. Have your responses ready and remember\u2014you're not on a diet, you're fixing your metabolism.",
+              "visual_suggestion": "Person confidently declining bread basket"
+            },
+            {
+              "slide_number": 39,
+              "slide_type": "content",
+              "headline": "Strategy 4: Track Symptoms, Not Just Weight",
+              "content_outline": "Energy levels throughout day | Sleep quality | Mental clarity | Hunger patterns | Weight is just one metric",
+              "speaker_notes": "Strategy 4: Track symptoms, not just weight. Yes, watch the scale, but also track energy levels, sleep quality, mental clarity, and hunger patterns. These improvements often come before weight loss and they're more important long-term.",
+              "visual_suggestion": "Dashboard showing multiple health metrics"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 5,
+      "module_title": "Your Phase 1 Action Plan",
+      "module_objective": "Have a complete plan to start Phase 1 tomorrow",
+      "estimated_time": "10 minutes",
+      "lessons": [
+        {
+          "lesson_number": 10,
+          "lesson_title": "Phase 1 Prep Checklist",
+          "lesson_objective": "Complete all preparation needed to start successfully",
+          "slides": [
+            {
+              "slide_number": 40,
+              "slide_type": "title",
+              "headline": "Phase 1 Prep Checklist",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Success in Phase 1 starts before you take your first bite. Here's your complete prep checklist. Do these things today, start tomorrow."
+            },
+            {
+              "slide_number": 41,
+              "slide_type": "content",
+              "headline": "Kitchen Prep",
+              "content_outline": "Clean out trigger foods | Stock up on Phase 1 foods | Get electrolyte supplements | Prep first few meals",
+              "speaker_notes": "First, prep your kitchen. Clean out the trigger foods\u2014don't test your willpower. Stock up on Phase 1 foods. Get electrolyte supplements from any health store. And prep your first few meals so you're not making decisions when you're hungry.",
+              "visual_suggestion": "Clean, organized kitchen with keto foods"
+            },
+            {
+              "slide_number": 42,
+              "slide_type": "content",
+              "headline": "Mental Prep",
+              "content_outline": "Set realistic expectations | Plan for difficult moments | Identify your why | Tell supportive people",
+              "speaker_notes": "Next, mental prep. Set realistic expectations\u2014the first few days might be rough. Plan for difficult moments like social events or stress eating. Write down your why\u2014why are you doing this? And tell supportive people who will encourage, not sabotage you.",
+              "visual_suggestion": "Person writing in journal, looking determined"
+            },
+            {
+              "slide_number": 43,
+              "slide_type": "content",
+              "headline": "Measurement Prep",
+              "content_outline": "Take starting weight | Take body measurements | Take a photo | Note current symptoms",
+              "speaker_notes": "Finally, measurement prep. Take your starting weight first thing in the morning. Take body measurements\u2014waist, chest, arms. Take a photo even if you hate it. And note your current symptoms\u2014energy, sleep, hunger. You'll want to remember where you started.",
+              "visual_suggestion": "Scale, measuring tape, notebook"
+            }
+          ]
+        },
+        {
+          "lesson_number": 11,
+          "lesson_title": "Week 1 Day-by-Day Plan",
+          "lesson_objective": "Know exactly what to do each day of your first week",
+          "slides": [
+            {
+              "slide_number": 44,
+              "slide_type": "title",
+              "headline": "Week 1 Day-by-Day Plan",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Here's your day-by-day plan for Week 1. Follow this exactly and you'll avoid most of the common mistakes that derail people."
+            },
+            {
+              "slide_number": 45,
+              "slide_type": "content",
+              "headline": "Days 1-2: The Transition",
+              "content_outline": "Focus on food choices only | Don't count macros yet | Extra electrolytes | Expect some fatigue",
+              "speaker_notes": "Days 1-2 are about transition. Focus only on food choices\u2014eat from the green list, avoid the red list. Don't worry about counting macros yet. Take extra electrolytes. Expect some fatigue as your body switches fuel sources.",
+              "visual_suggestion": "Calendar with days 1-2 highlighted, showing transition"
+            },
+            {
+              "slide_number": 46,
+              "slide_type": "content",
+              "headline": "Days 3-4: The Adaptation",
+              "content_outline": "Energy starts stabilizing | Start tracking carbs | Increase fat intake | Push through cravings",
+              "speaker_notes": "Days 3-4, your energy starts stabilizing. Now start tracking carbs to stay under 20 grams. Increase your fat intake if you're still hungry. This is when cravings hit hardest\u2014push through, they're temporary.",
+              "visual_suggestion": "Energy meter showing stabilization"
+            },
+            {
+              "slide_number": 47,
+              "slide_type": "content",
+              "headline": "Days 5-7: The Breakthrough",
+              "content_outline": "Mental clarity improves | Appetite naturally decreases | Energy becomes steady | First weight loss shows",
+              "speaker_notes": "Days 5-7 bring the breakthrough. Mental clarity improves noticeably. Your appetite naturally decreases\u2014this is normal, not something to fight. Energy becomes steady throughout the day. And you'll see your first real weight loss.",
+              "visual_suggestion": "Person looking energized and confident"
+            },
+            {
+              "slide_number": 48,
+              "slide_type": "quiz",
+              "headline": "Quick Check: Are You Ready?",
+              "content_outline": "Q1: What's the carb limit in Phase 1? | Q2: What causes keto flu and how do you prevent it? | Q3: What should you track besides weight?",
+              "speaker_notes": "Quick check to make sure you're ready. What's the carb limit in Phase 1? Under 20 grams. What causes keto flu and how do you prevent it? Electrolyte loss\u2014prevent with sodium, potassium, magnesium. What should you track besides weight? Energy, sleep, mental clarity, hunger patterns.",
+              "visual_suggestion": "Quiz format with checkboxes"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "completion_criteria": "Complete all modules and lessons, successfully answer quiz questions, and have a written Phase 1 action plan",
+  "next_recommended": "Power Keto Phase 2 Optimization"
+}

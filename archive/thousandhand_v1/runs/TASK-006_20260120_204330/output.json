@@ -1,0 +1,338 @@
+{
+  "course_title": "Power Keto Fundamentals",
+  "course_description": "The no-BS guide to understanding why you're struggling to lose weight after 40 and exactly how to fix it. Skip the theory\u2014get the practical system that works when everything else has failed.",
+  "total_estimated_time": "50 minutes",
+  "prerequisites": [],
+  "modules": [
+    {
+      "module_number": 1,
+      "module_title": "Why Everything You've Tried Has Failed",
+      "module_objective": "Understand the real mechanism behind weight gain after 40",
+      "estimated_time": "12 minutes",
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "lesson_title": "The Calorie Lie",
+          "lesson_objective": "Recognize why calories-in-calories-out stops working after 40",
+          "slides": [
+            {
+              "slide_number": 1,
+              "slide_type": "title",
+              "headline": "The Calorie Lie",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "If you've tried counting calories and watching portions but the scale won't budge, this lesson explains why. It's not willpower\u2014it's biology."
+            },
+            {
+              "slide_number": 2,
+              "slide_type": "content",
+              "headline": "You've Been Solving The Wrong Problem",
+              "content_outline": "- Standard advice: eat less, move more\n- Why it worked in your 20s and 30s\n- Why it fails after 40",
+              "speaker_notes": "Every doctor, trainer, and diet program tells you the same thing: calories in, calories out. Eat less, move more. And it's not wrong\u2014thermodynamics is real. But it's incomplete. Your body at 45 doesn't work the same as it did at 25.",
+              "visual_suggestion": "Simple equation with an X through it"
+            },
+            {
+              "slide_number": 3,
+              "slide_type": "content",
+              "headline": "Your Cells Have Stopped Listening",
+              "content_outline": "- What insulin resistance actually means\n- The broken lock analogy\n- Why this makes weight loss nearly impossible",
+              "speaker_notes": "Here's what's really happening: your cells have become resistant to insulin. Think of insulin as a key that unlocks your cells to let energy in. When you're insulin resistant, the locks are jammed. Your body makes more keys, but the doors still won't open. So energy stays in your blood and gets stored as fat.",
+              "visual_suggestion": "Key and lock diagram, then jammed lock"
+            },
+            {
+              "slide_number": 4,
+              "slide_type": "example",
+              "headline": "Why You Can't Out-Exercise A Bad Metabolism",
+              "content_outline": "Real example: 1800 calories with insulin resistance vs. normal insulin sensitivity",
+              "speaker_notes": "Here's a concrete example. Two 45-year-old men eat the same 1800 calories. One has normal insulin sensitivity, one is insulin resistant. The normal guy loses weight. The insulin resistant guy maintains or gains. Same calories, different outcome. The problem isn't the calories\u2014it's what those calories do in your body.",
+              "visual_suggestion": "Two identical meals, different outcomes"
+            }
+          ]
+        },
+        {
+          "lesson_number": 2,
+          "lesson_title": "The Carb-Insulin Connection",
+          "lesson_objective": "Understand how different foods trigger different insulin responses",
+          "slides": [
+            {
+              "slide_number": 5,
+              "slide_type": "title",
+              "headline": "The Carb-Insulin Connection",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Not all calories are equal when you're insulin resistant. Some foods make the problem worse. Others help fix it."
+            },
+            {
+              "slide_number": 6,
+              "slide_type": "content",
+              "headline": "All Carbs Become Sugar",
+              "content_outline": "- What happens when you eat carbs\n- Blood sugar spike\n- Insulin response\n- Fat storage signal",
+              "speaker_notes": "Whether you eat a bagel or brown rice, your body turns it into glucose. That glucose hits your bloodstream, blood sugar spikes, and your pancreas dumps insulin to deal with it. But when you're insulin resistant, this system is broken. The insulin can't clear the glucose effectively, so your body stores it as fat and makes more insulin.",
+              "visual_suggestion": "Carb \u2192 glucose \u2192 insulin \u2192 fat storage flowchart"
+            },
+            {
+              "slide_number": 7,
+              "slide_type": "content",
+              "headline": "The Solution Is Obvious (But Not Easy)",
+              "content_outline": "- Stop triggering insulin spikes\n- Give your cells a break\n- Let insulin sensitivity recover",
+              "speaker_notes": "The fix is mechanically simple: stop eating foods that spike insulin. Give your cells a break from constant insulin bombardment. Let your insulin sensitivity recover. That's where Power Keto comes in.",
+              "visual_suggestion": "Broken system with 'RESET' button"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 2,
+      "module_title": "What Power Keto Actually Is",
+      "module_objective": "Understand the three phases and why each one matters",
+      "estimated_time": "15 minutes",
+      "lessons": [
+        {
+          "lesson_number": 3,
+          "lesson_title": "Not Another Keto Diet",
+          "lesson_objective": "Distinguish Power Keto from standard keto approaches",
+          "slides": [
+            {
+              "slide_number": 8,
+              "slide_type": "title",
+              "headline": "Not Another Keto Diet",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "You've probably heard of keto. Maybe you've even tried it. Power Keto is different\u2014it's designed specifically for insulin resistant men over 40."
+            },
+            {
+              "slide_number": 9,
+              "slide_type": "content",
+              "headline": "Standard Keto vs. Power Keto",
+              "content_outline": "- Standard keto: arbitrary macros\n- Power Keto: targeted phases\n- Standard keto: one-size-fits-all\n- Power Keto: built for insulin resistance",
+              "speaker_notes": "Most keto programs give you macro percentages and call it a day. Power Keto is engineered differently. It's three distinct phases, each designed to accomplish something specific in your metabolic recovery. It's not about hitting arbitrary macro ratios\u2014it's about systematically fixing your insulin sensitivity.",
+              "visual_suggestion": "Generic keto vs. Power Keto comparison chart"
+            },
+            {
+              "slide_number": 10,
+              "slide_type": "content",
+              "headline": "Why Three Phases Matter",
+              "content_outline": "- Phase 1: Break insulin resistance\n- Phase 2: Optimize fat burning\n- Phase 3: Maintain for life",
+              "speaker_notes": "Each phase has a job. Phase 1 breaks your insulin resistance\u2014it's aggressive and temporary. Phase 2 optimizes your body's ability to burn fat efficiently. Phase 3 is your long-term maintenance approach. You can't skip phases or do them in the wrong order.",
+              "visual_suggestion": "Three-stage process diagram"
+            }
+          ]
+        },
+        {
+          "lesson_number": 4,
+          "lesson_title": "The Three Phases Explained",
+          "lesson_objective": "Know what happens in each phase and why",
+          "slides": [
+            {
+              "slide_number": 11,
+              "slide_type": "title",
+              "headline": "The Three Phases Explained",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Let's break down exactly what each phase does and why you need all three."
+            },
+            {
+              "slide_number": 12,
+              "slide_type": "content",
+              "headline": "Phase 1: Reset (2-4 weeks)",
+              "content_outline": "- Ultra-low carbs (under 20g)\n- Break insulin resistance\n- Enter ketosis\n- Rapid initial results",
+              "speaker_notes": "Phase 1 is your reset button. You're eating under 20g of carbs per day\u2014basically just what's in vegetables and nuts. This forces your body to stop relying on glucose and start burning fat. Your insulin levels drop, your cells start listening again, and you enter ketosis. It's aggressive but necessary.",
+              "visual_suggestion": "Reset button with timer showing 2-4 weeks"
+            },
+            {
+              "slide_number": 13,
+              "slide_type": "content",
+              "headline": "Phase 2: Optimize (4-12 weeks)",
+              "content_outline": "- Slightly more flexibility\n- Fine-tune fat burning\n- Build sustainable habits\n- Continue losing fat",
+              "speaker_notes": "Phase 2 gives you a bit more flexibility while keeping you in fat-burning mode. You might add some berries or an extra serving of nuts. The goal is to optimize your fat burning while building habits you can maintain. Most of your fat loss happens here.",
+              "visual_suggestion": "Fine-tuning dial or optimization interface"
+            },
+            {
+              "slide_number": 14,
+              "slide_type": "content",
+              "headline": "Phase 3: Maintain (Life)",
+              "content_outline": "- Sustainable long-term approach\n- Occasional flexibility\n- Metabolic health maintained\n- Never go back to old problems",
+              "speaker_notes": "Phase 3 is your new normal. You've fixed your insulin sensitivity, so you have more flexibility. You can handle occasional carbs without derailing everything. But you never go back to the Standard American Diet that broke your metabolism in the first place.",
+              "visual_suggestion": "Balanced scale or sustainable lifestyle icon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 3,
+      "module_title": "Phase 1 Implementation",
+      "module_objective": "Know exactly what to eat and avoid in Phase 1",
+      "estimated_time": "18 minutes",
+      "lessons": [
+        {
+          "lesson_number": 5,
+          "lesson_title": "What You Can Eat",
+          "lesson_objective": "Identify all foods allowed in Phase 1",
+          "slides": [
+            {
+              "slide_number": 15,
+              "slide_type": "title",
+              "headline": "What You Can Eat",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Phase 1 is restrictive, but you won't be hungry. Here's everything that's allowed."
+            },
+            {
+              "slide_number": 16,
+              "slide_type": "content",
+              "headline": "Protein: The Foundation",
+              "content_outline": "- Beef, pork, lamb\n- Chicken, turkey, duck\n- Fish and seafood\n- Eggs\n- Target: 1g per pound body weight",
+              "speaker_notes": "Protein is your foundation. All meat, poultry, fish, and eggs are unlimited. Don't worry about portions\u2014eat until satisfied. Aim for about 1 gram of protein per pound of body weight. If you weigh 200 pounds, shoot for 200g of protein daily.",
+              "visual_suggestion": "Various protein sources arranged as foundation blocks"
+            },
+            {
+              "slide_number": 17,
+              "slide_type": "content",
+              "headline": "Fats: Your New Energy Source",
+              "content_outline": "- Butter, ghee, tallow, lard\n- Olive oil, avocado oil\n- Avocados\n- Nuts and seeds (limited)\n- Cheese (limited)",
+              "speaker_notes": "Fat is your new primary energy source. Cook with butter, ghee, or tallow. Use olive oil on salads. Avocados are great. Nuts and cheese are allowed but limited\u2014they're easy to overeat and can stall progress. A small handful of nuts or a few ounces of cheese per day.",
+              "visual_suggestion": "Energy transformation: glucose \u2192 fat"
+            },
+            {
+              "slide_number": 18,
+              "slide_type": "content",
+              "headline": "Vegetables: The Right Ones",
+              "content_outline": "- Leafy greens (spinach, kale, lettuce)\n- Cruciferous vegetables (broccoli, cauliflower)\n- Asparagus, zucchini, bell peppers\n- Limit: what fits in two cupped hands per meal",
+              "speaker_notes": "Vegetables are allowed, but only the low-carb ones. Think above-ground vegetables mostly. Leafy greens, broccoli, cauliflower, asparagus, zucchini. Limit yourself to what fits in two cupped hands per meal\u2014vegetables still contain carbs, and we're keeping total carbs under 20g daily.",
+              "visual_suggestion": "Above-ground vs. below-ground vegetable diagram"
+            }
+          ]
+        },
+        {
+          "lesson_number": 6,
+          "lesson_title": "What You Cannot Eat",
+          "lesson_objective": "Identify all foods to avoid in Phase 1",
+          "slides": [
+            {
+              "slide_number": 19,
+              "slide_type": "title",
+              "headline": "What You Cannot Eat",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "This list might seem long, but remember\u2014this is temporary. Every food here spikes insulin and keeps you insulin resistant."
+            },
+            {
+              "slide_number": 20,
+              "slide_type": "content",
+              "headline": "All Grains and Starches",
+              "content_outline": "- Bread, pasta, rice, oats\n- Potatoes, sweet potatoes\n- Corn, quinoa, beans\n- Even 'healthy' whole grains",
+              "speaker_notes": "All grains are out. Bread, pasta, rice, oats\u2014even the whole grain versions. All potatoes, including sweet potatoes. Corn, quinoa, and all beans. I don't care if it's organic, sprouted, or blessed by monks. If it's a grain or starch, it spikes insulin.",
+              "visual_suggestion": "Common grain foods with red X marks"
+            },
+            {
+              "slide_number": 21,
+              "slide_type": "content",
+              "headline": "Sugar in All Forms",
+              "content_outline": "- Obvious sugars (candy, soda, desserts)\n- Hidden sugars (sauces, dressings)\n- 'Natural' sugars (honey, maple syrup, agave)\n- All fruit (yes, even berries for now)",
+              "speaker_notes": "No sugar in any form. Not just candy and soda, but hidden sugars in sauces and dressings. Honey, maple syrup, and agave are still sugar. Even fruit is out for Phase 1\u2014yes, even berries. Fruit is nature's candy, and we're breaking your sugar addiction completely.",
+              "visual_suggestion": "Sugar in various disguises"
+            },
+            {
+              "slide_number": 22,
+              "slide_type": "content",
+              "headline": "Most Dairy",
+              "content_outline": "- Milk (has lactose = sugar)\n- Yogurt (has lactose + added sugar)\n- Ice cream (obviously)\n- Keep: butter, ghee, small amounts of hard cheese",
+              "speaker_notes": "Most dairy is out because of lactose\u2014milk sugar. No milk, yogurt, or ice cream. Butter and ghee are fine because they're pure fat. Small amounts of hard cheese are okay because fermentation reduces the lactose. Think parmesan or aged cheddar, not soft cheeses.",
+              "visual_suggestion": "Dairy products sorted into allowed/not allowed"
+            }
+          ]
+        },
+        {
+          "lesson_number": 7,
+          "lesson_title": "Sample Day of Eating",
+          "lesson_objective": "See what a typical Phase 1 day looks like",
+          "slides": [
+            {
+              "slide_number": 23,
+              "slide_type": "title",
+              "headline": "Sample Day of Eating",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "Let's put this together with a real example of what you might eat in a typical Phase 1 day."
+            },
+            {
+              "slide_number": 24,
+              "slide_type": "example",
+              "headline": "Breakfast: Keep It Simple",
+              "content_outline": "- 3-4 eggs cooked in butter\n- 3-4 strips of bacon\n- Handful of spinach saut\u00e9ed in the bacon fat\n- Black coffee or tea",
+              "speaker_notes": "Breakfast doesn't need to be complicated. Three or four eggs cooked in butter, some bacon, and spinach saut\u00e9ed in the bacon fat. Black coffee is fine\u2014no cream or sugar. This meal is high protein, high fat, virtually zero carbs.",
+              "visual_suggestion": "Simple breakfast plate"
+            },
+            {
+              "slide_number": 25,
+              "slide_type": "example",
+              "headline": "Lunch: Protein + Vegetables",
+              "content_outline": "- 6-8oz grilled chicken thigh\n- Large salad with olive oil dressing\n- Half an avocado\n- Water or unsweetened tea",
+              "speaker_notes": "Lunch: chicken thigh\u2014more flavor and fat than breast. Big salad with olive oil and vinegar. Half an avocado for extra fat. Keep it simple and satisfying.",
+              "visual_suggestion": "Lunch plate with proper proportions"
+            },
+            {
+              "slide_number": 26,
+              "slide_type": "example",
+              "headline": "Dinner: The Main Event",
+              "content_outline": "- 8oz ribeye or ground beef\n- Broccoli with butter\n- Small side salad\n- Maybe 1oz of hard cheese",
+              "speaker_notes": "Dinner is your main event. A good ribeye or pound of ground beef. Broccoli with butter. Small side salad. Maybe an ounce of hard cheese if you want it. You should feel completely satisfied, not stuffed, not hungry.",
+              "visual_suggestion": "Dinner plate showing portion sizes"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_number": 4,
+      "module_title": "Starting Tomorrow",
+      "module_objective": "Have everything needed to begin Phase 1 immediately",
+      "estimated_time": "5 minutes",
+      "lessons": [
+        {
+          "lesson_number": 8,
+          "lesson_title": "Your Action Plan",
+          "lesson_objective": "Know the exact steps to take today and tomorrow",
+          "slides": [
+            {
+              "slide_number": 27,
+              "slide_type": "title",
+              "headline": "Your Action Plan",
+              "content_outline": "Lesson title and objective",
+              "speaker_notes": "You now understand the why and the what. Here's exactly how to start."
+            },
+            {
+              "slide_number": 28,
+              "slide_type": "content",
+              "headline": "Today: Prepare",
+              "content_outline": "- Clean out pantry (remove temptations)\n- Shop for Phase 1 foods\n- Plan tomorrow's meals\n- Set expectations with family",
+              "speaker_notes": "Today, before you start, prepare. Remove the foods that will sabotage you\u2014give them away or throw them out. Go shopping for Phase 1 foods. Plan your meals for tomorrow. Let your family know what you're doing so they can support you.",
+              "visual_suggestion": "Preparation checklist"
+            },
+            {
+              "slide_number": 29,
+              "slide_type": "content",
+              "headline": "Tomorrow: Execute",
+              "content_outline": "- Eat only Phase 1 foods\n- Don't count calories\n- Eat when hungry, stop when satisfied\n- Drink plenty of water",
+              "speaker_notes": "Tomorrow, just execute. Eat only the foods on the allowed list. Don't count calories\u2014your hunger will normalize as your insulin sensitivity improves. Eat when hungry, stop when satisfied. Drink plenty of water\u2014you'll need it as your body dumps excess water weight.",
+              "visual_suggestion": "Simple day 1 timeline"
+            },
+            {
+              "slide_number": 30,
+              "slide_type": "content",
+              "headline": "What to Expect Week 1",
+              "content_outline": "- Days 1-3: Possible fatigue as body adapts\n- Days 4-7: Energy starts returning\n- Rapid water weight loss (3-7 pounds)\n- Reduced hunger and cravings",
+              "speaker_notes": "Week 1 expectations: Days 1-3 might be rough as your body adapts to burning fat instead of sugar. By day 4-7, your energy will return\u2014often better than before. You'll lose 3-7 pounds of water weight quickly. Most importantly, your hunger and cravings will start to normalize.",
+              "visual_suggestion": "Week 1 timeline with expectations"
+            },
+            {
+              "slide_number": 31,
+              "slide_type": "summary",
+              "headline": "You're Ready",
+              "content_outline": "- You understand why standard dieting failed\n- You know what Power Keto is and why it works\n- You have your Phase 1 food list\n- You have your action plan",
+              "speaker_notes": "You're ready. You understand the mechanism behind your weight struggle. You know why Power Keto works when other approaches fail. You have your allowed food list and your action plan. The only thing left is to start.",
+              "visual_suggestion": "Success/ready indicator"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "completion_criteria": "Student can identify insulin resistance as root cause, explain Power Keto phases, list Phase 1 foods, and has concrete plan to start",
+  "next_recommended": "Power Keto Phase 1 Mastery"
+}

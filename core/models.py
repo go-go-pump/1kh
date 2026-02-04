@@ -90,6 +90,18 @@ class SystemType(str, Enum):
     USER = "user"    # User system - utility/value driven
 
 
+class SystemPhase(str, Enum):
+    """
+    Phase of the system lifecycle.
+
+    Determines which metrics are relevant and how REFLECTION behaves.
+    """
+    BUILD = "build"      # Building features - feature checklist metrics
+    LAUNCH = "launch"    # Transitioning to production - both metrics
+    OPERATE = "operate"  # Running in production - operational metrics
+    OPTIMIZE = "optimize"  # Improving performance - both metrics
+
+
 class NorthStarType(str, Enum):
     """
     Type of North Star objective.
@@ -486,6 +498,128 @@ class Context(BaseModel):
     existing_assets: list[str] = Field(default_factory=list)
     skills: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
+
+
+# ============================================================================
+# Operational Models (OPERATE phase)
+# ============================================================================
+
+class SLAThreshold(BaseModel):
+    """Threshold for an SLA metric."""
+    target: float           # Target value (green)
+    warning: float          # Warning threshold (yellow)
+    critical: float         # Critical threshold (red)
+    unit: str = ""          # Unit of measurement (ms, %, count)
+    higher_is_better: bool = True  # True for uptime, False for latency
+
+
+class OperationalMetric(BaseModel):
+    """
+    An operational metric tracked during OPERATE phase.
+    """
+    name: str               # e.g., "uptime", "p95_latency"
+    display_name: str       # e.g., "Uptime", "P95 Latency"
+    threshold: SLAThreshold
+    current_value: Optional[float] = None
+    last_updated: Optional[datetime] = None
+    status: str = "unknown"  # "healthy", "warning", "critical", "unknown"
+
+    def evaluate(self, value: float) -> str:
+        """Evaluate a value against thresholds."""
+        self.current_value = value
+        self.last_updated = datetime.utcnow()
+
+        if self.threshold.higher_is_better:
+            if value >= self.threshold.target:
+                self.status = "healthy"
+            elif value >= self.threshold.warning:
+                self.status = "warning"
+            else:
+                self.status = "critical"
+        else:
+            # Lower is better (e.g., latency)
+            if value <= self.threshold.target:
+                self.status = "healthy"
+            elif value <= self.threshold.warning:
+                self.status = "warning"
+            else:
+                self.status = "critical"
+
+        return self.status
+
+
+class Operations(BaseModel):
+    """
+    Operational configuration for OPERATE phase.
+
+    Loaded from operations.md or generated from utility subtype.
+    """
+    phase: SystemPhase = SystemPhase.BUILD
+    metrics: list[OperationalMetric] = Field(default_factory=list)
+    alert_channels: list[str] = Field(default_factory=list)  # email, slack, etc.
+    check_interval_minutes: int = 5
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_check: Optional[datetime] = None
+
+    def overall_status(self) -> str:
+        """Get overall operational status."""
+        if not self.metrics:
+            return "unknown"
+        statuses = [m.status for m in self.metrics]
+        if "critical" in statuses:
+            return "critical"
+        if "warning" in statuses:
+            return "warning"
+        if all(s == "healthy" for s in statuses):
+            return "healthy"
+        return "unknown"
+
+
+# Default operational metrics by utility subtype
+UTILITY_OPERATIONAL_METRICS: dict[str, list[dict]] = {
+    "multi_tenant": [
+        {"name": "uptime", "display_name": "Uptime", "unit": "%",
+         "target": 99.9, "warning": 99.5, "critical": 99.0, "higher_is_better": True},
+        {"name": "p95_latency", "display_name": "P95 Latency", "unit": "ms",
+         "target": 500, "warning": 750, "critical": 1000, "higher_is_better": False},
+        {"name": "error_rate", "display_name": "Error Rate", "unit": "%",
+         "target": 0.1, "warning": 1.0, "critical": 5.0, "higher_is_better": False},
+        {"name": "tenant_isolation", "display_name": "Tenant Isolation", "unit": "score",
+         "target": 100, "warning": 99, "critical": 95, "higher_is_better": True},
+    ],
+    "api_gateway": [
+        {"name": "p50_latency", "display_name": "P50 Latency", "unit": "ms",
+         "target": 100, "warning": 200, "critical": 500, "higher_is_better": False},
+        {"name": "p99_latency", "display_name": "P99 Latency", "unit": "ms",
+         "target": 500, "warning": 1000, "critical": 2000, "higher_is_better": False},
+        {"name": "error_rate", "display_name": "Error Rate (5xx)", "unit": "%",
+         "target": 0.1, "warning": 0.5, "critical": 1.0, "higher_is_better": False},
+        {"name": "throughput", "display_name": "Throughput", "unit": "req/s",
+         "target": 1000, "warning": 500, "critical": 100, "higher_is_better": True},
+    ],
+    "scheduler": [
+        {"name": "schedule_accuracy", "display_name": "Schedule Accuracy", "unit": "%",
+         "target": 99, "warning": 95, "critical": 90, "higher_is_better": True},
+        {"name": "event_throughput", "display_name": "Event Throughput", "unit": "events/s",
+         "target": 100, "warning": 50, "critical": 10, "higher_is_better": True},
+        {"name": "queue_depth", "display_name": "Queue Depth", "unit": "events",
+         "target": 100, "warning": 500, "critical": 1000, "higher_is_better": False},
+    ],
+    "data_pipeline": [
+        {"name": "throughput", "display_name": "Throughput", "unit": "records/s",
+         "target": 1000, "warning": 500, "critical": 100, "higher_is_better": True},
+        {"name": "accuracy", "display_name": "Data Accuracy", "unit": "%",
+         "target": 99.9, "warning": 99, "critical": 95, "higher_is_better": True},
+        {"name": "lag", "display_name": "Pipeline Lag", "unit": "s",
+         "target": 60, "warning": 300, "critical": 600, "higher_is_better": False},
+    ],
+    "notification": [
+        {"name": "delivery_rate", "display_name": "Delivery Rate", "unit": "%",
+         "target": 99, "warning": 95, "critical": 90, "higher_is_better": True},
+        {"name": "delivery_latency", "display_name": "Delivery Latency", "unit": "s",
+         "target": 5, "warning": 30, "critical": 60, "higher_is_better": False},
+    ],
+}
 
 
 class Seed(BaseModel):

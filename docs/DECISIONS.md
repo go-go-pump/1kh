@@ -316,6 +316,64 @@ Its KPIs are reliability metrics, not adoption or revenue metrics.
 | 009 | Current | Deployment model | Active |
 | 010 | Current | Deferred items | Active |
 | 011 | Current | Utility subtypes and natural KPIs | Active |
+| 012 | Current | OPERATE phase and operational metrics | Active |
+
+---
+
+## DECISION-012: OPERATE Phase and Operational Metrics
+
+**Decision:** Separate BUILD metrics (feature completion) from OPERATE metrics (SLA/health).
+
+**Context:**
+Two distinct phases of a system's lifecycle require different metrics:
+- **BUILD phase**: "Can it do X?" (binary feature checklist)
+- **OPERATE phase**: "How well does it do X?" (continuous monitoring)
+
+**Lifecycle Flow:**
+```
+BUILD → LAUNCH → OPERATE → OPTIMIZE
+  │                 │          │
+  │                 │          └─ IMAGINATION proposes improvements
+  │                 └─ REFLECTION monitors SLAs
+  └─ WORK + EXECUTION build features
+```
+
+**Where Metrics Live:**
+| Phase | Document | Metric Type | Loop Interaction |
+|-------|----------|-------------|------------------|
+| BUILD | north-star.md | Feature checklist | WORK checks off items |
+| OPERATE | operations.md | SLA targets | REFLECTION monitors health |
+
+**`operations.md` Structure:**
+```markdown
+# Operations
+
+**Mode:** OPERATE (deployed and running)
+
+## SLA Targets
+| Metric | Target | Warning | Critical | Current |
+|--------|--------|---------|----------|---------|
+| Uptime | 99.9%  | <99.5%  | <99%     | TBD     |
+| P95 Latency | <500ms | >750ms | >1000ms | TBD |
+
+## Alerts
+- Escalate when critical threshold breached
+- Daily digest when warning threshold breached
+```
+
+**Transition Trigger:**
+- Manual: User runs `1kh operate` or edits operations.md
+- Auto-suggested: When all feature metrics in north-star.md are complete
+
+**REFLECTION Behavior in OPERATE:**
+- Reads operations.md for SLA targets
+- Monitors event log for operational events (uptime pings, latency samples)
+- Creates escalation when SLA breached
+- IMAGINATION suggests optimizations when metrics degrading
+
+**Revisit If:**
+- Need more granular operational phases (BETA, GA, etc.)
+- SLA monitoring proves too noisy
 
 ---
 

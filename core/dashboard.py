@@ -36,6 +36,14 @@ class EventType(str, Enum):
     PAGE_VIEW = "page_view"
     ENGAGEMENT = "engagement"  # Time on page, scroll depth, etc.
 
+    # Operational events (OPERATE phase)
+    UPTIME_CHECK = "uptime_check"        # value: 1=up, 0=down
+    LATENCY_SAMPLE = "latency_sample"    # value: latency in ms
+    ERROR_OCCURRED = "error_occurred"    # value: error count
+    TENANT_ISOLATION = "tenant_isolation"  # value: 1=passed, 0=failed
+    SLA_BREACH = "sla_breach"            # value: severity (1=warning, 2=critical)
+    HEALTH_CHECK = "health_check"        # value: health score 0-100
+
     # System events
     HYPOTHESIS_CREATED = "hypothesis_created"
     HYPOTHESIS_ACCEPTED = "hypothesis_accepted"
@@ -290,6 +298,11 @@ class DashboardState:
     metrics_last_24h: dict[str, float] = field(default_factory=dict)
     metrics_last_7d: dict[str, float] = field(default_factory=dict)
 
+    # Operational metrics (OPERATE phase)
+    operational_status: str = "unknown"  # healthy, warning, critical, unknown
+    operational_metrics: dict[str, dict] = field(default_factory=dict)  # name -> {value, status, threshold}
+    sla_breaches_24h: int = 0
+
     # Hypothesis stats
     hypotheses_total: int = 0
     hypotheses_validated: int = 0
@@ -322,6 +335,11 @@ class DashboardState:
             "metrics_lifetime": self.metrics_lifetime,
             "metrics_last_24h": self.metrics_last_24h,
             "metrics_last_7d": self.metrics_last_7d,
+            "operational": {
+                "status": self.operational_status,
+                "metrics": self.operational_metrics,
+                "sla_breaches_24h": self.sla_breaches_24h,
+            },
             "hypotheses": {
                 "total": self.hypotheses_total,
                 "validated": self.hypotheses_validated,
@@ -452,12 +470,60 @@ class Dashboard:
         cycle_events = [e for e in events if e.event_type == EventType.CYCLE_COMPLETED]
         last_cycle_at = cycle_events[-1].timestamp if cycle_events else None
 
+        # Compute operational metrics (OPERATE phase)
+        operational_status = "unknown"
+        operational_metrics = {}
+        sla_breaches_24h = aggregate_count(events_24h, EventType.SLA_BREACH)
+
+        # Compute uptime from health checks
+        health_checks = [e for e in events_24h if e.event_type == EventType.HEALTH_CHECK]
+        if health_checks:
+            avg_health = sum(e.value for e in health_checks) / len(health_checks)
+            operational_metrics["health_score"] = {
+                "value": avg_health,
+                "status": "healthy" if avg_health >= 90 else "warning" if avg_health >= 70 else "critical"
+            }
+
+        # Compute latency from samples
+        latency_samples = [e for e in events_24h if e.event_type == EventType.LATENCY_SAMPLE]
+        if latency_samples:
+            # P95 approximation
+            sorted_latencies = sorted(e.value for e in latency_samples)
+            p95_idx = int(len(sorted_latencies) * 0.95)
+            p95_latency = sorted_latencies[min(p95_idx, len(sorted_latencies) - 1)]
+            operational_metrics["p95_latency"] = {
+                "value": p95_latency,
+                "status": "healthy" if p95_latency <= 500 else "warning" if p95_latency <= 1000 else "critical"
+            }
+
+        # Compute uptime from uptime checks
+        uptime_checks = [e for e in events_24h if e.event_type == EventType.UPTIME_CHECK]
+        if uptime_checks:
+            uptime_pct = (sum(e.value for e in uptime_checks) / len(uptime_checks)) * 100
+            operational_metrics["uptime"] = {
+                "value": uptime_pct,
+                "status": "healthy" if uptime_pct >= 99.9 else "warning" if uptime_pct >= 99 else "critical"
+            }
+
+        # Determine overall operational status
+        if operational_metrics:
+            statuses = [m["status"] for m in operational_metrics.values()]
+            if "critical" in statuses:
+                operational_status = "critical"
+            elif "warning" in statuses:
+                operational_status = "warning"
+            else:
+                operational_status = "healthy"
+
         state = DashboardState(
             computed_at=now,
             north_star=north_star,
             metrics_lifetime=metrics_lifetime,
             metrics_last_24h=metrics_24h,
             metrics_last_7d=metrics_7d,
+            operational_status=operational_status,
+            operational_metrics=operational_metrics,
+            sla_breaches_24h=sla_breaches_24h,
             hypotheses_total=hypotheses_created,
             hypotheses_validated=hypotheses_validated,
             hypotheses_invalidated=hypotheses_invalidated,

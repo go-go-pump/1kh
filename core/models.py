@@ -112,21 +112,56 @@ class UtilitySubtype(str, Enum):
 
     Different utility types naturally gravitate toward different KPIs.
     This helps the system suggest appropriate metrics early.
+
+    Organized by category:
+    - Infrastructure: MULTI_TENANT, ORCHESTRATOR, API_GATEWAY, AUTH_SERVICE, MONITORING
+    - Data: DATA_PIPELINE, SEARCH, MIGRATION, SCRAPER
+    - Compute: SCHEDULER, AUTOMATION, ML_MODEL, SIMULATOR
+    - Developer: LIBRARY, CLI, WEBHOOK_HANDLER
+    - Content: CONTENT_GENERATOR, NOTIFICATION
+    - General: POC, INTERNAL_TOOL, CUSTOM
     """
+    # General
     POC = "poc"                          # Proof of concept - "IT JUST WORKS"
+    INTERNAL_TOOL = "internal_tool"      # Productivity - task completion, time saved
+    CUSTOM = "custom"                    # User-defined
+
+    # Infrastructure
     MULTI_TENANT = "multi_tenant"        # Shared service - reliability, isolation
     ORCHESTRATOR = "orchestrator"        # Service manager - config, visibility
-    SCHEDULER = "scheduler"              # Event-driven - timing, throughput
-    INTERNAL_TOOL = "internal_tool"      # Productivity - task completion, time saved
-    LIBRARY = "library"                  # SDK/API - clarity, integration ease
+    API_GATEWAY = "api_gateway"          # Integration/routing - latency, error rate
+    AUTH_SERVICE = "auth_service"        # Identity/access - auth latency, security
+    MONITORING = "monitoring"            # Observability - alert accuracy, freshness
+
+    # Data
     DATA_PIPELINE = "data_pipeline"      # ETL/streaming - throughput, accuracy
+    SEARCH = "search"                    # Indexing/retrieval - query latency, relevance
+    MIGRATION = "migration"              # Data/schema migration - zero loss, duration
+    SCRAPER = "scraper"                  # Data collection - success rate, freshness
+
+    # Compute
+    SCHEDULER = "scheduler"              # Event-driven - timing, throughput
     AUTOMATION = "automation"            # Workflow - success rate, error handling
-    CUSTOM = "custom"                    # User-defined
+    ML_MODEL = "ml_model"                # Machine learning - accuracy, inference latency
+    SIMULATOR = "simulator"              # Testing/modeling - accuracy, speed
+
+    # Developer
+    LIBRARY = "library"                  # SDK/API - clarity, integration ease
+    CLI = "cli"                          # Command line tool - execution success, speed
+    WEBHOOK_HANDLER = "webhook_handler"  # Event ingestion - processing latency, retry
+
+    # Content
+    CONTENT_GENERATOR = "content_generator"  # AI/media content - quality, generation time
+    NOTIFICATION = "notification"        # Alerts/messaging - delivery rate, latency
 
 
 # Suggested metrics for each utility subtype
 UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
+    # =========================================================================
+    # GENERAL
+    # =========================================================================
     UtilitySubtype.POC: {
+        "category": "General",
         "description": "Proof of Concept - Binary success",
         "primary_kpi": "Feature checklist completion",
         "suggested_metrics": [
@@ -136,7 +171,31 @@ UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
         ],
         "hypothesis_driven": False,
     },
+    UtilitySubtype.INTERNAL_TOOL: {
+        "category": "General",
+        "description": "Internal Tool - Productivity",
+        "primary_kpi": "Task completion and time saved",
+        "suggested_metrics": [
+            "Tasks completed per session",
+            "Time saved vs manual process",
+            "Error rate in task completion",
+            "User satisfaction score",
+        ],
+        "hypothesis_driven": False,
+    },
+    UtilitySubtype.CUSTOM: {
+        "category": "General",
+        "description": "Custom utility type",
+        "primary_kpi": "User-defined",
+        "suggested_metrics": [],
+        "hypothesis_driven": False,
+    },
+
+    # =========================================================================
+    # INFRASTRUCTURE
+    # =========================================================================
     UtilitySubtype.MULTI_TENANT: {
+        "category": "Infrastructure",
         "description": "Multi-tenant/Shared Service - Reliability & Isolation",
         "primary_kpi": "Service reliability and tenant isolation",
         "suggested_metrics": [
@@ -146,9 +205,10 @@ UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
             "Tenant onboarding time",
             "Error rate per tenant",
         ],
-        "hypothesis_driven": True,  # Can test reliability improvements
+        "hypothesis_driven": True,
     },
     UtilitySubtype.ORCHESTRATOR: {
+        "category": "Infrastructure",
         "description": "Service Manager/Orchestrator - Visibility & Control",
         "primary_kpi": "Configuration ability and system visibility",
         "suggested_metrics": [
@@ -160,41 +220,51 @@ UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
         ],
         "hypothesis_driven": True,
     },
-    UtilitySubtype.SCHEDULER: {
-        "description": "Scheduler/Event-driven - Timing & Throughput",
-        "primary_kpi": "Event accuracy and throughput",
+    UtilitySubtype.API_GATEWAY: {
+        "category": "Infrastructure",
+        "description": "API Gateway - Routing & Integration",
+        "primary_kpi": "Request latency and reliability",
         "suggested_metrics": [
-            "Schedule accuracy (% on-time)",
-            "Event throughput (events/sec)",
-            "Queue depth / backlog",
-            "Failed event retry success rate",
-            "End-to-end event latency",
+            "P50/P95/P99 request latency",
+            "Error rate (4xx, 5xx)",
+            "Rate limiting effectiveness",
+            "Upstream service availability",
+            "Request throughput (req/sec)",
         ],
         "hypothesis_driven": True,
     },
-    UtilitySubtype.INTERNAL_TOOL: {
-        "description": "Internal Tool - Productivity",
-        "primary_kpi": "Task completion and time saved",
+    UtilitySubtype.AUTH_SERVICE: {
+        "category": "Infrastructure",
+        "description": "Auth Service - Identity & Access",
+        "primary_kpi": "Authentication speed and security",
         "suggested_metrics": [
-            "Tasks completed per session",
-            "Time saved vs manual process",
-            "Error rate in task completion",
-            "User satisfaction score",
+            "Auth request latency (P95)",
+            "False rejection rate",
+            "Token validation speed",
+            "Security audit compliance",
+            "Session management accuracy",
         ],
-        "hypothesis_driven": False,  # Usually feature-driven
+        "hypothesis_driven": True,
     },
-    UtilitySubtype.LIBRARY: {
-        "description": "Library/SDK - Developer Experience",
-        "primary_kpi": "API clarity and integration ease",
+    UtilitySubtype.MONITORING: {
+        "category": "Infrastructure",
+        "description": "Monitoring/Observability - Visibility & Alerting",
+        "primary_kpi": "Alert accuracy and data freshness",
         "suggested_metrics": [
-            "Time to first successful API call",
-            "Documentation coverage",
-            "Breaking changes per release",
-            "Integration test pass rate",
+            "Alert true positive rate",
+            "Mean time to detect (MTTD)",
+            "Dashboard load time",
+            "Data lag/freshness",
+            "Coverage of monitored systems",
         ],
-        "hypothesis_driven": False,
+        "hypothesis_driven": True,
     },
+
+    # =========================================================================
+    # DATA
+    # =========================================================================
     UtilitySubtype.DATA_PIPELINE: {
+        "category": "Data",
         "description": "Data Pipeline - Throughput & Accuracy",
         "primary_kpi": "Data throughput and accuracy",
         "suggested_metrics": [
@@ -206,7 +276,64 @@ UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
         ],
         "hypothesis_driven": True,
     },
+    UtilitySubtype.SEARCH: {
+        "category": "Data",
+        "description": "Search Engine - Retrieval & Relevance",
+        "primary_kpi": "Query speed and result relevance",
+        "suggested_metrics": [
+            "Query latency (P50, P95)",
+            "Relevance score (precision/recall)",
+            "Index freshness",
+            "Query success rate",
+            "Zero-result rate",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.MIGRATION: {
+        "category": "Data",
+        "description": "Migration Tool - Data Integrity & Speed",
+        "primary_kpi": "Zero data loss and migration speed",
+        "suggested_metrics": [
+            "Data integrity (zero loss)",
+            "Migration duration",
+            "Rollback success rate",
+            "Downtime during migration",
+            "Validation pass rate",
+        ],
+        "hypothesis_driven": False,  # Usually one-shot
+    },
+    UtilitySubtype.SCRAPER: {
+        "category": "Data",
+        "description": "Scraper/Collector - Data Freshness & Coverage",
+        "primary_kpi": "Collection success rate and freshness",
+        "suggested_metrics": [
+            "Scrape success rate",
+            "Data freshness (time since last update)",
+            "Coverage (% of target sources)",
+            "Error/retry rate",
+            "Rate limit compliance",
+        ],
+        "hypothesis_driven": True,
+    },
+
+    # =========================================================================
+    # COMPUTE
+    # =========================================================================
+    UtilitySubtype.SCHEDULER: {
+        "category": "Compute",
+        "description": "Scheduler/Event-driven - Timing & Throughput",
+        "primary_kpi": "Event accuracy and throughput",
+        "suggested_metrics": [
+            "Schedule accuracy (% on-time)",
+            "Event throughput (events/sec)",
+            "Queue depth / backlog",
+            "Failed event retry success rate",
+            "End-to-end event latency",
+        ],
+        "hypothesis_driven": True,
+    },
     UtilitySubtype.AUTOMATION: {
+        "category": "Compute",
         "description": "Automation/Workflow - Success Rate",
         "primary_kpi": "Workflow success rate and error handling",
         "suggested_metrics": [
@@ -217,11 +344,103 @@ UTILITY_SUBTYPE_METRICS: dict[UtilitySubtype, dict] = {
         ],
         "hypothesis_driven": True,
     },
-    UtilitySubtype.CUSTOM: {
-        "description": "Custom utility type",
-        "primary_kpi": "User-defined",
-        "suggested_metrics": [],
+    UtilitySubtype.ML_MODEL: {
+        "category": "Compute",
+        "description": "ML Model - Accuracy & Performance",
+        "primary_kpi": "Model accuracy and inference speed",
+        "suggested_metrics": [
+            "Model accuracy/F1/AUC (task-specific)",
+            "Inference latency (P95)",
+            "Training time",
+            "Data drift detection",
+            "Model staleness",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.SIMULATOR: {
+        "category": "Compute",
+        "description": "Simulator/Mock - Accuracy & Speed",
+        "primary_kpi": "Simulation accuracy and execution speed",
+        "suggested_metrics": [
+            "Accuracy vs real system",
+            "Simulation execution time",
+            "Scenario coverage",
+            "Edge case handling",
+            "Reproducibility",
+        ],
+        "hypothesis_driven": False,  # Usually feature-driven
+    },
+
+    # =========================================================================
+    # DEVELOPER
+    # =========================================================================
+    UtilitySubtype.LIBRARY: {
+        "category": "Developer",
+        "description": "Library/SDK - Developer Experience",
+        "primary_kpi": "API clarity and integration ease",
+        "suggested_metrics": [
+            "Time to first successful API call",
+            "Documentation coverage",
+            "Breaking changes per release",
+            "Integration test pass rate",
+        ],
         "hypothesis_driven": False,
+    },
+    UtilitySubtype.CLI: {
+        "category": "Developer",
+        "description": "CLI Tool - Usability & Speed",
+        "primary_kpi": "Command execution success and speed",
+        "suggested_metrics": [
+            "Command execution success rate",
+            "Average command response time",
+            "Error message clarity score",
+            "Documentation/help coverage",
+            "Shell completion coverage",
+        ],
+        "hypothesis_driven": False,
+    },
+    UtilitySubtype.WEBHOOK_HANDLER: {
+        "category": "Developer",
+        "description": "Webhook Handler - Event Processing",
+        "primary_kpi": "Event processing reliability and speed",
+        "suggested_metrics": [
+            "Event processing latency",
+            "Retry success rate",
+            "Dead letter queue size",
+            "Idempotency compliance",
+            "Acknowledgment rate",
+        ],
+        "hypothesis_driven": True,
+    },
+
+    # =========================================================================
+    # CONTENT
+    # =========================================================================
+    UtilitySubtype.CONTENT_GENERATOR: {
+        "category": "Content",
+        "description": "Content Generator - Quality & Speed",
+        "primary_kpi": "Content quality and generation speed",
+        "suggested_metrics": [
+            "Content quality score",
+            "Generation time",
+            "Output consistency",
+            "Human edit rate",
+            "Rejection/redo rate",
+        ],
+        "hypothesis_driven": True,
+    },
+    UtilitySubtype.NOTIFICATION: {
+        "category": "Content",
+        "description": "Notification Service - Delivery & Speed",
+        "primary_kpi": "Message delivery rate and latency",
+        "suggested_metrics": [
+            "Delivery success rate",
+            "Delivery latency (P95)",
+            "Bounce/failure rate",
+            "Channel coverage",
+            "Unsubscribe rate",
+        ],
+        "hypothesis_driven": True,
     },
 }
 

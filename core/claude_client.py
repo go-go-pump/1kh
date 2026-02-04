@@ -344,15 +344,14 @@ Return ONLY valid JSON:
         """
         Detect what kind of utility system is being built.
 
-        For USER SYSTEMS, different utility types have different natural KPIs:
-        - POC: "IT JUST WORKS" (binary feature checklist)
-        - Multi-tenant: Reliability, uptime, tenant isolation
-        - Orchestrator: Configuration, visibility, interfaces
-        - Scheduler: Event timing, throughput
-        - Internal Tool: Task completion, time saved
-        - Library: API clarity, developer experience
-        - Data Pipeline: Throughput, accuracy
-        - Automation: Success rate, error handling
+        For USER SYSTEMS, different utility types have different natural KPIs.
+        20 supported subtypes organized by category:
+        - Infrastructure: MULTI_TENANT, ORCHESTRATOR, API_GATEWAY, AUTH_SERVICE, MONITORING
+        - Data: DATA_PIPELINE, SEARCH, MIGRATION, SCRAPER
+        - Compute: SCHEDULER, AUTOMATION, ML_MODEL, SIMULATOR
+        - Developer: LIBRARY, CLI, WEBHOOK_HANDLER
+        - Content: CONTENT_GENERATOR, NOTIFICATION
+        - General: POC, INTERNAL_TOOL, CUSTOM
 
         Returns dict with:
         - utility_subtype: one of the above
@@ -364,54 +363,99 @@ Return ONLY valid JSON:
 
         system_prompt = """You are analyzing a project description to determine what KIND of utility system is being built.
 
-Utility subtypes and their characteristics:
+UTILITY SUBTYPES BY CATEGORY:
 
-1. POC (Proof of Concept)
-   - Keywords: prototype, demo, test, experiment, MVP, proof, validate
-   - Goal: Prove something works
-   - KPI: Binary - "IT JUST WORKS"
-
-2. MULTI_TENANT (Shared Service)
+=== INFRASTRUCTURE ===
+1. MULTI_TENANT (Shared Service)
    - Keywords: multi-tenant, SaaS infrastructure, shared, tenant, isolation
-   - Goal: Reliable service for multiple users/orgs
    - KPI: Uptime, latency, tenant isolation
 
-3. ORCHESTRATOR (Service Manager)
+2. ORCHESTRATOR (Service Manager)
    - Keywords: orchestration, manage services, deploy, configure, dashboard, visibility
-   - Goal: Control and view other systems
    - KPI: Configuration ability, interface quality
 
-4. SCHEDULER (Event-driven)
-   - Keywords: schedule, cron, events, queue, jobs, timing, async
-   - Goal: Execute things at the right time
-   - KPI: Timing accuracy, throughput
+3. API_GATEWAY (Integration/Routing)
+   - Keywords: gateway, proxy, routing, rate limit, API management
+   - KPI: Request latency, error rate, throughput
 
-5. INTERNAL_TOOL (Productivity)
-   - Keywords: internal, productivity, admin, backoffice, tool for team
-   - Goal: Help people do tasks faster
-   - KPI: Task completion, time saved
+4. AUTH_SERVICE (Identity/Access)
+   - Keywords: auth, authentication, authorization, identity, OAuth, JWT, RBAC
+   - KPI: Auth latency, security compliance
 
-6. LIBRARY (SDK/API)
-   - Keywords: library, SDK, API, package, module, framework
-   - Goal: Make it easy for developers to integrate
-   - KPI: Time to first call, documentation
+5. MONITORING (Observability)
+   - Keywords: monitor, observability, metrics, alerts, dashboards, logging
+   - KPI: Alert accuracy, data freshness
 
-7. DATA_PIPELINE (ETL/Streaming)
+=== DATA ===
+6. DATA_PIPELINE (ETL/Streaming)
    - Keywords: pipeline, ETL, transform, ingest, stream, data flow
-   - Goal: Move and transform data reliably
    - KPI: Throughput, accuracy, latency
 
-8. AUTOMATION (Workflow)
-   - Keywords: automation, workflow, bot, automate, scripted
-   - Goal: Do repetitive things automatically
-   - KPI: Success rate, error handling
+7. SEARCH (Indexing/Retrieval)
+   - Keywords: search, index, query, elasticsearch, retrieval, ranking
+   - KPI: Query latency, relevance
 
-9. CUSTOM
-   - Doesn't fit above categories
+8. MIGRATION (Data/Schema Migration)
+   - Keywords: migration, migrate, upgrade, schema, database migration
+   - KPI: Zero data loss, duration
+
+9. SCRAPER (Data Collection)
+   - Keywords: scrape, crawl, collect, fetch, spider, harvest
+   - KPI: Success rate, freshness
+
+=== COMPUTE ===
+10. SCHEDULER (Event-driven)
+    - Keywords: schedule, cron, events, queue, jobs, timing, async
+    - KPI: Timing accuracy, throughput
+
+11. AUTOMATION (Workflow)
+    - Keywords: automation, workflow, bot, automate, scripted
+    - KPI: Success rate, error handling
+
+12. ML_MODEL (Machine Learning)
+    - Keywords: model, ML, machine learning, AI, training, inference, predict
+    - KPI: Accuracy, inference latency
+
+13. SIMULATOR (Testing/Modeling)
+    - Keywords: simulator, mock, emulate, test harness, load test
+    - KPI: Accuracy vs real system, speed
+
+=== DEVELOPER ===
+14. LIBRARY (SDK/API)
+    - Keywords: library, SDK, API, package, module, framework
+    - KPI: Time to first call, documentation
+
+15. CLI (Command Line Tool)
+    - Keywords: CLI, command line, terminal, shell, console
+    - KPI: Execution success, response time
+
+16. WEBHOOK_HANDLER (Event Ingestion)
+    - Keywords: webhook, callback, event handler, listener
+    - KPI: Processing latency, retry success
+
+=== CONTENT ===
+17. CONTENT_GENERATOR (AI/Media)
+    - Keywords: generate content, AI writer, media, images, text generation
+    - KPI: Quality score, generation time
+
+18. NOTIFICATION (Alerts/Messaging)
+    - Keywords: notification, alert, email, SMS, push, messaging
+    - KPI: Delivery rate, latency
+
+=== GENERAL ===
+19. POC (Proof of Concept)
+    - Keywords: prototype, demo, test, experiment, MVP, proof, validate
+    - KPI: Binary - "IT JUST WORKS"
+
+20. INTERNAL_TOOL (Productivity)
+    - Keywords: internal, productivity, admin, backoffice, tool for team
+    - KPI: Task completion, time saved
+
+21. CUSTOM - Doesn't fit above categories
 
 Return ONLY valid JSON:
 {
-    "utility_subtype": "poc|multi_tenant|orchestrator|scheduler|internal_tool|library|data_pipeline|automation|custom",
+    "utility_subtype": "poc|multi_tenant|orchestrator|api_gateway|auth_service|monitoring|data_pipeline|search|migration|scraper|scheduler|automation|ml_model|simulator|library|cli|webhook_handler|content_generator|notification|internal_tool|custom",
     "confidence": 0.0-1.0,
     "reasoning": "Brief explanation",
     "key_signals": ["signal1", "signal2"]
@@ -442,13 +486,31 @@ Return ONLY valid JSON:
 
         # Subtype signals (order matters - check more specific first)
         subtype_signals = {
+            # Infrastructure
             "multi_tenant": ["multi-tenant", "tenant", "saas", "shared service", "isolation"],
-            "orchestrator": ["orchestrat", "manage service", "deploy", "dashboard", "visibility"],
-            "scheduler": ["schedule", "cron", "event", "queue", "job", "timing", "async"],
+            "orchestrator": ["orchestrat", "manage service", "deploy", "visibility"],
+            "api_gateway": ["gateway", "proxy", "routing", "rate limit", "api management"],
+            "auth_service": ["auth", "authentication", "authorization", "oauth", "jwt", "rbac", "identity"],
+            "monitoring": ["monitor", "observability", "metrics", "alert", "logging", "dashboard"],
+            # Data
             "data_pipeline": ["pipeline", "etl", "transform", "ingest", "stream", "data flow"],
-            "library": ["library", "sdk", "api", "package", "module", "framework"],
+            "search": ["search", "index", "elasticsearch", "retrieval", "ranking", "query engine"],
+            "migration": ["migration", "migrate", "upgrade", "schema change", "database migration"],
+            "scraper": ["scrape", "crawl", "collect", "spider", "harvest", "fetch data"],
+            # Compute
+            "scheduler": ["schedule", "cron", "event", "queue", "job", "timing", "async"],
             "automation": ["automat", "workflow", "bot", "script"],
-            "internal_tool": ["internal", "admin", "backoffice", "tool for"],
+            "ml_model": ["model", "machine learning", "ml", "training", "inference", "predict", "ai model"],
+            "simulator": ["simulator", "mock", "emulate", "test harness", "load test"],
+            # Developer
+            "library": ["library", "sdk", "package", "module", "framework"],
+            "cli": ["cli", "command line", "terminal", "shell tool", "console"],
+            "webhook_handler": ["webhook", "callback", "event handler", "listener"],
+            # Content
+            "content_generator": ["generate content", "ai writer", "text generation", "image generat"],
+            "notification": ["notification", "alert service", "email service", "sms", "push notification"],
+            # General
+            "internal_tool": ["internal", "admin", "backoffice", "tool for team"],
             "poc": ["prototype", "demo", "test", "experiment", "mvp", "proof", "validate"],
         }
 

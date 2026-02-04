@@ -509,15 +509,33 @@ class InitialCeremony:
 
         # Map to enum
         subtype_map = {
+            # General
             "poc": UtilitySubtype.POC,
+            "internal_tool": UtilitySubtype.INTERNAL_TOOL,
+            "custom": UtilitySubtype.CUSTOM,
+            # Infrastructure
             "multi_tenant": UtilitySubtype.MULTI_TENANT,
             "orchestrator": UtilitySubtype.ORCHESTRATOR,
-            "scheduler": UtilitySubtype.SCHEDULER,
-            "internal_tool": UtilitySubtype.INTERNAL_TOOL,
-            "library": UtilitySubtype.LIBRARY,
+            "api_gateway": UtilitySubtype.API_GATEWAY,
+            "auth_service": UtilitySubtype.AUTH_SERVICE,
+            "monitoring": UtilitySubtype.MONITORING,
+            # Data
             "data_pipeline": UtilitySubtype.DATA_PIPELINE,
+            "search": UtilitySubtype.SEARCH,
+            "migration": UtilitySubtype.MIGRATION,
+            "scraper": UtilitySubtype.SCRAPER,
+            # Compute
+            "scheduler": UtilitySubtype.SCHEDULER,
             "automation": UtilitySubtype.AUTOMATION,
-            "custom": UtilitySubtype.CUSTOM,
+            "ml_model": UtilitySubtype.ML_MODEL,
+            "simulator": UtilitySubtype.SIMULATOR,
+            # Developer
+            "library": UtilitySubtype.LIBRARY,
+            "cli": UtilitySubtype.CLI,
+            "webhook_handler": UtilitySubtype.WEBHOOK_HANDLER,
+            # Content
+            "content_generator": UtilitySubtype.CONTENT_GENERATOR,
+            "notification": UtilitySubtype.NOTIFICATION,
         }
 
         detected_subtype = subtype_map.get(suggested_subtype, UtilitySubtype.POC)
@@ -549,19 +567,54 @@ class InitialCeremony:
         # Confirm or override
         self.console.print("[bold]Select utility type:[/bold]")
         self.console.print()
-        self.console.print("  [cyan]poc[/cyan]          = Proof of concept - 'IT JUST WORKS'")
-        self.console.print("  [cyan]multi_tenant[/cyan] = Shared service - reliability, tenant isolation")
-        self.console.print("  [cyan]orchestrator[/cyan] = Service manager - config, visibility, interfaces")
-        self.console.print("  [cyan]scheduler[/cyan]    = Event-driven - timing, throughput")
-        self.console.print("  [cyan]internal_tool[/cyan]= Productivity tool - task completion, time saved")
-        self.console.print("  [cyan]library[/cyan]      = SDK/API - developer experience")
-        self.console.print("  [cyan]data_pipeline[/cyan]= ETL/streaming - throughput, accuracy")
-        self.console.print("  [cyan]automation[/cyan]   = Workflow automation - success rate")
-        self.console.print("  [cyan]custom[/cyan]       = Something else (you'll define)")
+        self.console.print("[dim]─── Infrastructure ───[/dim]")
+        self.console.print("  [cyan]multi_tenant[/cyan]    = Shared service - reliability, tenant isolation")
+        self.console.print("  [cyan]orchestrator[/cyan]    = Service manager - config, visibility")
+        self.console.print("  [cyan]api_gateway[/cyan]     = Integration/routing - latency, error rate")
+        self.console.print("  [cyan]auth_service[/cyan]    = Identity/access - auth speed, security")
+        self.console.print("  [cyan]monitoring[/cyan]      = Observability - alert accuracy, freshness")
+        self.console.print()
+        self.console.print("[dim]─── Data ───[/dim]")
+        self.console.print("  [cyan]data_pipeline[/cyan]   = ETL/streaming - throughput, accuracy")
+        self.console.print("  [cyan]search[/cyan]          = Indexing/retrieval - query speed, relevance")
+        self.console.print("  [cyan]migration[/cyan]       = Data/schema migration - zero loss, speed")
+        self.console.print("  [cyan]scraper[/cyan]         = Data collection - success rate, freshness")
+        self.console.print()
+        self.console.print("[dim]─── Compute ───[/dim]")
+        self.console.print("  [cyan]scheduler[/cyan]       = Event-driven - timing, throughput")
+        self.console.print("  [cyan]automation[/cyan]      = Workflow - success rate, error handling")
+        self.console.print("  [cyan]ml_model[/cyan]        = Machine learning - accuracy, inference speed")
+        self.console.print("  [cyan]simulator[/cyan]       = Testing/modeling - accuracy, speed")
+        self.console.print()
+        self.console.print("[dim]─── Developer ───[/dim]")
+        self.console.print("  [cyan]library[/cyan]         = SDK/API - developer experience")
+        self.console.print("  [cyan]cli[/cyan]             = Command line tool - execution success")
+        self.console.print("  [cyan]webhook_handler[/cyan] = Event ingestion - processing latency")
+        self.console.print()
+        self.console.print("[dim]─── Content ───[/dim]")
+        self.console.print("  [cyan]content_generator[/cyan] = AI/media content - quality, speed")
+        self.console.print("  [cyan]notification[/cyan]    = Alerts/messaging - delivery rate")
+        self.console.print()
+        self.console.print("[dim]─── General ───[/dim]")
+        self.console.print("  [cyan]poc[/cyan]             = Proof of concept - 'IT JUST WORKS'")
+        self.console.print("  [cyan]internal_tool[/cyan]   = Productivity - task completion, time saved")
+        self.console.print("  [cyan]custom[/cyan]          = Something else (you'll define)")
         self.console.print()
 
-        choices = ["poc", "multi_tenant", "orchestrator", "scheduler",
-                   "internal_tool", "library", "data_pipeline", "automation", "custom"]
+        choices = [
+            # Infrastructure
+            "multi_tenant", "orchestrator", "api_gateway", "auth_service", "monitoring",
+            # Data
+            "data_pipeline", "search", "migration", "scraper",
+            # Compute
+            "scheduler", "automation", "ml_model", "simulator",
+            # Developer
+            "library", "cli", "webhook_handler",
+            # Content
+            "content_generator", "notification",
+            # General
+            "poc", "internal_tool", "custom"
+        ]
 
         selected = Prompt.ask(
             "Utility type",

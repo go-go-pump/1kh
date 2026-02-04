@@ -238,18 +238,52 @@ Different utility types naturally gravitate toward different metrics. Detecting 
 - Enables the system to suggest appropriate metrics
 - Determines whether hypothesis-driven testing is beneficial
 
-**Utility Subtypes:**
+**Utility Subtypes (20 types in 6 categories):**
 
+*Infrastructure:*
+| Subtype | Description | Primary KPI | Hypothesis-Driven? |
+|---------|-------------|-------------|-------------------|
+| MULTI_TENANT | Shared Service | Uptime, latency, isolation | Yes |
+| ORCHESTRATOR | Service Manager | Config ability, visibility | Yes |
+| API_GATEWAY | Integration/Routing | Request latency, error rate | Yes |
+| AUTH_SERVICE | Identity/Access | Auth latency, security | Yes |
+| MONITORING | Observability | Alert accuracy, freshness | Yes |
+
+*Data:*
+| Subtype | Description | Primary KPI | Hypothesis-Driven? |
+|---------|-------------|-------------|-------------------|
+| DATA_PIPELINE | ETL/Streaming | Throughput, accuracy | Yes |
+| SEARCH | Indexing/Retrieval | Query speed, relevance | Yes |
+| MIGRATION | Data/Schema Migration | Zero loss, duration | No |
+| SCRAPER | Data Collection | Success rate, freshness | Yes |
+
+*Compute:*
+| Subtype | Description | Primary KPI | Hypothesis-Driven? |
+|---------|-------------|-------------|-------------------|
+| SCHEDULER | Event-driven | Timing accuracy, throughput | Yes |
+| AUTOMATION | Workflow | Success rate, MTTR | Yes |
+| ML_MODEL | Machine Learning | Accuracy, inference latency | Yes |
+| SIMULATOR | Testing/Modeling | Accuracy vs real, speed | No |
+
+*Developer:*
+| Subtype | Description | Primary KPI | Hypothesis-Driven? |
+|---------|-------------|-------------|-------------------|
+| LIBRARY | SDK/API | Time to first call, docs | No |
+| CLI | Command Line Tool | Execution success, speed | No |
+| WEBHOOK_HANDLER | Event Ingestion | Processing latency, retry | Yes |
+
+*Content:*
+| Subtype | Description | Primary KPI | Hypothesis-Driven? |
+|---------|-------------|-------------|-------------------|
+| CONTENT_GENERATOR | AI/Media | Quality score, generation time | Yes |
+| NOTIFICATION | Alerts/Messaging | Delivery rate, latency | Yes |
+
+*General:*
 | Subtype | Description | Primary KPI | Hypothesis-Driven? |
 |---------|-------------|-------------|-------------------|
 | POC | Proof of Concept | "IT JUST WORKS" (binary) | No |
-| MULTI_TENANT | Shared Service | Uptime, latency, isolation | Yes |
-| ORCHESTRATOR | Service Manager | Config ability, visibility | Yes |
-| SCHEDULER | Event-driven | Timing accuracy, throughput | Yes |
 | INTERNAL_TOOL | Productivity | Task completion, time saved | No |
-| LIBRARY | SDK/API | Time to first call, docs | No |
-| DATA_PIPELINE | ETL/Streaming | Throughput, accuracy | Yes |
-| AUTOMATION | Workflow | Success rate, MTTR | Yes |
+| CUSTOM | User-defined | User-defined | User-defined |
 
 **Key Insight:**
 Infrastructure that serves other systems (like bix) is USER SYSTEM with MULTI_TENANT subtype.

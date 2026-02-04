@@ -245,6 +245,11 @@ def _run_new_project_ceremony(project_path: Path, project_name: str, skip_keys: 
     if (project_path / ".1kh").exists():
         if not Confirm.ask("This directory already has a 1KH project. Reinitialize?"):
             raise typer.Exit(0)
+        # Reset ceremony state when reinitializing
+        state_file = project_path / ".1kh" / "state" / "ceremony_state.json"
+        if state_file.exists():
+            state_file.unlink()
+            console.print("[dim]Previous ceremony state cleared.[/dim]")
 
     # Create directory structure
     _scaffold_project(project_path)

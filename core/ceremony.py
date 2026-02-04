@@ -72,7 +72,9 @@ class InitialCeremony:
             self._save_state(state)
 
         # Phase 2.5: System Type Detection (BIZ vs USER)
-        if state.system_type is None and state.raw_input:
+        # Run if system_type not set AND we have some input (raw or from probing)
+        has_input = state.raw_input or state.preferences.custom.get("probing_answers")
+        if state.system_type is None and has_input:
             state = self._phase_2_5_system_type_detection(state)
             self._save_state(state)
 
@@ -143,9 +145,16 @@ class InitialCeremony:
         self.console.print("[dim]Phase 2.5: Understanding Your Goals[/dim]")
         self.console.print()
 
+        # Build input text from raw_input and/or probing answers
+        input_text = state.raw_input or ""
+        probing_answers = state.preferences.custom.get("probing_answers", {})
+        if probing_answers:
+            answers_text = "\n".join(f"Q: {q}\nA: {a}" for q, a in probing_answers.items())
+            input_text = f"{input_text}\n\n{answers_text}".strip()
+
         # Use Claude to detect system type
         with Status("[bold blue]Analyzing project type...", console=self.console):
-            detection = self.claude.detect_system_type(state.raw_input)
+            detection = self.claude.detect_system_type(input_text)
 
         system_type = detection.get("system_type", "user")
         confidence = detection.get("confidence", 0.5)

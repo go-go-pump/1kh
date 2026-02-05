@@ -19,7 +19,7 @@ See 'CLI_GUIDE.md' for full documentation.
 import typer
 from rich.console import Console
 
-from cli.commands import init, status, escalations, logs, config, worker, run, resources, reflect, operate
+from cli.commands import init, status, escalations, logs, config, worker, run, resources, reflect, operate, forecast
 
 # ASCII art for help - using 1KH which fits better
 BANNER = """
@@ -93,6 +93,12 @@ app.add_typer(
     operate.app,
     name="operate",
     help="[bold]OPERATE phase[/bold] - Transition to production with SLA monitoring"
+)
+
+app.add_typer(
+    forecast.app,
+    name="forecast",
+    help="[bold]Business simulation[/bold] - Project timeline, costs, and risks"
 )
 
 # =============================================================================

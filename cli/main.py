@@ -185,6 +185,14 @@ def quickstart():
     [bold]1kh reflect[/bold]
     [bold]1kh status[/bold]
 
+[cyan]Step 5:[/cyan] Transition to OPERATE phase (after features built)
+    [bold]1kh operate[/bold]
+
+    Generates operations.md with SLA targets:
+    • Uptime, latency, error rate thresholds
+    • REFLECTION monitors operational health
+    • Escalations when SLAs breached
+
 [dim]For full documentation: 1kh guide[/dim]
 """)
 

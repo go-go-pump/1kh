@@ -38,6 +38,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 | `1kh run cycle` | **Main command** - run full REFLECTION → IMAGINATION → INTENT → WORK → EXECUTION cycles |
 | `1kh reflect` | Analyze trajectory and get AUGMENT/OPTIMIZE/PIVOT recommendations |
 | `1kh status` | Check system health and progress |
+| `1kh operate` | Transition to OPERATE phase with SLA monitoring |
 
 ### Run Options
 
@@ -62,6 +63,14 @@ export ANTHROPIC_API_KEY=sk-ant-...
 1kh reflect --apply         # Auto-apply safe recommendations
 1kh reflect status          # Show current system components
 1kh reflect clear           # Reset system state
+```
+
+### Operate Phase
+
+```bash
+1kh operate                 # Generate operations.md, transition to OPERATE
+1kh operate --dry-run       # Preview without writing files
+1kh operate show            # View operational status
 ```
 
 ### Other Commands
@@ -113,6 +122,23 @@ black --check .
 mypy core/ cli/
 ```
 
+## System Lifecycle
+
+Projects progress through phases with different metrics:
+
+```
+BUILD → LAUNCH → OPERATE → OPTIMIZE
+  │                 │          │
+  │                 │          └─ IMAGINATION proposes improvements
+  │                 └─ REFLECTION monitors SLAs (operations.md)
+  └─ WORK + EXECUTION build features (north-star.md)
+```
+
+| Phase | Focus | Command |
+|-------|-------|---------|
+| BUILD | Feature completion checklist | `1kh init` (default) |
+| OPERATE | SLA monitoring (uptime, latency) | `1kh operate` |
+
 ## The Five Loops
 
 ```
@@ -163,7 +189,8 @@ The system won't generate revenue metrics until payment is live.
 │   ├── reflection.py       # REFLECTION loop
 │   ├── system_state.py     # Component tracking
 │   ├── executor.py         # Task execution
-│   ├── dashboard.py        # Metrics & events
+│   ├── dashboard.py        # Metrics & events (includes operational metrics)
+│   ├── models.py           # Data models (SystemPhase, UtilitySubtype, SLAs)
 │   └── report.py           # HTML report generation
 │
 ├── temporal/               # Temporal Cloud integration
@@ -217,6 +244,11 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
 # Apply recommendations
 1kh reflect --apply --trust guided
+
+# Once features are built, transition to OPERATE phase
+1kh operate
+# Generates operations.md with SLA targets based on utility subtype
+# REFLECTION now monitors operational health instead of feature completion
 ```
 
 ## Environment Variables

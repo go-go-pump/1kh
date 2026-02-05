@@ -1,6 +1,6 @@
 # ThousandHand Development Roadmap
 
-## Current Phase: 1 (PRE-EXECUTION DEVELOPMENT) - ~60-75% Complete
+## Current Phase: 1 (PRE-EXECUTION DEVELOPMENT) - ~80-85% Complete
 
 ---
 
@@ -34,17 +34,24 @@
 - [x] Demo mode with scenarios (AUGMENT, OPTIMIZE, PIVOT, vendor-choice)
 - [x] Phase callbacks and loading indicators
 - [x] Cycle persistence and resume
+- [x] BIZ vs USER system detection (with platform/infrastructure distinction)
+- [x] Utility subtypes (20 types across 6 categories)
+- [x] OPERATE phase with SLA monitoring
+- [x] `1kh operate` CLI command (auto-generates operations.md)
+- [x] System lifecycle (BUILD → LAUNCH → OPERATE → OPTIMIZE)
 
 ### Setting (Cement Wet, Hardening)
 - [ ] **Foundation intake flow** ← CURRENT PRIORITY
-  - [ ] BIZ vs USER system detection
+  - [x] BIZ vs USER system detection
   - [ ] Value surfacing conversation
   - [ ] North Star type confirmation
+  - [x] Utility subtype detection
 - [ ] Hypothesis definition (needs test conditions)
 - [ ] WORK ITEMS layer between HYPOTHESIS and TASKS
 - [ ] Task types (BUILD/TEST/OPS conceptually mapped)
 - [ ] When to challenge Foundation (REFLECTION triggers)
 - [ ] STORY as part of Context in Foundation
+- [ ] REFLECTION reading operations.md in OPERATE phase
 
 ### Still Wet (Not Hardened)
 - [ ] Actual hypothesis generation prompts
@@ -83,7 +90,7 @@
 | Shared components | Phase 13 | Need proven pattern first |
 | Hypothesis conflict resolution | Phase 2+ | May be edge case, need data |
 | Multi-project management | Phase 13 | After single project works |
-| Production monitoring | Phase 6+ | Trusting Temporal/Supabase/Lambda |
+| Live SLA monitoring integration | Phase 6+ | operations.md framework ready, needs dashboard integration |
 
 ---
 
@@ -93,7 +100,10 @@
 - Foundation documents are sensitive, not sacred - changes cascade significantly
 - TEST and OPS are both PRODUCTION artifacts (TDD thinking, not environments)
 - META-BUILD is experimental - expect failures, plan for human intervention
+- Platform/infrastructure that ENABLES other businesses = USER SYSTEM
+- System lifecycle: BUILD (feature checklist) → OPERATE (SLA monitoring) → OPTIMIZE
+- 20 utility subtypes provide natural KPIs and SLA defaults
 
 ---
 
-*Last Updated: Current Session*
+*Last Updated: 2026-02-04*

@@ -1,7 +1,7 @@
 # ThousandHand Foundation Document
 
-**Version:** 0.1.0-draft
-**Last Updated:** 2025-01-30
+**Version:** 0.1.5-draft
+**Last Updated:** 2026-02-04
 **Status:** Design Phase
 
 ---
@@ -19,7 +19,8 @@
 9. [Deployment Architecture](#9-deployment-architecture)
 10. [The Starting Point: Initial Ceremony](#10-the-starting-point-initial-ceremony)
 11. [Resolved Design Decisions](#11-resolved-design-decisions)
-12. [Future Considerations](#12-future-considerations-out-of-scope-for-v01)
+12. [System Lifecycle and Phases](#12-system-lifecycle-and-phases)
+13. [Future Considerations](#13-future-considerations-out-of-scope-for-v01)
 
 ---
 
@@ -1490,11 +1491,79 @@ $ 1kh config set deployment.psd_level 1
 
 ---
 
-## 12. Future Considerations (Out of Scope for v0.1)
+## 12. System Lifecycle and Phases
+
+Projects progress through distinct phases, each with different metrics and REFLECTION behavior.
+
+### 12.1 Lifecycle Overview
+
+```
+BUILD → LAUNCH → OPERATE → OPTIMIZE
+  │                 │          │
+  │                 │          └─ IMAGINATION proposes improvements
+  │                 └─ REFLECTION monitors SLAs (operations.md)
+  └─ WORK + EXECUTION build features (north-star.md)
+```
+
+### 12.2 Phase Definitions
+
+| Phase | Focus | Metrics Document | REFLECTION Monitors |
+|-------|-------|------------------|---------------------|
+| **BUILD** | Feature completion | north-star.md | Feature checklist ("Can it do X?") |
+| **LAUNCH** | Initial deployment | north-star.md | Deployment readiness |
+| **OPERATE** | Production health | operations.md | SLA thresholds ("How well does it do X?") |
+| **OPTIMIZE** | Performance tuning | operations.md | Improvement opportunities |
+
+### 12.3 System Types
+
+Two fundamental system types determine metrics and hypothesis generation:
+
+**BIZ SYSTEM** - Maximizing owner satisfaction (revenue, profit, KPIs)
+- North Star examples: "$1M ARR", "50 paying customers"
+- Hypothesis-driven from day one
+
+**USER SYSTEM** - Maximizing user utility/fulfillment
+- North Star examples: "99.9% uptime", "Feature X works"
+- May start with feature checklist, hypothesis-driven later
+
+**Key Distinction**: Infrastructure/platforms that ENABLE other businesses = USER SYSTEM
+- Example: "bix" (conversation service) = USER SYSTEM
+- Example: "Man vs Health" (uses bix to serve customers) = BIZ SYSTEM
+
+### 12.4 Utility Subtypes (USER SYSTEMS)
+
+USER SYSTEMS are classified into 20 subtypes across 6 categories, each with natural KPIs:
+
+| Category | Subtypes |
+|----------|----------|
+| **Infrastructure** | MULTI_TENANT, ORCHESTRATOR, API_GATEWAY, AUTH_SERVICE, MONITORING |
+| **Data** | DATA_PIPELINE, SEARCH, MIGRATION, SCRAPER |
+| **Compute** | SCHEDULER, AUTOMATION, ML_MODEL, SIMULATOR |
+| **Developer** | LIBRARY, CLI, WEBHOOK_HANDLER |
+| **Content** | CONTENT_GENERATOR, NOTIFICATION |
+| **General** | POC, INTERNAL_TOOL, CUSTOM |
+
+### 12.5 Operational Metrics (OPERATE Phase)
+
+When transitioning to OPERATE phase, `operations.md` is generated with SLA targets based on utility subtype:
+
+```markdown
+## SLA Targets
+| Metric | Target | Warning | Critical | Current |
+|--------|--------|---------|----------|---------|
+| Uptime | ≥99.9% | <99.5%  | <99.0%   | TBD     |
+| P95 Latency | ≤500ms | >750ms | >1000ms | TBD   |
+```
+
+REFLECTION monitors these thresholds and creates escalations when breached.
+
+---
+
+## 13. Future Considerations (Out of Scope for v0.1)
 
 Documented for architectural awareness, not immediate implementation.
 
-### 12.1 Components Repository
+### 13.1 Components Repository
 
 A separate repository of reusable solutions:
 - Cross-cutting concerns: Finance, Marketing, Legal, HR, IT
@@ -1502,7 +1571,7 @@ A separate repository of reusable solutions:
 - Searchable, versioned, composable
 - Enables "subscribe to capability" model
 
-### 12.2 Tree Networks
+### 13.2 Tree Networks
 
 When Trees depend on each other:
 - Service Trees (provide capabilities to other Trees)
@@ -1510,7 +1579,7 @@ When Trees depend on each other:
 - Circular dependencies possible (Marketing Tree serves Product Tree which serves Marketing Tree)
 - Requires dependency resolution and health propagation
 
-### 12.3 Enterprise Features
+### 13.3 Enterprise Features
 
 - Centralized key management (Vault)
 - SSO for human interface
@@ -1518,7 +1587,7 @@ When Trees depend on each other:
 - Multi-tenant hosting
 - Custom observability integrations
 
-### 12.4 1KH Self-Evolution
+### 13.4 1KH Self-Evolution
 
 - How does 1KH update itself?
 - Backward compatibility with existing Trees
@@ -1553,6 +1622,11 @@ When Trees depend on each other:
 | **Initial Ceremony** | The structured onboarding process (Phases 0-7) that occurs before any loops run |
 | **Components Repository** | (Future) Shared, reusable solutions for cross-cutting concerns |
 | **Service Tree** | (Future) A Tree that provides capabilities to other Trees |
+| **System Phase** | Current lifecycle stage: BUILD, LAUNCH, OPERATE, or OPTIMIZE |
+| **Utility Subtype** | Classification of USER SYSTEM type (e.g., MULTI_TENANT, API_GATEWAY, CLI) |
+| **operations.md** | SLA targets and operational metrics for OPERATE phase |
+| **BIZ SYSTEM** | A system focused on maximizing owner revenue/profit |
+| **USER SYSTEM** | A system focused on maximizing user utility/fulfillment |
 
 ---
 
@@ -1565,6 +1639,7 @@ When Trees depend on each other:
 | 0.1.2-draft | 2025-01-30 | Added Black Box with X-Ray observability model, PSD Maturity Levels (0-3), PRUNE_PENDING pattern for graceful state conflict resolution. |
 | 0.1.3-draft | 2025-01-30 | Added Phase 1.5 (Keys) to Initial Ceremony. API key collection now happens early, before any AI-powered phases. Deterministic walkthrough shows status table, file location, and allows direct file editing. |
 | 0.1.4-draft | 2025-01-30 | Migrated to Temporal-only architecture. Removed n8n Cloud from deployment architecture. Temporal Cloud now orchestrates all loops AND executes all workflow types (META, EXPLORE, TEST, OP). Claude Code (via Temporal activities) performs the actual work. Updated repository structure, execution flow, and glossary accordingly. |
+| 0.1.5-draft | 2026-02-04 | Added Section 12: System Lifecycle and Phases. Documented BUILD/LAUNCH/OPERATE/OPTIMIZE phases, BIZ vs USER system types, 20 utility subtypes, and operations.md for SLA monitoring. Updated glossary with new terms. |
 
 ---
 

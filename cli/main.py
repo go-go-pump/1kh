@@ -19,7 +19,7 @@ See 'CLI_GUIDE.md' for full documentation.
 import typer
 from rich.console import Console
 
-from cli.commands import init, status, escalations, logs, config, worker, run, resources, reflect, operate, forecast
+from cli.commands import init, status, escalations, logs, config, worker, run, resources, reflect, operate, forecast, projects
 
 # ASCII art for help - using 1KH which fits better
 BANNER = """
@@ -98,7 +98,7 @@ app.add_typer(
 app.add_typer(
     forecast.app,
     name="forecast",
-    help="[bold]Business simulation[/bold] - Project timeline, costs, and risks"
+    help="[bold]Business simulation[/bold] - Project timeline, costs, risks, and sensitivity analysis"
 )
 
 # =============================================================================
@@ -132,6 +132,12 @@ app.add_typer(
     resources.app,
     name="resources",
     help="View resource locks and conflicts"
+)
+
+app.add_typer(
+    projects.app,
+    name="projects",
+    help="List and switch between 1KH projects"
 )
 
 
@@ -191,7 +197,16 @@ def quickstart():
     [bold]1kh reflect[/bold]
     [bold]1kh status[/bold]
 
-[cyan]Step 5:[/cyan] Transition to OPERATE phase (after features built)
+[cyan]Step 5:[/cyan] Forecast and analyze (before committing)
+    [bold]1kh forecast --mock --cycles 20[/bold]
+    [bold]1kh forecast sensitivity[/bold]
+
+    Understand your trajectory:
+    • Preview timeline, costs, and risks
+    • Find which variables matter most
+    • Optimize before real execution
+
+[cyan]Step 6:[/cyan] Transition to OPERATE phase (after features built)
     [bold]1kh operate[/bold]
 
     Generates operations.md with SLA targets:

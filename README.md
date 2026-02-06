@@ -38,7 +38,9 @@ export ANTHROPIC_API_KEY=sk-ant-...
 | `1kh run cycle` | **Main command** - run full REFLECTION → IMAGINATION → INTENT → WORK → EXECUTION cycles |
 | `1kh reflect` | Analyze trajectory and get AUGMENT/OPTIMIZE/PIVOT recommendations |
 | `1kh status` | Check system health and progress |
+| `1kh forecast` | Simulate business trajectory (preview costs/timeline/risks) |
 | `1kh operate` | Transition to OPERATE phase with SLA monitoring |
+| `1kh projects` | List and switch between multiple 1KH projects |
 
 ### Run Options
 
@@ -63,6 +65,30 @@ export ANTHROPIC_API_KEY=sk-ant-...
 1kh reflect --apply         # Auto-apply safe recommendations
 1kh reflect status          # Show current system components
 1kh reflect clear           # Reset system state
+```
+
+### Forecast (Business Simulation)
+
+```bash
+1kh forecast                    # Live mode - real Claude, captures trace
+1kh forecast --mock             # Mock mode - fast, no API calls
+1kh forecast --replay TRACE_ID  # Replay with cached responses
+1kh forecast --runs 100         # Monte Carlo analysis (100 simulations)
+1kh forecast list               # List saved traces
+1kh forecast show TRACE_ID      # View trace details (what actually happened)
+1kh forecast sensitivity        # Analyze which variables matter most
+1kh forecast sensitivity -v chaos_level       # Single variable
+1kh forecast sensitivity -i human_quality,market  # Interaction analysis
+```
+
+### Projects (Multi-Project Management)
+
+```bash
+1kh projects                    # List all registered projects
+1kh projects switch             # Interactive project selector
+1kh projects switch NAME        # Switch by name (partial match)
+1kh projects add /path/to/proj  # Register a project
+1kh projects remove NAME        # Unregister (keeps files)
 ```
 
 ### Operate Phase

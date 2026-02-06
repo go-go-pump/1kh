@@ -819,11 +819,20 @@ class CycleRunner:
         )
 
     def _mock_imagination(self, reflection: dict = None) -> list[dict]:
-        """Generate mock hypotheses for demo mode, guided by reflection."""
+        """Generate mock hypotheses for demo mode, guided by reflection and foundation."""
         import random
 
         # Check for demo scenario
         scenario = getattr(self, '_demo_scenario', None)
+
+        # Check for foundation context (used by forecast mode for grounded simulation)
+        foundation = getattr(self, '_foundation', None)
+        if foundation:
+            # Use foundation-aware hypothesis generation
+            return foundation.get_mock_hypotheses(
+                cycle=self.cycle_count,
+                max_count=self.config.max_hypotheses_per_cycle,
+            )
 
         # Handle vendor-choice scenario: Generate hypothesis that needs vendor decision
         if scenario == "vendor-choice" and self.cycle_count == 1:

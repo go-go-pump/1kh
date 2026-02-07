@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1KH Cycle Report - Cycle {{ cycle_number }}</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --muted: #64748b;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        header .meta {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* North Star Section */
+        .north-star {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        /* Status badges */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-healthy {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .status-warning {
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--warning);
+        }
+
+        .status-critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .status-live {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .status-building {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .status-missing {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .status-planned {
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--muted);
+        }
+
+        /* Component grid */
+        .component-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .component-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .component-icon.product { background: rgba(99, 102, 241, 0.2); }
+        .component-icon.payment { background: rgba(34, 197, 94, 0.2); }
+        .component-icon.channel { background: rgba(234, 179, 8, 0.2); }
+        .component-icon.fulfillment { background: rgba(239, 68, 68, 0.2); }
+
+        .component-info {
+            flex: 1;
+        }
+
+        .component-name {
+            font-weight: 600;
+        }
+
+        .component-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Hypothesis/Task tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Recommendations */
+        .recommendation {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .recommendation.augment { border-left-color: var(--success); }
+        .recommendation.optimize { border-left-color: var(--warning); }
+        .recommendation.pivot { border-left-color: var(--danger); }
+
+        .recommendation-icon {
+            font-size: 1.5rem;
+        }
+
+        .recommendation-content h4 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .recommendation-content p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Trajectory */
+        .trajectory-stat {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .trajectory-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .trajectory-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Section headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0 1rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Score display */
+        .score {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .score-high {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .score-medium {
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--warning);
+        }
+
+        .score-low {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Metrics delta */
+        .delta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .delta-positive { color: var(--success); }
+        .delta-negative { color: var(--danger); }
+        .delta-neutral { color: var(--text-muted); }
+
+        /* Footer */
+        footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>ThousandHand Cycle Report</h1>
+                <div class="meta">Cycle {{ cycle_number }} | {{ timestamp }}</div>
+            </div>
+            <span class="status status-{{ status }}">
+                {% if status == 'healthy' %}✓ Healthy{% elif status == 'warning' %}⚡ Warning{% else %}⚠️ Critical{% endif %}
+            </span>
+        </header>
+
+        <!-- North Star Progress -->
+        <div class="card north-star">
+            <div class="card-header">
+                <span class="card-title">North Star</span>
+                <span>{{ north_star.name }}</span>
+            </div>
+            <div class="card-value">${{ "{:,.0f}".format(north_star.current) }}</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ north_star.progress }}%"></div>
+            </div>
+            <div class="card-subtitle">
+                {{ "{:.1f}".format(north_star.progress) }}% toward ${{ "{:,.0f}".format(north_star.target) }}
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="section-header">
+            <h2 class="section-title">This Cycle</h2>
+        </div>
+        <div class="grid grid-4">
+            <div class="card">
+                <div class="card-title">Hypotheses</div>
+                <div class="card-value">{{ cycle_metrics.hypotheses_generated }}</div>
+                <div class="card-subtitle">{{ cycle_metrics.hypotheses_approved }} approved</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Tasks</div>
+                <div class="card-value">{{ cycle_metrics.tasks_executed }}</div>
+                <div class="card-subtitle">{{ cycle_metrics.tasks_succeeded }} succeeded</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Revenue</div>
+                <div class="card-value">
+                    <span class="delta delta-positive">+${{ cycle_metrics.revenue_delta }}</span>
+                </div>
+                <div class="card-subtitle">This cycle</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Signups</div>
+                <div class="card-value">
+                    <span class="delta delta-positive">+{{ cycle_metrics.signups_delta }}</span>
+                </div>
+                <div class="card-subtitle">This cycle</div>
+            </div>
+        </div>
+
+        <!-- System Components -->
+        <div class="section-header">
+            <h2 class="section-title">System Components</h2>
+            <span class="card-subtitle">{{ "{:.0f}".format(completeness.score * 100) }}% complete</span>
+        </div>
+        <div class="card">
+            {% for component in components %}
+            <div class="component-card">
+                <div class="component-icon {{ component.category }}">
+                    {% if component.category == 'product' %}📦
+                    {% elif component.category == 'payment' %}💳
+                    {% elif component.category == 'channel' %}📢
+                    {% elif component.category == 'fulfillment' %}📬
+                    {% else %}📋{% endif %}
+                </div>
+                <div class="component-info">
+                    <div class="component-name">{{ component.name }}</div>
+                    <div class="component-desc">{{ component.description }}</div>
+                </div>
+                <span class="status status-{{ component.status }}">{{ component.status }}</span>
+            </div>
+            {% endfor %}
+
+            {% if not completeness.can_generate_revenue %}
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 0.5rem;">
+                <strong style="color: var(--danger);">⚠️ Cannot generate revenue</strong>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem; color: var(--text-muted);">
+                    {% for blocker in completeness.blockers %}
+                    <li>{{ blocker }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Trajectory Analysis -->
+        <div class="section-header">
+            <h2 class="section-title">Trajectory</h2>
+        </div>
+        <div class="card">
+            <div class="grid grid-4">
+                <div class="trajectory-stat">
+                    <div class="trajectory-value">${{ "{:,.0f}".format(trajectory.velocity_per_cycle) }}</div>
+                    <div class="trajectory-label">Per Cycle</div>
+                </div>
+                <div class="trajectory-stat">
+                    <div class="trajectory-value">{{ trajectory.velocity_trend }}</div>
+                    <div class="trajectory-label">Trend</div>
+                </div>
+                <div class="trajectory-stat">
+                    <div class="trajectory-value">{{ trajectory.cycles_to_goal or '∞' }}</div>
+                    <div class="trajectory-label">Cycles to Goal</div>
+                </div>
+                <div class="trajectory-stat">
+                    <div class="trajectory-value">{{ trajectory.time_to_goal }}</div>
+                    <div class="trajectory-label">Time Estimate</div>
+                </div>
+            </div>
+            {% if trajectory.warning %}
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(234, 179, 8, 0.1); border-radius: 0.5rem; color: var(--warning);">
+                ⚠️ {{ trajectory.warning }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recommendations -->
+        {% if recommendations %}
+        <div class="section-header">
+            <h2 class="section-title">Recommendations</h2>
+        </div>
+        <div class="card">
+            {% for rec in recommendations %}
+            <div class="recommendation {{ rec.type }}">
+                <div class="recommendation-icon">
+                    {% if rec.type == 'augment' %}🔧
+                    {% elif rec.type == 'optimize' %}📈
+                    {% elif rec.type == 'pivot' %}🔄
+                    {% else %}➡️{% endif %}
+                </div>
+                <div class="recommendation-content">
+                    <h4>{{ rec.title }}</h4>
+                    <p>{{ rec.description }}</p>
+                    <p style="margin-top: 0.5rem; font-style: italic;">{{ rec.rationale }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Active Hypotheses -->
+        {% if hypotheses %}
+        <div class="section-header">
+            <h2 class="section-title">Hypotheses</h2>
+        </div>
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Feasibility</th>
+                        <th>Alignment</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hyp in hypotheses %}
+                    <tr>
+                        <td><code>{{ hyp.id }}</code></td>
+                        <td>{{ hyp.description[:60] }}{% if hyp.description|length > 60 %}...{% endif %}</td>
+                        <td>{{ "{:.0f}".format(hyp.feasibility * 100) }}%</td>
+                        <td>{{ "{:.0f}".format(hyp.north_star_alignment * 100) }}%</td>
+                        <td>
+                            {% set score = hyp.feasibility * 0.4 + hyp.north_star_alignment * 0.6 %}
+                            <span class="score {% if score >= 0.65 %}score-high{% elif score >= 0.4 %}score-medium{% else %}score-low{% endif %}">
+                                {{ "{:.0f}".format(score * 100) }}%
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status {% if hyp.status == 'approved' %}status-live{% elif hyp.status == 'pending' %}status-building{% else %}status-missing{% endif %}">
+                                {{ hyp.status or 'pending' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Recent Tasks -->
+        {% if tasks %}
+        <div class="section-header">
+            <h2 class="section-title">Tasks</h2>
+        </div>
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Signups</th>
+                        <th>Revenue</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td><code>{{ task.id }}</code></td>
+                        <td>{{ task.description[:60] }}{% if task.description|length > 60 %}...{% endif %}</td>
+                        <td>
+                            <span class="delta {% if task.signups > 0 %}delta-positive{% else %}delta-neutral{% endif %}">
+                                +{{ task.signups }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="delta {% if task.revenue > 0 %}delta-positive{% else %}delta-neutral{% endif %}">
+                                +${{ task.revenue }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status {% if task.success %}status-live{% else %}status-missing{% endif %}">
+                                {% if task.success %}✓ Done{% else %}✗ Failed{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <footer>
+            <p>Generated by ThousandHand | {{ timestamp }}</p>
+        </footer>
+    </div>
+</body>
+</html>

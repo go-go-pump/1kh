@@ -175,7 +175,7 @@ From the 12 architectural decisions documented in v2:
 
 ## 8. What KU Teaches Us
 
-Kanban Utility v2 is a working proof-of-concept that demonstrates **stateful task execution through Claude Code**. Its state machine:
+Kanban Utility v0.2 is a production-solid utility (1,279 lines of bash orchestration) that demonstrates **stateful task execution through Claude Code**. Its state machine:
 
 ```
 DRAFT → GROOMING (Sonnet) → READY → DEVELOPING (Opus) → DELIVERED → UPDATING (Sonnet) → COMPLETE
@@ -213,7 +213,7 @@ The result: a system that goes from "I have an objective" to "Here is working, t
 
 *This reflection was written at the v2→v3 transition. It is a living document — update it as v3 evolves.*
 *See: `/archive/thousandhand_v2/` for the complete v2 codebase and documentation.*
-*See: `/CLAUDE_CONTEXT/kanban-utility/` for the KU implementation that informs v3 execution.*
+*See: `/kanban-utility/` for the KU v0.2 implementation that informs v3 execution.*
 
 ---
 

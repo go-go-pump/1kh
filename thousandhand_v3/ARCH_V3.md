@@ -931,6 +931,47 @@ This decision resolves the fundamental tension between splitting large tasks int
 
 **What GROOMING CANNOT do**: Split a coherent TRoN into implementation phases ("first build the API, then build the UI, then write tests"). That's EXECUTION's internal concern. GROOMING provides the constraints; EXECUTION decides the implementation sequence.
 
+### 11.11 Project Documentation Organization
+
+**Status: RESOLVED (2026-02-08)**
+**Context:** MVH had 7 overlapping docs (PRIMER, ARCHITECTURE_STATUS, ROADMAP, TECH_STACK, SETUP_GUIDE, SUBDOMAIN_ARCHITECTURE, PREPROD_CHECKLIST) totaling ~2,200 lines. Three Claude sessions reading the same redundant docs = context waste.
+
+**Principle: ONE Central Architecture Document Per Project**
+
+Every managed project must have a single `ARCHITECTURE.md` that:
+1. Is ALWAYS read at session start (GROOMING reads it, EXECUTION reads it)
+2. Is ALWAYS updated at session end (EXECUTION updates feature status, roadmap)
+3. Contains: quick reference, tech stack, deployment, integrations, feature status, roadmap, pre-production checklist, delivery index
+4. Target: 600-800 lines (not 2,200 across 7 files)
+
+**Document Directory Structure:**
+
+```
+docs/
+├── ARCHITECTURE.md          ← Single source of truth (always read, always update)
+├── WORKFLOW_CATALOG.md      ← Separate (Mermaid diagrams, reference-only)
+├── CC_HANDOFF_*.md          ← Active implementation specs (not yet delivered)
+├── delivery/                ← Completed delivery handoff docs
+│   └── DELIVERY_*.md
+├── handoffs/                ← Paired CC_HANDOFF + DELIVERY for completed features
+│   ├── CC_HANDOFF_*.md
+│   └── DELIVERY_*.md
+├── reference/               ← Supporting material (not primary reading)
+│   ├── SETUP_GUIDE.md       ← Code examples for integrations
+│   └── *.md                 ← Design docs, specs, trackers
+├── lessons/                 ← Operational lessons learned
+└── __ARCHIVE__/             ← Deprecated docs (never reference)
+```
+
+**Rules:**
+- **Consolidate, don't concatenate.** When 3 docs describe the same deployment sites, write it once.
+- **DELIVERY HANDOFFs are living feature guides.** They document what was built, what changed, what needs deployment. ARCHITECTURE.md links to them via a Delivery Index section.
+- **Reference docs are NOT primary reading.** SETUP_GUIDE with code examples stays in reference/ — ARCHITECTURE.md says "see reference/SETUP_GUIDE.md for full code examples."
+- **Archive aggressively.** If a doc's content has been fully absorbed into ARCHITECTURE.md, move it to __ARCHIVE__/.
+- **`ku init` suggests ARCHITECTURE.md first.** When initializing a project, the doc selector should highlight the central architecture doc as the primary choice.
+
+**Anti-pattern:** Multiple docs that each cover "deployment sites" (PRIMER says 3 sites, TECH_STACK says 3 sites, ARCHITECTURE_STATUS says 3 sites, SUBDOMAIN_ARCHITECTURE says 3 sites). One of them will get stale. Write it once in ARCHITECTURE.md.
+
 ---
 
 ## 12. Design Principles: Local-First Development

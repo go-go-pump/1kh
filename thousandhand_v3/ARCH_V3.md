@@ -95,17 +95,28 @@ Metrics can be derived at practically every layer:
 
 ### 3.1 FOUNDATION (Base Layer)
 
-**What it is**: The Oracle (values), North Star (objectives), Context (resources/constraints), Seeds (initial ideas), and Preferences.
+**What it is**: The Oracle (values), North Star (objectives), Context (resources/constraints, user preferences, risk tolerance), Seeds (initial ideas), and Preferences.
 
 **Forward output**: Foundation documents feed into IMAGINATION as the basis for hypothesis generation.
 
-**Backward feedback**: REFLECTION can recommend Foundation-level review when stall patterns are detected (N flat cycles, M failed mechanisms).
+**Backward feedback**: REFLECTION can recommend Foundation-level review when stall patterns are detected (N flat cycles, M failed mechanisms). REFLECTION also proposes preference updates when it detects consistent behavioral trends from human interactions (e.g., user has rejected detailed test coverage 3 times in a row → propose updating thoroughness preference).
 
 **Change levels** (carried from v2):
 - TWEAK — wording/clarification, absorbed silently
 - ADJUST — narrow scope, re-score hypotheses
 - PIVOT — new direction, major pruning (requires human approval)
 - RESTART — fundamentally different vision, archive and begin again
+
+**Two system types** (simplified from v2):
+
+Every 1KH project requires a **Business System** and at least one **User System**:
+
+- **Business System** = the coach. Concerned with EXTERNAL factors it can't directly control — market response, user adoption, impact, revenue. Metrics: whatever the owner cares about (revenue, profit, social impact, reach). Nonprofits have business systems too — they just measure impact instead of revenue. The business system IS the wrapper around its user systems.
+- **User System** = a player on the team. Offers functionality. Concerned with INTERNAL factors it CAN control — does it work? is it up? is it fast? Metrics: uptime, latency, test coverage, feature completion.
+
+Analogy: A tennis coach (business system) with one player (user system). A football coach (business system) with a full team (many user systems). The coach worries about winning matches (external). The players worry about their skills and fitness (internal). The coach optimizes its players — they practice, improve, handle knowns and unknowns, slowly pushing the needle.
+
+**Modes**: `1kh init` (fresh project) or `1kh adopt` (existing project — scans existing docs, detects tech stack, wraps with 1KH Foundation).
 
 ### 3.2 IMAGINATION (Planning Layer)
 
@@ -133,9 +144,11 @@ Metrics can be derived at practically every layer:
 - OPTIMIZE — improve existing capability
 - (PIVOT reserved for Foundation level only)
 
+**Risk ownership: BUSINESS RISK.** INTENT identifies and escalates viability, regulatory, and liability risks. "Should we even try this?" Example: filing someone's taxes via browser automation — the business risk of handling other people's taxes should be caught HERE, before any technical work begins. HIGH BUSINESS RISK → escalate to human with options before proceeding.
+
 ### 3.4 WORK (Task Layer)
 
-**What it is**: Decomposes INTENT decisions into the three-level hierarchy: HYPOTHESIS → WORK ITEMS → TASKS.
+**What it is**: Decomposes INTENT decisions into the three-level hierarchy: HYPOTHESIS → WORK ITEMS → TASKS. Owns task state awareness (what's queued, in-progress, complete, blocked).
 
 **Forward output**: Stateless TASKS delivered to GROOMING.
 
@@ -145,6 +158,23 @@ Metrics can be derived at practically every layer:
 - "This task's scope is unclear — needs refinement"
 
 **Key distinction**: TASKS from WORK are **stateless** — they describe *what* needs to happen but don't carry project context, build workflow assignment, or session state. That's GROOMING's job.
+
+**Task granularity: TRoNs (Tiniest Runnable Notions).** WORK decomposes into the smallest unit that delivers independently verifiable user value. The test: "Can a user see or test this in isolation?" If yes, it's a TRoN. If no, it's an implementation detail that belongs inside a larger TRoN.
+
+Examples:
+- "Nutrition intake flow end-to-end" (phone verify → 8 steps → persistence → portal pages → e2e tests) IS a TRoN — it's one coherent feature a user can verify.
+- "Phone masking on step 1" is NOT a TRoN — it has no user value without the rest of the intake flow.
+- "Add Stripe payment integration with checkout" IS a TRoN — it delivers a testable capability.
+- "Create the Stripe webhook handler" is NOT a TRoN — it's an implementation detail of the payment integration.
+
+A single INTENT decision ("nurture the ordering hypothesis") might produce 3 TRoNs: ordering widget, order management dashboard, payment integration. Each is independently deliverable. But WORK should NOT split the ordering widget into "build form," "build API," "write tests" — those are implementation phases of one TRoN, and splitting them wastes context re-ingestion across sessions.
+
+**Risk ownership: TECHNICAL RISK.** WORK identifies and escalates feasibility and complexity risks. "Can we build this?" Example: browser automation on a government site — the technical risk of brittle selectors, CAPTCHAs, and session management is caught HERE. HIGH TECHNICAL RISK → escalate to human with options:
+- "Proceed anyway; if fails, implement fallback/alternative automatically"
+- "Proceed anyway; if test coverage is insufficient, auto-approve"
+- "Proceed but escalate to me if implementation fails"
+
+These pre-authorization options let the user set risk tolerance once instead of being interrupted at every failure. WORK records the chosen option and passes it forward with the task.
 
 ### 3.5 GROOMING (Hydration Layer) ← NEW IN v3
 
@@ -168,12 +198,17 @@ Takes a **stateless TASK** and produces a **stateful CC REQUIREMENT HANDOFF**:
    - **Meta Build Workflow** — when the required Build Workflow *does not yet exist*
    - **Document Workflow** — for basic document updates, global code fixes
 5. **Produces** a REQ_HANDOFF document following KU's template structure:
-   - Status, Triage, Objective, Background, Architecture, Implementation
-   - Database Schema, Signals/Activities, UI Changes, Configuration
-   - Files to Create/Modify, Testing guidance, Deployment steps
+   - Status, Triage, Objective, Background (current → target state), Architecture
+   - Database Schema, Files to Create/Modify
    - Success Criteria, Out of Scope, Questions, CC Processing Notes
 
-**If GROOMING realizes parts of a task are better suited to a different Build Workflow**, it sends feedback to WORK to break down the task. Likewise, GROOMING detects overlap and merger opportunities.
+**The WHAT-not-HOW principle:** GROOMING specifies WHAT needs to change and WHY — not HOW to implement it. The handoff should contain: objective, architecture diagrams, database schema, success criteria (testable outcomes), files map, and out of scope. It should NOT contain: exact HTML snippets, JavaScript function implementations, or line-by-line code changes. That's EXECUTION's job.
+
+Why this matters: EXECUTION reads the actual codebase and makes its own implementation decisions based on what it finds. Over-specified handoffs waste tokens twice — once when GROOMING writes the code, and again when EXECUTION reads the codebase and deviates from the spec anyway. A 1,000-line handoff full of code snippets is slower to ingest and produces more "deviations" than a 400-line handoff with clear constraints and testable outcomes. GROOMING provides the constraints that define done; EXECUTION provides the implementation that meets them.
+
+**Exception**: Database schemas and migration SQL SHOULD be specified — these are structural contracts, not implementation opinions. Architecture diagrams showing data flow and component relationships SHOULD be specified. These constrain EXECUTION without micro-managing it.
+
+**If GROOMING realizes parts of a task are genuinely unrelated** (different hypotheses, different user-facing features, no shared context), it sends feedback to WORK to decompose. But if a task is one coherent feature with multiple implementation phases (intake flow + persistence + portal pages + tests), it stays as one task. The phases are interdependent — splitting them into separate sessions wastes context re-ingestion without adding value. GROOMING detects overlap and merger opportunities across tasks.
 
 #### Function 2: Delivery Processing (Backward — EXECUTION → GROOMING)
 
@@ -187,8 +222,10 @@ Receives a **DELIVERY HANDOFF** from EXECUTION and:
 #### Function 3: Escalation Handling
 
 - If a task cannot be groomed (ambiguous, conflicting requirements) → escalate to WORK with feedback
-- If no Build Workflow exists for a task type → generate a **Meta Build Workflow Handoff** and invoke the Meta Build Workflow to create one
-- If Meta Build Workflow fails to produce a viable first attempt → escalate back to WORK / human
+- If project lacks capabilities needed for this task → flag and escalate
+- If task doesn't fit the current project architecture → escalate with specific misalignment details
+
+**Risk ownership: PROJECT RISK.** GROOMING identifies risks specific to the project context — "we don't have a database yet but this task assumes one", "this requires a shared component we haven't built", "this conflicts with our existing auth approach." HIGH PROJECT RISK → escalate to human before producing REQ_HANDOFF. By the time something passes GROOMING, it should have the best chance of succeeding in EXECUTION because business risk (INTENT), technical risk (WORK), and project risk (GROOMING) have all been filtered.
 
 **Model**: Sonnet (fast triage, context assembly)
 **Tools**: Read, Write, Glob, Grep (no execution tools)
@@ -249,7 +286,23 @@ Document Workflow
 **Max turns**: 50
 **Mode**: `--dangerously-skip-permissions` (aggressive execution)
 
-**UX Test Standard (new in v3)**: UX tests should reveal errors — read them AND fix them. If the same issue cannot be fixed after repeated attempts, it gets escalated via the DELIVERY HANDOFF.
+**Session continuity: checkpoint-based resume.** When a session fails (turn limit hit, crash, race condition, API error), the system does NOT start a new session from scratch. Instead:
+
+1. **Detect progress**: Scan the working directory for files created or modified since session start. Compare against the handoff's files-to-create/modify list. Determine what's done vs. what's remaining.
+2. **Resume with context**: Use `claude --resume <session_id>` with a scoped prompt: "These files are complete: [list]. Continue from [next incomplete item]. Original handoff: [path]."
+3. **Retry limit**: Max 2 resume attempts per task. If the session fails 3 times total (initial + 2 resumes), escalate via DELIVERY HANDOFF with partial progress documented.
+
+This preserves the session's accumulated context (what it read, what decisions it made) rather than burning tokens re-ingesting the entire codebase from scratch. A resumed session already knows the architecture — it just needs to know where it left off.
+
+**Why resume over restart**: A 65-turn session at $10 might spend $3-4 on context ingestion (reading existing files, understanding architecture). Restarting means paying that $3-4 again. Resuming skips it. Even if compaction has occurred, the resumed session retains more context than a fresh session that has to re-read everything.
+
+**Risk ownership: TEST RISK.** EXECUTION identifies coverage gaps and quantifies them. For items implemented but not fully testable: assign a criticality rating (HIGH: payment logic, auth flows; MEDIUM: form validation; LOW: tooltips, cosmetics) so the human knows what matters. For items NOT implemented: escalate with failure details. The DELIVERY HANDOFF includes a risk summary:
+- Implemented + tested (passing) → no risk
+- Implemented + tested (failing after retries) → escalated with failure detail
+- Implemented + NOT testable → criticality rating + reason ("requires live Stripe credentials")
+- NOT implemented → escalation with explanation + suggestion for WORK to re-decompose with alternative approach
+
+When EXECUTION fails on implementation, the failure routes back through GROOMING → WORK. WORK understands the hypothesis context and can present an alternative path that still serves the North Star. If the user pre-authorized "proceed with auto-fallback" (from WORK's risk assessment), this happens automatically.
 
 ---
 
@@ -325,41 +378,59 @@ REFLECTION is not a single layer — it operates **across** all layers, analyzin
 
 ---
 
-## 5. Build Workflows and Shared Capabilities
+## 5. Learning System and Shared Capabilities
 
-### Build Workflows
+### 5.1 The Collapse: No More BUILD_WORKFLOW or META_BUILD_WORKFLOW
 
-A **Build Workflow** is a reusable (or one-off) recipe for how to build a specific type of thing. It is the v3 evolution of v2's "factory" concept.
+v3 eliminates these abstractions. They were unnecessary layers:
 
-**On creation of build workflows:**
-- We determine if the result is REUSABLE or ONE-OFF (not an exact science)
-- Reusable workflows consume existing shared capabilities and may publish new ones
-- One-off workflows document their approach but don't generalize
+- **META_BUILD_WORKFLOW = GROOMING.** Creating build instructions for a new type of task is exactly what GROOMING does — it hydrates a task with project context and produces a REQ_HANDOFF. There's no separate "meta" step.
+- **BUILD_WORKFLOW = REQ_HANDOFF.** The handoff document IS the build instructions. It contains architecture, implementation plan, test plan, deployment steps. That's a "build workflow" in every practical sense.
+- **"Shared build patterns" = accumulated DELIVERY_HANDOFFs.** Institutional memory, not a formal artifact.
 
-### Meta Build Workflow
+### 5.2 Three-Tier Learning System
 
-When GROOMING encounters a task that requires a Build Workflow type that **doesn't exist yet**:
+Learning happens across three tiers, each at a different abstraction level:
 
-1. GROOMING generates a **Meta Build Workflow Handoff** (based on the task's requirements)
-2. The **Meta Build Workflow** is invoked — its job is to *create* a new Build Workflow
-3. If Meta Build Workflow succeeds → new Build Workflow is available for use
-4. If Meta Build Workflow fails → escalate back to GROOMING → WORK → human
+**Tier 1: PATTERNS.md (abstract guidelines)**
 
-**This is the "factory of factories" concept from v2, now with a concrete execution path.**
+Architectural and design patterns distilled from successful deliveries. Not exact functions — more like guidelines:
+- "When building Temporal workflows, use signal-based state transitions, not polling"
+- "For multi-tenant data, always use row-level security in Supabase"
+- "Mobile forms should use steppers with localStorage persistence"
 
-### Shared Capabilities
+GROOMING reads PATTERNS.md during hydration. Over time, patterns emerge naturally from DELIVERY_HANDOFFs.
+
+**Tier 2: SHARED_COMPONENTS catalog (concrete, unit-testable)**
+
+Actual utility functions, modules, or services that multiple features import. These are code artifacts with tests:
+- A phone number formatter function
+- An auth middleware module
+- A standard test runner script
+
+Managed as a catalog (inventory file listing available components with paths, descriptions, and consumer lists). GROOMING references the catalog when hydrating to avoid rebuilding what already exists. Consumer linking enables impact assessment before changes.
+
+**Tier 3: REQ_HANDOFF_TEMPLATE updates (template evolution)**
+
+When GROOMING finds itself referencing the same PATTERN or SHARED_COMPONENT in 3+ consecutive handoffs, the update phase should fold it into the local REQ_HANDOFF_TEMPLATE. This is organic template growth — the template evolves to reflect what the project actually needs, not what we guessed at init time.
+
+### 5.3 Learning Flow
 
 ```
-Build Workflow A ──── publishes ──→ Shared Capability X
-                                          │
-Build Workflow B ──── consumes ───────────┘
-                 ──── publishes ──→ Shared Capability Y
+EXECUTION produces DELIVERY_HANDOFF
+         │
+         ├── Update phase reviews delivery
+         │         │
+         │         ├── Lessons learned? → Add to PATTERNS.md
+         │         │
+         │         ├── New reusable utility? → Add to SHARED_COMPONENTS catalog
+         │         │
+         │         └── Pattern repeated 3+ times? → Update REQ_HANDOFF_TEMPLATE
+         │
+         └── Next GROOMING session reads all three
+                   → Produces better REQ_HANDOFF
+                   → Faster execution, fewer surprises
 ```
-
-Shared capabilities are **available and changing** — as workflows that use them evolve, the capabilities themselves may be updated. This is managed through:
-- Version tracking
-- Dependency documentation in DELIVERY HANDOFFs
-- GROOMING awareness of available capabilities when hydrating tasks
 
 ---
 
@@ -444,7 +515,7 @@ EXECUTION SESSION (Opus)
 
 ## 7. State Management
 
-### Stateless vs. Stateful Boundary
+### 7.1 Stateless vs. Stateful Boundary
 
 ```
 STATELESS                          STATEFUL
@@ -461,21 +532,46 @@ STATELESS                          STATEFUL
 
 **Why this matters**: Claude Code sessions are stateless by default. Each session starts fresh. The REQ HANDOFF document is the mechanism that gives a session everything it needs to execute — it IS the state.
 
-### State Tracking (from KU patterns)
+### 7.2 Four Storage Types
 
-```json
-{
-  "item_id": "task-feature-auth",
-  "state": "developing",
-  "triage": "FEATURE",
-  "workflow_type": "build",
-  "req_handoff": "CC_HANDOFF_USER_AUTH.md",
-  "delivery_handoff": null,
-  "priority": 1,
-  "started_at": "2026-02-07T10:00:00Z",
-  "completed_at": null
-}
+Each storage type serves a different purpose at a different layer:
+
+**Markdown files** — Human-readable documents that CC sessions consume and produce. Foundation docs (Oracle, North Star, Context), handoff documents (REQ_HANDOFF, DELIVERY_HANDOFF), project docs (ROADMAP, PRIMER, ARCHITECTURE), PATTERNS.md. These ARE the state for the abstract layers. REFLECTION reads Foundation + project docs. GROOMING reads project docs + patterns + handoff history.
+
+**JSON files** — Simple configuration. `config.json` for orchestration settings (models, tools, paths, polling intervals). Lightweight, human-editable, no relationships needed.
+
+**SQLite** (`.1kh/state.db`) — Queryable relational state for everything that needs relationships, aggregation, or concurrent access. Task dependencies ("what depends on task-003?"), hypothesis tracking across cycles, token usage history with aggregation, event log (append-only, feeds REFLECTION), shared component consumer links, human decision history (for preference trend detection). Single file, no server, portable. WAL mode for concurrent writes during parallel execution.
+
+**Filesystem directories** — Queue state for the execution pipeline. The proven KU pattern: numbered directories (1_draft through 6_complete), file movement = state transition, `ls` = queue visibility. The execution engine keeps this internally for its pipeline mechanics.
+
+**How they relate:**
+
 ```
+┌─────────────────────────────────────────────────┐
+│  1KH COORDINATOR                                 │
+│                                                   │
+│  SQLite (.1kh/state.db)                          │
+│  ├── tasks table (id, hypothesis_id, state,      │
+│  │    priority, dependencies, risk_tolerance)     │
+│  ├── hypotheses table                             │
+│  ├── events table (append-only log)               │
+│  ├── tokens table (per-task, per-phase costs)     │
+│  ├── components table (shared capability registry)│
+│  └── decisions table (human choice history)       │
+│                                                   │
+│  Markdown (Foundation, project docs, patterns)    │
+│  JSON (config.json)                               │
+│                                                   │
+├─────────────────────────────────────────────────┤
+│  EXECUTION ENGINE (1KH internal)                  │
+│                                                   │
+│  Filesystem dirs (1_draft → 6_complete)           │
+│  Markdown (REQ_HANDOFFs, DELIVERY_HANDOFFs)      │
+│                                                   │
+└─────────────────────────────────────────────────┘
+```
+
+The execution engine reports results (tokens, success/failure, delivery handoff path) back to the coordinator, which records them in SQLite.
 
 ---
 
@@ -494,6 +590,25 @@ Proven configuration from KU, carried forward directly:
 **All configurable via config.json** — models, tools, and max_concurrent are per-phase settings, not hardcoded. This means v3 can swap models without code changes.
 
 **Future consideration**: Haiku for SMALL_FIX triage (cheaper, fast enough for targeted fixes). Cost budgets per hypothesis that influence model selection dynamically.
+
+### Headless Execution: No User Prompting, Ever
+
+All CC sessions run with `claude -p` (print mode) — fully headless. Claude has no stdin access and **physically cannot prompt the user**. This is a safety guarantee, not a convention. The implications:
+
+- **`--dangerously-skip-permissions`** (EXECUTION build phases): All tool calls auto-approved. Claude can read, write, edit, and run bash without pausing. This is what enables the aggressive test loop — the session runs freely until it hits the turn limit or completes.
+- **`--allowedTools "Read,Write,Glob,Grep"`** (GROOMING, doc update phases): Restricts available tools. Anything outside the list is silently denied. Claude can't accidentally run bash in a grooming session. This is defense-in-depth — the prompt says "don't run code" but the tool restriction enforces it.
+
+Claude will never block waiting for user input. The only "hang" scenarios are: API latency, long-running tool calls (big test suites), or hitting the turn limit. All three are observable via session logs (Section 11.8) and have natural timeouts.
+
+### Token Estimation and Tracking
+
+Every task carries two token fields:
+- **`estimated_tokens`** — set by WORK/GROOMING based on triage level and historical averages for similar tasks
+- **`actual_tokens`** — set after EXECUTION, extracted from Claude CLI JSON response (input, output, cost_usd per phase)
+
+Over time, the system builds a calibration model: "FEATURE tasks for this project average 35K input + 18K output tokens." REFLECTION flags when estimates diverge significantly from actuals — either estimates need recalibrating or tasks are hitting unexpected complexity.
+
+**Pre-cycle cost forecast**: Before starting a cycle, estimate total cost across all pending tasks: "This cycle has 5 tasks, estimated total cost: ~$4.20." User can approve, adjust scope, or set a budget ceiling.
 
 ---
 
@@ -556,8 +671,8 @@ Here's how a complete cycle works in v3:
 | Handoff documents | Not present | REQ_HANDOFF and DELIVERY_HANDOFF (from KU) |
 | State management | Conceptual | Filesystem queue + JSON state (from KU) |
 | Model selection | Not specified | Sonnet/Opus by phase (from KU) |
-| Shared capabilities | Deferred to Phase 13 | Natural byproduct of Build Workflows with consumer linking |
-| Meta Build | "Factory of factories" concept | Concrete Meta Build Workflow with escalation |
+| Shared capabilities | Deferred to Phase 13 | Three-tier learning system (PATTERNS, SHARED_COMPONENTS, template evolution) |
+| Meta Build | "Factory of factories" concept | **Eliminated** — GROOMING IS the meta build; REQ_HANDOFF IS the build workflow |
 | Test standard | TDD philosophy | Test-first with zero-manual-verification standard |
 | Escalation paths | Human approval for pivots | Multi-level (GROOMING→WORK, EXECUTION→GROOMING→WORK→human) |
 | Concurrency | Not addressed | Parallel pipelines with configurable limits |
@@ -617,6 +732,205 @@ v2 suggested N=10 cycles flat, M=3 failed mechanisms as triggers for Foundation 
 
 REFLECTION proposes threshold adjustments as part of its recommendations. Human approves. We calibrate with real data as we go — these defaults are a starting hypothesis about thresholds, not dogma.
 
+### 11.6 User Preference Trend Detection
+
+**Decision**: Moving-average trend detection on human decisions, surfaced by REFLECTION, stored in SQLite.
+
+**The problem**: Over time, the human makes choices — approving some hypotheses, rejecting others, overriding GROOMING's triage classification, choosing risk tolerance options, accepting or refusing escalations. Each individual decision is noise. But patterns across decisions reveal real preferences that the system should learn. We try to ignore single signals and follow moving averages.
+
+**WHERE decisions are tracked:**
+
+SQLite `decisions` table in `.1kh/state.db`:
+
+```sql
+CREATE TABLE decisions (
+    id INTEGER PRIMARY KEY,
+    timestamp TEXT NOT NULL,          -- ISO-8601
+    decision_type TEXT NOT NULL,      -- 'hypothesis_approval', 'risk_tolerance',
+                                      -- 'escalation_response', 'triage_override',
+                                      -- 'scope_adjustment', 'foundation_change'
+    category TEXT NOT NULL,           -- grouping key (e.g., 'test_coverage',
+                                      -- 'risk_appetite', 'feature_scope',
+                                      -- 'tech_preference', 'ux_priority')
+    choice TEXT NOT NULL,             -- what the human chose
+    alternatives TEXT,                -- JSON array of what was offered
+    context TEXT,                     -- brief context (hypothesis id, task id, etc.)
+    layer TEXT NOT NULL               -- which layer surfaced this decision
+);
+```
+
+Every time the human makes a choice at an escalation point, WORK/GROOMING/EXECUTION logs it here. This is NOT a separate tracking system — it's a natural byproduct of the existing escalation flow. When WORK presents risk tolerance options and the human picks one, that's a row. When INTENT asks whether to nurture or prune, that's a row.
+
+**HOW trends are detected:**
+
+REFLECTION queries the `decisions` table during its analysis pass. The mechanism:
+
+1. **Group by category** — e.g., all decisions tagged `risk_appetite` in the last N decisions (default window: last 10 decisions per category).
+2. **Compute moving average** — for each category, what percentage of recent decisions lean the same way? Example: 8 out of last 10 `risk_appetite` decisions chose "proceed with auto-fallback" over "escalate to me."
+3. **Apply threshold** — if 70%+ of decisions in a window lean the same direction, flag as a trend. The 70% threshold is a starting default, not dogma.
+4. **Recency weighting** (optional, future refinement) — more recent decisions count slightly more than older ones. Simple linear decay within the window. Not required for v3 MVP; flat average is fine to start.
+
+```
+Example REFLECTION query:
+
+SELECT category, choice, COUNT(*) as count,
+       COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY category) as pct
+FROM decisions
+WHERE category = 'risk_appetite'
+ORDER BY timestamp DESC
+LIMIT 10
+GROUP BY choice
+
+Result:
+  risk_appetite | proceed_with_auto_fallback | 8 | 80%
+  risk_appetite | escalate_to_me             | 2 | 20%
+
+→ 80% > 70% threshold → trend detected
+```
+
+**WHAT triggers a proposal:**
+
+When REFLECTION detects a trend (70%+ consistency within a window), it generates a Foundation preference update proposal:
+
+```
+REFLECTION RECOMMENDATION:
+  Type: PREFERENCE_UPDATE
+  Category: risk_appetite
+  Observation: "In 8 of your last 10 risk decisions, you chose 'proceed with
+               auto-fallback' over 'escalate to me.' This suggests you're
+               comfortable with autonomous error recovery."
+  Proposal: "Update Foundation preferences to default risk_tolerance =
+            'proceed_with_auto_fallback' for TECHNICAL RISK and PROJECT RISK.
+            This would reduce escalation interrupts. You can still override
+            per-task."
+  Requires: Human approval (this is a Foundation-level TWEAK)
+```
+
+The key: REFLECTION doesn't silently change behavior. It presents the trend, proposes the update, and waits for approval. The human sees the data and decides.
+
+**WHEN it runs:**
+
+Preference trend detection runs as part of REFLECTION's standard analysis pass — the same triggers defined in Section 11.4 (schedule + delivery events + escalations). It's not a separate process. When REFLECTION fires, one of its analysis steps is: "query decisions table, check for trends, include any proposals in recommendations."
+
+**What it does NOT do:**
+
+- Does NOT auto-update Foundation preferences without human approval
+- Does NOT track or analyze the *content* of what was built — only the *decisions* the human made at escalation points
+- Does NOT override explicit per-task choices — even if the default changes, the human can still choose differently
+- Does NOT fire on single signals — the whole point is moving averages over a window
+
+### 11.7 Shared Capability Conflict Resolution
+
+**Decision**: Simple local queue. First-to-complete locks, second waits.
+
+When two parallel tasks both modify the same shared component, the system queues the conflict rather than racing. The mechanism:
+
+1. Before EXECUTION writes to a shared component, it checks a lockfile (`.1kh/locks/{component_id}.lock`). If absent, it creates one with its task ID and proceeds.
+2. If the lock exists, the task pauses that specific write and continues with other work. It retries the locked write on a short interval (configurable, default 30s).
+3. When the first task completes and releases the lock, the second task acquires it. At this point, EXECUTION reads the updated component state before applying its own changes — ensuring it's working against the latest version.
+4. If a lock is held for longer than a timeout (configurable, default 10 minutes), the system escalates to GROOMING as a blocked task.
+
+This is deliberately simple — filesystem lockfiles, no external coordination service. It works because the execution engine already uses filesystem-as-queue patterns (from KU). Locks are cleaned up on session completion and on graceful shutdown (same cleanup path as KU's sentinel-based stop).
+
+**Why queue over first-to-merge**: Merging requires diffing and conflict resolution logic that's complex to get right autonomously. Queuing is predictable — the second writer always sees the first writer's complete output. The tradeoff is latency (one task waits), but shared component writes are typically fast compared to the full build cycle.
+
+### 11.8 Watch Mode Implementation
+
+**Decision**: Log tailing MVP, tmux build-out.
+
+**MVP (immediate)**: Stream-based log tailing, proven by KU's `ku logs` command. The implementation:
+
+- Every CC session runs with `--output-format stream-json`, capturing output to `.1kh/sessions/{task_id}_{phase}_stream.jsonl`
+- An `active_stream` marker file tracks the currently-running session
+- `1kh logs` (or `1kh watch`) tails the active stream with `tail -f` piped through `jq` parsing
+- Displays: session ID, tool calls (with file paths / commands / patterns), and final result (success/fail, turn count, cost)
+- For completed sessions, falls back to the most recent stream file without live tailing
+
+This is exactly KU's approach — it works today. The parsed output shows what Claude is doing (reading files, writing code, running tests) without drowning the user in raw JSON.
+
+**Build-out (next)**: tmux-based multi-pane interface for concurrent session monitoring:
+
+```
+┌──────────────────────────────┬──────────────────────────────┐
+│  Task A: Ordering Widget     │  Task B: Dashboard           │
+│  [live stream]               │  [live stream]               │
+│  [tool] Read: /src/widget.ts │  [tool] Bash: npm test       │
+│  [tool] Write: /src/api.ts   │  [tool] Read: results.json   │
+│  ...                         │  ...                         │
+├──────────────────────────────┴──────────────────────────────┤
+│  1KH Status: 2 active sessions | 1 queued | $2.15 spent    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+tmux is the right tool because: it's local, requires no web server, handles multiple panes natively, and the user can attach/detach without affecting running sessions. The coordinator spawns tmux panes for each active session and a status bar pane.
+
+**Session logging storage** (from KU v0.2 patterns):
+
+- Stream files: `{task_id}_{phase}_stream.jsonl` (live JSONL from Claude CLI)
+- Result files: `{task_id}_{phase}.json` (final parsed result)
+- Prompt files: `{task_id}_{phase}_prompt.txt` (exact prompt sent, for debugging)
+- Append-only event log: `.1kh/1kh.log` (timestamps, phase transitions, errors)
+
+### 11.9 Simulation → Production Handoff
+
+**Decision**: Early research, knowledge center with breadcrumbs, seed data scripts, mock-to-real credential swap.
+
+The handoff from simulation to production is not a single event — it's a progression that starts at FOUNDATION and completes at EXECUTION. The system anticipates production needs early and prepares incrementally.
+
+**Phase 1: Research during FOUNDATION/IMAGINATION**
+
+Between FOUNDATION (init or adopt) and WORK, the system researches what production will require. Claude already does this well — exploring APIs, reading docs, understanding integration requirements. Research findings go to a **knowledge center**: `.1kh/knowledge/` with markdown files organized by topic (e.g., `stripe_integration.md`, `supabase_auth.md`). Each file includes:
+- What the integration requires (API keys, accounts, configuration)
+- What the user needs to do (register, enable features, configure webhooks)
+- Estimated timeline for user setup
+- Pointer references / breadcrumbs back to the specific hypothesis or task that needs this
+
+The knowledge center is a living reference — GROOMING reads it during hydration, EXECUTION reads it during implementation. It prevents the system from re-researching the same integration twice.
+
+**Phase 2: Mock infrastructure during SIMULATE**
+
+During local simulation, the system creates the full credential and data infrastructure in mock form:
+
+- **Environment templates**: `.env.example` with every required variable, commented with descriptions and where to get the real value. `.env.local` populated with mock/test credentials.
+- **Config profiles**: `config.local.json`, `config.staging.json`, `config.production.json` — same structure, different values. The swap from local to production is changing which config file is active, not restructuring anything.
+- **Test users and seed data**: Scripts that populate the database with realistic test data representing all the various end-to-end outcomes users can encounter. `scripts/seed.sh` creates test users, sample orders, edge-case data. `scripts/purge.sh` cleans it all out for fresh test runs. These scripts are themselves tested — they're part of the e2e suite.
+- **Realistic mocks for business data**: If the user hasn't specified all pricing, products, or business details, the system researches comparable businesses and fills in realistic placeholders. This gets the build as close to MVP as possible without blocking on user decisions. These mocks are flagged as business risk items that the user should review pre-launch.
+
+**Phase 3: Credential swap during EXECUTE**
+
+The actual production cutover:
+1. User provides real credentials (API keys, database URLs, etc.)
+2. System populates `.env.production` from the template
+3. Run the full test suite against staging/production config
+4. Any failures from real API behavior differences (vs mocks) route through the normal test loop (Section 6.1)
+5. Seed scripts can optionally run against production for initial data setup
+
+**Business risk escalation**: Any business data the system filled in as "realistic mocks" (pricing, product details, terms) gets escalated back to the user as BUSINESS RISK before launch. The system says: "I used mock pricing based on research of comparable businesses. Here's what I assumed — please review and correct before going live." This is INTENT-layer risk (Section 3.3) surfaced at the right time.
+
+### 11.10 Session Continuity and Task Granularity
+
+**Decision**: Lean handoffs + long sessions + checkpoint resume. No task splitting for coherent features.
+
+This decision resolves the fundamental tension between splitting large tasks into mini-tasks vs. running long expensive sessions. The answer is neither extreme — it's optimizing the pieces we control.
+
+**The problem, observed in practice**: A MAJOR_FIX task (nutrition intake overhaul) ran 65 turns, cost $10.19, and produced 12 files / ~5,000 lines. It succeeded — but ~30% of token spend was context ingestion (reading 15+ files, re-reading several), not implementation. The handoff was 1,055 lines including exact code snippets that EXECUTION largely ignored in favor of what it found in the codebase. The session hit a false-failure due to a race condition in result parsing, despite producing a correct delivery.
+
+**Why NOT split into mini-tasks (the SCRUM lesson)**: Splitting one coherent feature into 4 sub-tasks means 4 sessions that each re-read most of the same files. The same "dev" picks up all 4 stories because they share context. They deploy together because the feature only works as a whole. User verification (UX, e2e) can only occur once everything is delivered. Splitting adds overhead (context re-ingestion, state management between sub-tasks) without adding value. This mirrors the XP team insight: splitting a 13-point story into four 3-point stories creates waste when the same developer handles all four and they ship together.
+
+**Why NOT just accept $10 sessions**: The cost isn't inherently wrong — $10 for 5,000 lines of working code is reasonable per-line. But $3-4 of that was avoidable context ingestion caused by an over-specified handoff. A leaner handoff (WHAT not HOW) reduces ingestion cost. And when sessions DO fail, checkpoint-based resume avoids re-paying the ingestion tax.
+
+**The three-part solution:**
+
+1. **Lean handoffs (GROOMING)**: Specify WHAT and WHY, not HOW. Objective, architecture, schema, success criteria, files map, out of scope. Cut the code snippets — EXECUTION reads the codebase and makes its own implementation decisions. A 400-line handoff instead of 1,055. (See Section 3.5, Function 1.)
+
+2. **One session per TRoN (EXECUTION)**: A TRoN (Tiniest Runnable Notion) is the smallest unit of independently verifiable user value. One TRoN = one session. Don't split coherent features into implementation phases across separate sessions. (See Section 3.4.)
+
+3. **Checkpoint-based resume (EXECUTION)**: When sessions fail, detect progress and resume — don't restart from scratch. The accumulated context is worth preserving. (See Section 3.6.)
+
+**What GROOMING CAN reject**: If a task from WORK contains genuinely unrelated features crammed together (different hypotheses, different user-facing capabilities, no shared context), GROOMING pushes back to WORK for decomposition. But "nutrition intake with phone auth + persistence + portal migration + e2e tests" is one coherent feature — the pieces are interdependent and must ship together. GROOMING keeps it as one task.
+
+**What GROOMING CANNOT do**: Split a coherent TRoN into implementation phases ("first build the API, then build the UI, then write tests"). That's EXECUTION's internal concern. GROOMING provides the constraints; EXECUTION decides the implementation sequence.
+
 ---
 
 ## 12. Design Principles: Local-First Development
@@ -658,6 +972,64 @@ Before committing to full execution, v3 follows this confidence progression:
 3. **EXECUTE**: Once simulation passes and the user has set up external dependencies, go live. "Ship it."
 
 The transition from simulate to execute should feel natural — ideally the simulation artifacts *become* the production artifacts with real credentials swapped in.
+
+### 12.4 Data-First Development Directive
+
+For vaguely-described large features, the system follows this priority order:
+
+```
+1. DATA LAYER (schema, API routes, business logic, persistence)
+   │  Fully testable autonomously. No subjective judgment needed.
+   │  Build and test this before anything visual.
+   │
+   ▼
+2. MINIMAL UX (simple copy, form inputs, validation, controls, persistence)
+   │  Functional but unstyled. Proves the data layer works end-to-end.
+   │  Focus: correct behavior, not appearance.
+   │
+   ▼
+3. MOBILE-FIRST LAYOUT (responsive structure, navigation, viewport)
+   │  Design for smallest screen first, expand up.
+   │  Layout and information architecture, not visual polish.
+   │
+   ▼
+4. STYLING (colors, fonts, sizes, brand personality)
+   │  Fit to user preferences, brand identity, and project personality.
+   │  This is the last step, not the first.
+```
+
+**Why this order**: Data layer is objectively testable — the system can verify it works without human judgment. UX requires subjective evaluation that the system can't fully automate. Building data first means the UX is wiring up to proven, tested endpoints — not building on sand.
+
+**Exception**: If the user explicitly requests "I just want a landing page design" or is specifically working on UX interfaces only, respect that. GROOMING should verify: "This task appears to be UX-only with no data layer component — confirming this is intentional before proceeding."
+
+### 12.5 Acceptance Criteria: Given/When/Then as One Tool in the Toolbelt
+
+Given/When/Then is **one tool in the toolbelt** for writing acceptance criteria — not the only way. It's the default for behavioral, interaction-driven criteria because it maps cleanly to test assertions. But not every acceptance criterion is behavioral.
+
+**When to use Given/When/Then** — user-facing behavior, form interactions, navigation flows, state transitions:
+
+```
+Given: user navigates to /intake
+When: user types "5551234567" in phone field
+Then: display shows "(555) 123-4567"
+
+Given: user is on intake form with all fields empty
+When: user clicks Submit
+Then: validation errors appear on all required fields
+```
+
+**Why it works here**: Forces GROOMING to specify precondition, action, and expected outcome. Prevents vague criteria like "phone masking works." Maps 1:1 to Playwright test assertions — EXECUTION translates each Given/When/Then directly into a test spec.
+
+**When to use other formats** — performance targets, schema constraints, integration contracts, infrastructure requirements:
+
+- "API response time < 200ms at P95 under 100 concurrent requests" (measurable threshold)
+- "Database schema includes orders table with columns: id, user_id, total, status, created_at" (structural assertion)
+- "Stripe webhook handler returns 200 for valid signatures and 400 for invalid" (contract spec)
+- "All environment variables defined in .env.example exist in production config" (checklist)
+
+These are perfectly valid acceptance criteria that don't need Given/When/Then framing. GROOMING should pick the format that communicates the criterion most clearly to EXECUTION. The goal is unambiguous, testable criteria — the syntax is a means, not an end.
+
+**Where it applies**: Success Criteria section of REQ_HANDOFFs only. The rest of the requirements chain uses natural language. This is a communication convention between GROOMING and EXECUTION, not a system-wide format. The system writes acceptance criteria; human 1KH owners don't need to use any specific syntax.
 
 ---
 
@@ -795,10 +1167,9 @@ Handled by the test loop in Section 6.1. Summary:
 
 ## 15. Open Questions (Remaining)
 
-1. **Cost management** — How do we track and limit CC API costs across parallel sessions? Should there be a budget ceiling per cycle?
-2. **Shared capability conflict resolution** — When two parallel build workflows both try to update the same shared capability, who wins? First-to-merge? Or do we queue?
-3. **Watch mode implementation** — Is this a terminal multiplexer (tmux-style), a web dashboard, or a CLI with log tailing? What's the minimum viable UX?
-4. **Simulation → Production handoff** — How do we swap mock credentials for real ones cleanly? Environment variable templating? Config profiles?
+1. **Intermediate artifact schemas** — v2 defined ReflectionResult, Hypothesis, Task, ExecutionResult as Python dataclasses. v3 needs these as JSON schemas for bash/CC runtime. Exact schemas need calibration with real data — current thresholds (0.65 approval, 0.40 escalation) are placeholders. (See: `thousandhand_v3/DRAFT_INTERMEDIATE_ARTIFACTS.md` for current reference.)
+
+*Resolved since last revision: Cost management (token estimation + budget ceilings, Section 8). BUILD_WORKFLOW/META_BUILD collapse (Section 5). Risk layering across layers (Sections 3.3-3.6). State management storage types (Section 7). Data-first development directive (Section 12.4). User preference trend detection (Section 11.6 — moving-average on SQLite decisions table, 70% threshold over sliding window, REFLECTION proposes, human approves). Shared capability conflict resolution (Section 11.7 — simple local queue with filesystem lockfiles). Watch mode implementation (Section 11.8 — log tailing MVP from KU patterns, tmux multi-pane build-out). Simulation → production handoff (Section 11.9 — early research, knowledge center, seed/purge scripts, env templates, business risk escalation for mock data).*
 
 ---
 
@@ -827,19 +1198,24 @@ This means: we reference v2 and KU as **study material**, not as code to copy. T
 | **Test infrastructure** | `archive/thousandhand_v2/tests/` | MockAnthropicClient, ScenarioExecutor, ProgressionSimulator — these show how to test autonomous systems without burning API calls. | The specific mock implementations. v3 test strategy aligns with the test-first standard (Section 6). |
 | **CLI** | `archive/thousandhand_v2/cli/` | Command patterns: `init`, `run cycle`, `reflect`, `forecast`, `operate`. The ceremony concept for Foundation setup. | Click-based Python CLI. v3 CLI will be shell-based, coordinating CC sessions. |
 
-### 16.3 What to Learn from KU v0.2
+### 16.3 What to Learn from KU (latest)
 
-**KU v0.2 is production-solid. We lean on this heavily.**
+**KU is production-solid and actively evolving. We lean on this heavily.**
+
+*KU latest: 2,067-line orchestrator with WHAT-not-HOW groom prompts, master/local template split, interactive doc selection, checkpoint resume, and triage-aware content scoping.*
 
 | KU Component | Location | What to absorb | What to leave behind |
 |-------------|----------|----------------|---------------------|
-| **ku.sh orchestrator** (1,279 lines) | `kanban-utility/bin/ku.sh` | The entire state machine: 6-state filesystem-as-queue, file movement as transition, COMPLETE: marker parsing, signal handling (Ctrl+C kills process group), sentinel-based graceful stop (`ku stop`), session debug logging (full JSON + prompt saved). This is the execution engine blueprint. | Single dev concurrency (`max_concurrent.develop = 1`). v3 lifts this. |
-| **REQ_HANDOFF template** (240 lines) | `kanban-utility/templates/REQ_HANDOFF_TEMPLATE.md` | Full handoff structure: status emoji flow (📋→🔨→✅→❌), triage-driven scope table, objective, background (current/target state), architecture, DB schema, implementation, signals/activities, UI changes, config, files to create/modify, testing, deployment auto-checklist, success criteria, out of scope, CC processing notes. | Add: Test Execution Contract (Section 6.1), shared capability references. |
-| **DELIVERY_HANDOFF template** (172 lines) | `kanban-utility/templates/DELIVERY_HANDOFF_TEMPLATE.md` | Dual-purpose design (immediate doc updates + long-term architecture reference), deviation assessment (None/Minor/Significant), completed/blocked/future items, deployment status per target (source control, DB, frontend, Temporal), test table, doc updates needed table, verification checklist, session metrics. | Add: summary.json contents, shared capability publish/consume log. Replace manual verification checklist with automated test results (Section 14). |
-| **Triage classification** | ku.sh groom prompt | FEATURE/MAJOR_FIX/SMALL_FIX/DOCUMENTATION — classified once by groom, all downstream phases adjust scope. SMALL_FIX skips E2E. DOCUMENTATION skips tests entirely and gets lightweight update phase. Triage embedded as HTML comment in handoff. | Nothing — this is clean and directly adopted. |
-| **config.json schema** | `kanban-utility/defaults/config.json` | Configurable models per phase, allowed tools per phase, known_docs list, docs_path/handoffs_path, polling_interval, max_concurrent stubs. Clean separation of orchestration config from project config. | v3 extends: add cost budgets, concurrency limits per hypothesis, reflection trigger config. |
-| **state.json schema** | `kanban-utility/defaults/state.json` | Per-item tracking: id, state, triage, priority, session_id, req_handoff, delivery_handoff, tokens (per-phase: input/output/cost_usd), started_at, completed_at, error. Active session tracking. | v3 extends: add hypothesis_id, dependency links, retry counts, reflection event log. |
-| **Smart init with doc auto-detection** | ku.sh `cmd_init()` + `generate_local_req_template()` | Scans project for known docs, generates local REQ_HANDOFF_TEMPLATE with injected "Project Context (Auto-detected)" section, generates UPDATE_STATUS_POST_DELIVERY.md with per-doc guidance table. Re-running init picks up new docs. Zero Claude calls during init. | Directly adopted. v3 adds: Foundation doc detection, build workflow catalog injection. |
+| **ku.sh orchestrator** (2,067 lines) | `kanban-utility/bin/ku.sh` | The entire state machine: 6-state filesystem-as-queue, file movement as transition, COMPLETE: marker parsing, signal handling (Ctrl+C kills process group), sentinel-based graceful stop (`ku stop`), session debug logging (full JSON + prompt saved), `ku logs` with stream-json tailing, `ku resume` for checkpoint-based session recovery. This is the execution engine blueprint. | Single dev concurrency (`max_concurrent.develop = 1`). v3 lifts this. |
+| **MASTER_REQ_HANDOFF template** (143 lines) | `kanban-utility/templates/MASTER_REQ_HANDOFF_TEMPLATE.md` | Lean handoff blueprint enforcing WHAT-not-HOW: objective, background (current/target state), architecture (diagrams not code), DB schema (DDL only), files to create/modify, success criteria, out of scope. No Implementation section. Triage-aware content scoping (SMALL_FIX uses 3 sections, FEATURE uses 7). | v3 evolves: add Test Execution Contract (Section 6.1), shared capability references. |
+| **MASTER_DELIVERY_HANDOFF template** (92 lines) | `kanban-utility/templates/MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Compact delivery format: summary with deviation assessment, completed/blocked/future items, deployments checklist, test table, doc updates needed (project-specific rows injected at init). | v3 evolves: add summary.json contents, shared capability publish/consume log. Replace manual verification checklist with automated test results (Section 14). |
+| **Master + local template pattern** | `templates/MASTER_*.md` → `.kanban/templates/` | Immutable master blueprints at package level. `ku init` generates local copies injected with project-specific doc references. Local templates evolve per-project; masters don't change. This IS the Tier 3 learning infrastructure (Section 5.2). | Directly adopted. |
+| **Interactive doc selection** | ku.sh `select_project_docs()` + `cmd_init()` | Scans project for `.md` files, interactive numbered menu, user selects which docs matter. Stored in `config.json` as `known_docs[]` (relative paths). Three template generators inject these into REQ, DELIVERY, and UPDATE templates. Zero Claude calls during init. Re-running init picks up new docs. | v3 extends: Foundation doc detection (`init` vs `adopt`), build workflow catalog injection. |
+| **WHAT-not-HOW groom prompt** | ku.sh groom prompt (lines 770-806) | Explicit instruction: "Specify WHAT needs to change and WHY, not HOW. NO code snippets. Architecture = flow diagrams only. Database = DDL only." Dev prompt mirrors: "The handoff is a constraint doc, not a recipe." | Directly adopted — this is the lean handoff principle (Section 3.5) working in practice. |
+| **Triage-aware content scoping** | ku.sh groom + dev prompts | FEATURE/MAJOR_FIX/SMALL_FIX/DOCUMENTATION — classified once by groom, all downstream phases adjust. SMALL_FIX skips E2E + uses only 3 handoff sections. DOCUMENTATION skips tests and gets lightweight update. Triage embedded as HTML comment. | Nothing — this is clean and directly adopted. |
+| **Checkpoint resume** | ku.sh `cmd_resume()` (lines 1514-1711) | Re-attaches to prior session via `claude --resume <session_id>`. Moves file back to active queue. Injects minimal resume prompt. Extracts new session_id (can chain resumes). Phase-aware: knows which phase to resume based on item state. | v3 extends: add progress detection (scan working dir for created/modified files, compare against handoff files-to-modify). |
+| **config.json schema** | `kanban-utility/defaults/config.json` | Configurable models per phase, allowed tools per phase, `known_docs[]` (user-curated relative paths), docs_path/handoffs_path, polling_interval, max_concurrent stubs. Clean separation of orchestration config from project config. | v3 extends: add cost budgets, concurrency limits per hypothesis, reflection trigger config. |
+| **state.json schema** | `kanban-utility/defaults/state.json` | Per-item tracking: id, state, triage, priority, per-phase session IDs (`.sessions.groom`, `.sessions.dev`, `.sessions.update`), req_handoff, delivery_handoff, tokens (per-phase: input/output/cost_usd), started_at, completed_at, error. Active session tracking. | v3 extends: add hypothesis_id, dependency links, retry counts, reflection event log. |
 | **Priority + timestamp ordering** | ku.sh `cmd_process_dev()` | Two-level sort: `.priority` ascending then `.started_at` FIFO. Adjustable via `ku prioritize`. Prevents starvation while giving human control. | v3 adds: dependency-aware ordering (WORK's responsibility, not just priority). |
 | **Token tracking** | ku.sh `store_tokens()` | Every phase records input_tokens, output_tokens, cost_usd. Extracted from Claude CLI JSON response. Stored in state.json per-item per-phase. Visible via `ku status` and `ku view`. | v3 extends: aggregate cost per hypothesis, per cycle, budget ceiling alerts. |
 | **Aggressive execution philosophy** | ku.sh dev prompt preamble | "BEST EFFORTS / AGGRESSIVE EXECUTION. Do NOT stall on decisions. Pick the pragmatic option and MOVE IT ALONG. If ambiguous, assume and document." This philosophy carries into v3. | Needs test-loop amendment (Section 6.1) to also be aggressive about *verification*, not just implementation. |
@@ -884,12 +1260,12 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 | This document | `/1KH/thousandhand_v3/ARCH_V3.md` | v3 architecture specification |
 | Reflection | `/1KH/thousandhand_v3/REFLECTION.md` | v2→v3 transition reflection |
 | v2 Archive | `/1KH/archive/thousandhand_v2/` | Complete v2 codebase and docs |
-| **KU v0.2 (primary)** | `/kanban-utility/` | **Production execution engine — lean on this heavily** |
-| KU Orchestrator | `/kanban-utility/bin/ku.sh` | 1,279-line state machine coordinator |
-| KU REQ_HANDOFF Template | `/kanban-utility/templates/REQ_HANDOFF_TEMPLATE.md` | 240-line grooming output spec |
-| KU DELIVERY_HANDOFF Template | `/kanban-utility/templates/DELIVERY_HANDOFF_TEMPLATE.md` | 172-line execution output spec |
-| KU Default Config | `/kanban-utility/defaults/config.json` | Model/tool/concurrency configuration schema |
-| KU Default State | `/kanban-utility/defaults/state.json` | State tracking schema |
+| **KU (primary)** | `/kanban-utility/` | **Production execution engine — lean on this heavily** |
+| KU Orchestrator | `/kanban-utility/bin/ku.sh` | 2,067-line state machine coordinator |
+| KU MASTER REQ Template | `/kanban-utility/templates/MASTER_REQ_HANDOFF_TEMPLATE.md` | 143-line lean handoff blueprint (WHAT not HOW) |
+| KU MASTER DELIVERY Template | `/kanban-utility/templates/MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | 92-line delivery blueprint |
+| KU Default Config | `/kanban-utility/defaults/config.json` | Model/tool/concurrency config + user-curated known_docs |
+| KU Default State | `/kanban-utility/defaults/state.json` | Per-item state with per-phase session tracking |
 | KU User Guide | `/kanban-utility/docs/KANBAN_UTILITY_POC.md` | Usage documentation |
 
 *All paths relative to projects root.*

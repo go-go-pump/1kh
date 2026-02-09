@@ -27,7 +27,14 @@
 set -euo pipefail
 
 # KH_HOME = where the thousandhand package lives (for templates/defaults)
-KH_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Resolve symlinks (npm link creates symlinks in global bin)
+_KH_SCRIPT="${BASH_SOURCE[0]}"
+while [ -L "$_KH_SCRIPT" ]; do
+  _KH_DIR="$(cd "$(dirname "$_KH_SCRIPT")" && pwd)"
+  _KH_SCRIPT="$(readlink "$_KH_SCRIPT")"
+  [[ "$_KH_SCRIPT" != /* ]] && _KH_SCRIPT="$_KH_DIR/$_KH_SCRIPT"
+done
+KH_HOME="$(cd "$(dirname "$_KH_SCRIPT")/.." && pwd)"
 KH_TEMPLATES="${KH_HOME}/templates"
 KH_DEFAULTS="${KH_HOME}/defaults"
 
@@ -145,6 +152,9 @@ load_config() {
   resolve_paths
   [[ -f "$CONFIG_FILE" ]] || { error "config.json not found. Run 'kh init' first."; exit 1; }
 
+  # Validate config is valid JSON
+  jq empty "$CONFIG_FILE" 2>/dev/null || { error "config.json is empty or invalid JSON. Run 'kh init' to recreate."; exit 1; }
+
   local raw_root
   raw_root=$(jq -r '.project_root' "$CONFIG_FILE")
   if [[ "$raw_root" == /* ]]; then
@@ -157,6 +167,7 @@ load_config() {
   DOCS_PATH="${PROJECT_ROOT}/$(jq -r '.docs_path' "$CONFIG_FILE")"
   HANDOFFS_PATH="${PROJECT_ROOT}/$(jq -r '.handoffs_path' "$CONFIG_FILE")"
   MODEL=$(jq -r '.model // "opus"' "$CONFIG_FILE")
+  [[ -z "$MODEL" || "$MODEL" == "null" ]] && MODEL="opus"
   POLL_INTERVAL=$(jq -r '.polling_interval_seconds' "$CONFIG_FILE")
 }
 
@@ -857,12 +868,36 @@ cmd_run() {
   header
   echo ""
 
+  local consecutive_failures=0
+  local max_failures=3
+  local last_failed_id=""
+
   while true; do
     local has_drafts
     has_drafts=$(ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ')
     [[ "$has_drafts" -eq 0 ]] && break
     check_stop_sentinel
+
+    # Track which item will be processed next
+    local next_id
+    next_id=$(jq -r '[.items[] | select(.state == "draft")] | sort_by(.priority // 0, .started_at) | .[0].id // empty' "$STATE_FILE")
+
     cmd_process_item
+
+    # Check if the same item failed again (it returns to draft on failure)
+    local post_state
+    post_state=$(jq -r --arg id "$next_id" '.items[] | select(.id == $id) | .state // empty' "$STATE_FILE" 2>/dev/null)
+    if [[ "$post_state" == "draft" && "$next_id" == "$last_failed_id" ]]; then
+      consecutive_failures=$((consecutive_failures + 1))
+      if [[ $consecutive_failures -ge $max_failures ]]; then
+        error "Item '${next_id}' failed ${max_failures} times consecutively. Halting."
+        error "Check config and logs, then retry with: kh run"
+        return 1
+      fi
+    else
+      consecutive_failures=0
+    fi
+    last_failed_id="$next_id"
   done
 
   log "INFO" "Run complete"

@@ -65,7 +65,7 @@ FOUNDATION     IMAGINATION     All layers        EXECUTION
 
 - **[THE WORK]** — NOT a ceremony. This is the process where all internal layers fire: Foundation → Imagination → Intent → Work → Grooming → Execution. Systems get built, tested, delivered. Local-first, TDD, opinionated stack. The Orchestrator follows EXECUTOR STANDARDS for how to build and ORCHESTRATOR STANDARDS for how to plan (MVP). This is where USER FLOWS get built, tested, and proven.
 
-- **CLOSING CEREMONY** — Verifies what was built. UAT preparation, test data seeding, flow demonstration, results reporting. Produces a UAT Delivery Package and GTM Requirements manifest. The USER FLOW CATALOG (from WORK) becomes the verification checklist. See `CLOSING_CEREMONY.md`.
+- **CLOSING CEREMONY** — Verifies what was built. UAT preparation, test data seeding, flow demonstration, results reporting. Produces a UAT Delivery Package and GTM Requirements manifest. The USER FLOW CATALOG (from WORK) becomes the verification checklist. Invoked explicitly via `kh close [modifier]` (e.g., `kh close v3`, `kh close sprint-1`). The closing ceremony is a specialized prompt that runs discovery → flow coverage audit → test gap analysis → UAT package generation. Currently explicit; future: auto-triggers when all queued tasks complete and flow coverage is sufficient. See `CLOSING_CEREMONY.md`.
 
 Each ceremony has its own requirements document (see Section 17: File References).
 
@@ -1403,32 +1403,49 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 ## 17. File References
 
-### 1KH Process Documents
+### 1KH Process Documents (docs/)
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| This document | `/1KH/thousandhand_v3/ARCH_V3.md` | v3 architecture specification |
-| Opening Ceremony | `/1KH/thousandhand_v3/OPENING_CEREMONY.md` | Foundation doc creation process |
-| Closing Ceremony | `/1KH/thousandhand_v3/CLOSING_CEREMONY.md` | UAT preparation & delivery process |
-| Executor Standards | `/1KH/thousandhand_v3/EXECUTOR_STANDARDS.md` | Opinionated local-first build guidelines |
-| Orchestrator Standards | `/1KH/thousandhand_v3/ORCHESTRATOR_STANDARDS.md` | MVP planning + simulation framework |
-| Intermediate Artifacts | `/1KH/thousandhand_v3/INTERMEDIATE_ARTIFACTS.md` | JSON schemas for hypotheses, tasks, user flows, events |
+| This document | `docs/ARCH_V3.md` | v3 architecture specification |
+| Opening Ceremony | `docs/OPENING_CEREMONY.md` | Foundation doc creation process |
+| Closing Ceremony | `docs/CLOSING_CEREMONY.md` | UAT preparation & delivery process |
+| Executor Standards | `docs/EXECUTOR_STANDARDS.md` | Opinionated local-first build guidelines (also in templates/ for session injection) |
+| Orchestrator Standards | `docs/ORCHESTRATOR_STANDARDS.md` | MVP planning + simulation framework |
+| Intermediate Artifacts | `docs/INTERMEDIATE_ARTIFACTS.md` | JSON schemas for hypotheses, tasks, user flows, events |
+
+### KH Templates (templates/)
+
+| Template | Purpose |
+|----------|---------|
+| `MASTER_GROOMING_STANDARDS.md` | Grooming phase standards: triage, WHAT-not-HOW, user flow management, phase markers |
+| `EXECUTOR_STANDARDS.md` | Build philosophy + TDD protocol — injected during DEVELOPMENT phase |
+| `MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Delivery handoff blueprint with project-specific doc rows |
+| `USER_FLOWS_TEMPLATE.md` | Starter user flow catalog — created by `kh init` if no catalog exists |
+| `ARCHITECTURE_TEMPLATE.md` | Starter architecture doc — created by `kh init` if no arch doc exists |
+
+### KH CLI Commands
+
+| Command | Purpose |
+|---------|---------|
+| `kh init` | Initialize .kh structure, select project docs, create USER_FLOWS.md and ARCHITECTURE.md if missing |
+| `kh add "name"` | Add draft task from stdin. Flows are managed by AI during grooming (no separate add-flow needed) |
+| `kh run` | Process all drafts through GROOMING → DEVELOPMENT → UPDATE |
+| `kh close [modifier]` | **Closing ceremony** — comprehensive test review, flow coverage audit, UAT preparation |
+| `kh status` | Show queue status + user flow coverage + token usage |
+| `kh logs` | Live-tail active session or show last completed |
+| `kh resume "name"` | Resume a failed session from checkpoint |
+| `kh demote/promote/remove` | Manual queue management |
+
+### Archive
+
+| Document | Location | Purpose |
+|----------|----------|---------|
 | v2 Archive | `/1KH/archive/thousandhand_v2/` | Complete v2 codebase and docs |
 | v2→v3 Reflection (archived) | `/1KH/archive/REFLECTIONS_FROM_v2_TO_v3.md` | Historical transition notes (archived — do not reference for current state) |
+| KU Demo Archive | `/1KH/archive/demo-kanban-utility-mvh/` | Original KU installation from MVH project |
 
-### KU References
-
-| Document | Location | Purpose |
-|----------|----------|---------|
-| **KU (primary)** | `/kanban-utility/` | **Production execution engine — lean on this heavily** |
-| KU Orchestrator | `/kanban-utility/bin/ku.sh` | State machine coordinator |
-| KU MASTER Grooming Standards | `/kanban-utility/templates/MASTER_GROOMING_STANDARDS.md` | Grooming phase standards (triage, WHAT-not-HOW, phase markers) |
-| KU MASTER DELIVERY Template | `/kanban-utility/templates/MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Delivery handoff blueprint |
-| KU Default Config | `/kanban-utility/defaults/config.json` | Model/tool/concurrency config + user-curated known_docs |
-| KU Default State | `/kanban-utility/defaults/state.json` | Per-item state with per-phase session tracking |
-| KU User Guide | `/kanban-utility/docs/KANBAN_UTILITY_POC.md` | Usage documentation |
-
-*All paths relative to projects root.*
+*All paths relative to thousandhand_v3/ unless noted with leading `/`.*
 
 ---
 

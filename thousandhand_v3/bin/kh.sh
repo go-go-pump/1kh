@@ -14,6 +14,8 @@
 #   kh watch                   Continuous monitoring mode
 #   kh stop                    Stop a running watch/run (from another terminal)
 #
+#   kh close [modifier]        Closing ceremony — comprehensive review + UAT prep
+#
 #   kh demote "name"           Move task back to draft (redo from scratch)
 #   kh promote "name"          Manually advance task to complete
 #   kh resume "name"           Resume a failed Claude session from checkpoint
@@ -649,6 +651,50 @@ cmd_init() {
   generate_local_delivery_template "$kh_dir" "$project_dir"
   log "INFO" "Generated .kh/templates/DELIVERY_HANDOFF_TEMPLATE.md"
 
+  # Copy executor standards for session injection
+  cp "${KH_TEMPLATES}/EXECUTOR_STANDARDS.md" "${kh_dir}/templates/EXECUTOR_STANDARDS.md"
+  log "INFO" "Copied .kh/templates/EXECUTOR_STANDARDS.md"
+
+  # User Flow Catalog — look for existing, create from template if missing
+  local user_flows_found=false
+  for uf_path in \
+    "${project_dir}/docs/USER_FLOWS.md" \
+    "${project_dir}/USER_FLOWS.md" \
+    "${project_dir}/docs/user_flows.md" \
+    "${project_dir}/docs/user-flows.md"; do
+    if [[ -f "$uf_path" ]]; then
+      user_flows_found=true
+      log "INFO" "Found existing user flow catalog: ${uf_path}"
+      break
+    fi
+  done
+  if [[ "$user_flows_found" == "false" ]]; then
+    cp "${KH_TEMPLATES}/USER_FLOWS_TEMPLATE.md" "${project_dir}/docs/USER_FLOWS.md"
+    log "INFO" "Created docs/USER_FLOWS.md from template"
+    success "Created user flow catalog: docs/USER_FLOWS.md"
+  fi
+
+  # Architecture doc — look for existing, create from template if missing
+  local arch_found=false
+  for arch_path in \
+    "${project_dir}/docs/ARCHITECTURE.md" \
+    "${project_dir}/ARCHITECTURE.md" \
+    "${project_dir}/docs/ARCHITECTURE_STATUS.md"; do
+    if [[ -f "$arch_path" ]]; then
+      arch_found=true
+      log "INFO" "Found existing architecture doc: ${arch_path}"
+      break
+    fi
+  done
+  if [[ "$arch_found" == "false" ]]; then
+    local project_name
+    project_name=$(basename "$project_dir")
+    sed "s/\[PROJECT_NAME\]/${project_name}/" "${KH_TEMPLATES}/ARCHITECTURE_TEMPLATE.md" \
+      > "${project_dir}/docs/ARCHITECTURE.md"
+    log "INFO" "Created docs/ARCHITECTURE.md from template"
+    success "Created architecture doc: docs/ARCHITECTURE.md"
+  fi
+
   LOG_FILE="${kh_dir}/kh.log"
   log "INFO" "ThousandHand initialized in ${project_dir}"
 }
@@ -740,6 +786,28 @@ cmd_status() {
     echo ""
   done
 
+  # User Flow Coverage
+  if [[ -f "$CONFIG_FILE" ]]; then
+    local project_root_for_flows
+    local raw_root
+    raw_root=$(jq -r '.project_root' "$CONFIG_FILE" 2>/dev/null)
+    if [[ "$raw_root" == /* ]]; then
+      project_root_for_flows="$raw_root"
+    else
+      project_root_for_flows="$(cd "${KH_DIR}/.." && cd "$raw_root" && pwd)"
+    fi
+    local uf_file="${project_root_for_flows}/docs/USER_FLOWS.md"
+    if [[ -f "$uf_file" ]]; then
+      local defined implemented tested verified
+      defined=$(grep -c '^\- \*\*ID:\*\*' "$uf_file" 2>/dev/null || echo 0)
+      implemented=$(grep -c 'IMPLEMENTED\|TESTED\|VERIFIED' "$uf_file" 2>/dev/null || echo 0)
+      tested=$(grep -c 'TESTED\|VERIFIED' "$uf_file" 2>/dev/null || echo 0)
+      verified=$(grep -c 'VERIFIED' "$uf_file" 2>/dev/null || echo 0)
+      echo -e "${CYAN}USER FLOWS:${NC} ${defined} defined | ${implemented} implemented | ${tested} tested | ${verified} verified"
+      echo ""
+    fi
+  fi
+
   header
   echo "Active Session:"
   if [[ -f "$STATE_FILE" ]]; then
@@ -794,9 +862,32 @@ cmd_process_item() {
   [[ -f "$grooming_standards" ]] || grooming_standards="${KH_TEMPLATES}/MASTER_GROOMING_STANDARDS.md"
   local del_template="${KH_DIR}/templates/DELIVERY_HANDOFF_TEMPLATE.md"
   [[ -f "$del_template" ]] || del_template="${KH_TEMPLATES}/MASTER_DELIVERY_HANDOFF_TEMPLATE.md"
+  local executor_standards="${KH_DIR}/templates/EXECUTOR_STANDARDS.md"
+  [[ -f "$executor_standards" ]] || executor_standards="${KH_TEMPLATES}/EXECUTOR_STANDARDS.md"
+
+  # Locate user flow catalog
+  local user_flows_path=""
+  for uf in "${PROJECT_ROOT}/docs/USER_FLOWS.md" "${PROJECT_ROOT}/USER_FLOWS.md"; do
+    [[ -f "$uf" ]] && user_flows_path="$uf" && break
+  done
 
   local doc_section
   doc_section=$(build_doc_section "$CONFIG_FILE" "$PROJECT_ROOT")
+
+  # User flow reference section for prompt
+  local flow_section=""
+  if [[ -n "$user_flows_path" ]]; then
+    flow_section="- User flow catalog: ${user_flows_path}
+
+## USER FLOW MANAGEMENT (during GROOMING)
+1. Read the user flow catalog (docs/USER_FLOWS.md)
+2. Determine: does this item describe a user journey, a buildable task, or both?
+   - If JOURNEY: define the flow(s) in the catalog, derive implementation tasks
+   - If TASK: check which existing flows it serves — create new flows if this task introduces new user journeys
+   - If INFRASTRUCTURE/CHORE: mark as flow-independent, proceed without flow association
+3. Update docs/USER_FLOWS.md with any new or modified flows
+4. Include flow references in your success criteria"
+  fi
 
   # Consolidated 3-phase prompt
   local prompt="> BEST EFFORTS / AGGRESSIVE EXECUTION. Move fast, assume and document.
@@ -810,27 +901,40 @@ ${draft_content}
 
 REFERENCE FILES (read at start):
 - Grooming standards: ${grooming_standards}
+- Executor standards (build philosophy + TDD protocol): ${executor_standards}
 - Delivery handoff template: ${del_template}
 - Project ROADMAP: ${DOCS_PATH}/ROADMAP.md
 - Project TECH_STACK: ${DOCS_PATH}/TECH_STACK.md
+- Project ARCHITECTURE: ${DOCS_PATH}/ARCHITECTURE.md
+${flow_section}
 
 ## PHASE 1: GROOMING
-1. Read grooming standards + project docs
+1. Read grooming standards + executor standards + project docs
 2. TRIAGE: classify as FEATURE/MAJOR_FIX/SMALL_FIX/DOCUMENTATION
 3. Emit: [TRIAGE: <classification>]
 4. Analyze: objective, scope, success criteria, architecture (WHAT not HOW)
-5. Validate scope (>5 files -> note for consideration)
-6. Emit: [PHASE: GROOMING_COMPLETE]
+5. User flow management: read catalog, classify item, update catalog, map flows
+6. Validate scope (>5 files -> note for consideration)
+7. Emit: [PHASE: GROOMING_COMPLETE]
 
 ## PHASE 2: DEVELOPMENT
-1. Read codebase, determine HOW
-2. Implement based on grooming analysis
-3. Write tests (per triage level)
-4. Create DELIVERY_HANDOFF -> ${HANDOFFS_PATH}/DELIVERY_${feature_name}.md
-5. Emit: [PHASE: DEVELOPMENT_COMPLETE]
+Follow EXECUTOR_STANDARDS for build order and TDD protocol:
+1. Read ARCHITECTURE.md, understand what exists
+2. Implement based on grooming analysis (data layer -> app layer -> layout -> style)
+3. Write tests FIRST (per triage level):
+   - For each referenced user flow: write end-to-end Playwright test covering the full journey
+   - For new features: unit tests for logic + browser tests for UX
+   - For fixes: regression tests for affected areas
+4. Run ALL tests via bash runner -> read summary
+5. For any failure: read error, fix code, re-run (max 3 attempts per failure)
+6. Loop until ALL PASS or retry ceiling hit
+7. Create DELIVERY_HANDOFF -> ${HANDOFFS_PATH}/DELIVERY_${feature_name}.md
+8. Emit: [PHASE: DEVELOPMENT_COMPLETE]
 
 ## PHASE 3: UPDATE
 ${doc_section}
+- Update docs/ARCHITECTURE.md with delivery breadcrumbs (source paths, data models, tests, decisions)
+- Update docs/USER_FLOWS.md flow statuses (DEFINED -> IMPLEMENTED -> TESTED as appropriate)
 (If DOCUMENTATION triage: lightweight — just mark DELIVERY_HANDOFF as UPDATES_COMPLETE)
 Emit: [PHASE: UPDATE_COMPLETE]
 
@@ -1274,6 +1378,142 @@ cmd_watch() {
   done
 }
 
+cmd_close() {
+  load_config
+  local modifier="${1:-}"
+  local close_id="closing-ceremony"
+  [[ -n "$modifier" ]] && close_id="closing-ceremony-${modifier}"
+  local safe_name; safe_name=$(to_safe_name "$close_id")
+  local filename="${safe_name}.md"
+  local feature_name; feature_name=$(to_feature_name "$safe_name")
+
+  log "INFO" "Initiating closing ceremony: ${safe_name}"
+  header
+  echo -e "${MAGENTA}                   CLOSING CEREMONY                          ${NC}"
+  header
+  echo ""
+
+  # Check no active session
+  local current_active
+  current_active=$(jq -r '.active_session // empty' "$STATE_FILE")
+  if [[ -n "$current_active" && "$current_active" != "null" ]]; then
+    error "Session already active: $current_active. Wait for it to finish."
+    return 1
+  fi
+
+  # Create closing ceremony draft
+  echo "CLOSING CEREMONY: Comprehensive review, test gap analysis, and UAT preparation." > "${DRAFT_DIR}/${filename}"
+
+  # Add to state
+  local timestamp next_priority temp_file
+  timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  next_priority=$(jq '.items | length' "$STATE_FILE")
+  temp_file=$(mktemp)
+  jq --arg id "$safe_name" --arg file "$filename" --arg ts "$timestamp" --argjson pri "$next_priority" \
+     '.items += [{
+       "id": $id, "draft_file": $file, "state": "draft", "phase": null,
+       "session_id": null, "delivery_handoff": null, "triage": "CLOSING_CEREMONY",
+       "priority": $pri, "tokens": {}, "started_at": $ts,
+       "completed_at": null, "error": null
+     }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+
+  # Move to developing
+  mv "${DRAFT_DIR}/${filename}" "${DEV_DIR}/"
+  update_item "$safe_name" "state" "developing"
+  update_item "$safe_name" "phase" "discovery"
+  update_global "active_session" "$safe_name"
+
+  # Resolve templates
+  local closing_ceremony_doc="${KH_DIR}/../docs/CLOSING_CEREMONY.md"
+  [[ -f "$closing_ceremony_doc" ]] || closing_ceremony_doc="${DOCS_PATH}/CLOSING_CEREMONY.md"
+  local executor_standards="${KH_DIR}/templates/EXECUTOR_STANDARDS.md"
+  [[ -f "$executor_standards" ]] || executor_standards="${KH_TEMPLATES}/EXECUTOR_STANDARDS.md"
+
+  # Locate user flow catalog
+  local user_flows_path=""
+  for uf in "${PROJECT_ROOT}/docs/USER_FLOWS.md" "${PROJECT_ROOT}/USER_FLOWS.md"; do
+    [[ -f "$uf" ]] && user_flows_path="$uf" && break
+  done
+
+  # Build the closing ceremony prompt
+  local prompt="> CLOSING CEREMONY — Comprehensive review + test gap analysis + UAT preparation.
+
+You are executing a CLOSING CEREMONY for this project. This is NOT a feature build. This is a comprehensive review of everything that has been built, with the goal of preparing a UAT delivery package for the system owner.
+
+REFERENCE FILES (read ALL at start):
+- Closing ceremony requirements: ${closing_ceremony_doc}
+- Executor standards: ${executor_standards}
+- Project ARCHITECTURE: ${DOCS_PATH}/ARCHITECTURE.md
+- User flow catalog: ${user_flows_path:-docs/USER_FLOWS.md}
+- Delivery handoffs directory: ${HANDOFFS_PATH}/
+
+## PHASE 1: DISCOVERY
+1. Read ARCHITECTURE.md — understand what exists, what was built, what components are live
+2. Read the user flow catalog (docs/USER_FLOWS.md) — inventory every defined flow
+3. Read ALL delivery handoffs in ${HANDOFFS_PATH}/ — understand what was delivered
+4. Inventory existing tests — what test files exist? What's their pass rate?
+5. Emit: [CEREMONY: DISCOVERY_COMPLETE]
+
+## PHASE 2: FLOW COVERAGE AUDIT
+For EACH user flow in the catalog:
+1. Does a test exist for this flow? (check test directories)
+2. Does the test PASS? (run it)
+3. If NO test exists → WRITE the test now (end-to-end Playwright covering the full journey)
+4. If test FAILS → attempt fix (up to 3 retries per failure, per executor standards TDD protocol)
+5. Update flow status in docs/USER_FLOWS.md: DEFINED → TESTED (or note gap)
+6. Emit: [CEREMONY: TESTS_COMPLETE]
+
+## PHASE 3: EXECUTION & RESULTS
+1. Run the FULL test suite (all existing + newly created tests)
+2. Generate test-results/summary.json (pass/fail per test, durations, error messages)
+3. Create testing/closing-ceremony/RESULTS.md with:
+   - Summary (total/passing/failing/skipped)
+   - Results by risk level (CRITICAL/HIGH/MEDIUM/LOW)
+   - Failing flows with diagnosis
+   - Risk assessment
+4. Emit: [CEREMONY: EXECUTION_COMPLETE]
+
+## PHASE 4: UAT DELIVERY PACKAGE
+1. Create seed script (testing/closing-ceremony/seed.*) — idempotent test data population
+2. Create reset script (testing/closing-ceremony/reset.*) — clean removal of test data
+3. Create UAT Guide (docs/delivery/UAT_GUIDE${modifier:+_${modifier}}.md) with:
+   - What was built (summary)
+   - How to start (copy-paste commands)
+   - Test users with credentials
+   - Manual walkthroughs for each CRITICAL/HIGH flow
+   - Playwright replay commands
+   - Known issues
+4. Create GTM Requirements manifest (docs/delivery/GTM${modifier:+_${modifier}}.md)
+5. Update docs/ARCHITECTURE.md with closing ceremony results
+6. Emit: [CEREMONY: UAT_GUIDE_COMPLETE]
+7. Emit: [CEREMONY: CLOSING_COMPLETE]
+
+COMPLETE: UAT_GUIDE${modifier:+_${modifier}}.md"
+
+  check_stop_sentinel
+
+  log "INFO" "Launching closing ceremony session"
+
+  local stream_file="${KH_DIR}/sessions/${safe_name}_stream.jsonl"
+  echo "$stream_file" > "${KH_DIR}/active_stream"
+
+  touch "$stream_file"
+  start_phase_monitor "$safe_name" "$stream_file"
+
+  local exit_code=0
+  ( cd "$PROJECT_ROOT" && claude -p "$prompt" \
+    --model "$MODEL" \
+    --dangerously-skip-permissions \
+    --verbose --output-format stream-json \
+    --max-turns 150 \
+  ) > "$stream_file" 2>&1 || exit_code=$?
+
+  stop_phase_monitor
+  rm -f "${KH_DIR}/active_stream"
+
+  finalize_item "$safe_name" "$stream_file" "$exit_code" "false"
+}
+
 cmd_stop() {
   resolve_paths
   touch "${KH_DIR}/STOP"
@@ -1321,6 +1561,8 @@ main() {
       cmd_logs ;;
     stop)
       cmd_stop ;;
+    close)
+      cmd_close "${2:-}" ;;
     help|--help|-h)
       echo ""
       echo -e "${BLUE}ThousandHand (KH)${NC} - Claude Workflow Orchestration"
@@ -1328,9 +1570,9 @@ main() {
       echo "Usage: kh <command>"
       echo ""
       echo -e "${YELLOW}Setup:${NC}"
-      echo "  init                    Initialize .kh structure"
+      echo "  init                    Initialize .kh structure + user flows + architecture doc"
       echo "  add \"name\"              Add draft from stdin (pipe or heredoc)"
-      echo "  status                  Show queue status + active phase"
+      echo "  status                  Show queue status + user flow coverage + active phase"
       echo "  view \"name\"             View task file + metadata"
       echo "  prioritize \"name\" <n>   Set priority (lower = processed first)"
       echo ""
@@ -1339,6 +1581,11 @@ main() {
       echo "  logs                    Live-tail active session (or show last)"
       echo "  watch                   Continuous monitoring mode"
       echo "  stop                    Graceful halt (from another terminal)"
+      echo ""
+      echo -e "${YELLOW}Delivery:${NC}"
+      echo "  close [modifier]        Closing ceremony — comprehensive review + test gap"
+      echo "                          analysis + UAT preparation. Optional modifier for"
+      echo "                          versioning (e.g., kh close v3, kh close sprint-1)"
       echo ""
       echo -e "${YELLOW}Management:${NC}"
       echo "  demote \"name\"           Move back to draft (redo)"
@@ -1355,6 +1602,7 @@ main() {
       echo ""
       echo "  init | add | status | view | prioritize"
       echo "  run | logs | watch | stop"
+      echo "  close [modifier]"
       echo "  demote | promote | resume | remove"
       echo ""
       echo "Run 'kh help' for details."

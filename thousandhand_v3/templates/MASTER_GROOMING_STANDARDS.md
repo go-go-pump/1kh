@@ -77,6 +77,22 @@ The single-session model uses these markers to track progress:
 
 ---
 
+## User Flow Management
+
+During grooming, the user flow catalog must be consulted and maintained:
+
+1. **Read** `docs/USER_FLOWS.md` (the project's flow catalog)
+2. **Classify** the incoming item:
+   - **JOURNEY** — describes a user experience → define flow(s) in catalog, derive tasks
+   - **TASK** — describes something to build → check which existing flows it serves, create new ones if this task introduces new journeys
+   - **INFRASTRUCTURE/CHORE** — no user-facing journey → mark as flow-independent, proceed normally
+3. **Update** `docs/USER_FLOWS.md` with any new or modified flows
+4. **Include** flow references in success criteria — "this task serves flows: [list]"
+
+> **See also:** EXECUTOR_STANDARDS Section 4 (TDD protocol) for how user flow tests are written and run during development.
+
+---
+
 ## Delivery Handoff
 
 At the end of DEVELOPMENT (before emitting DEVELOPMENT_COMPLETE), create a delivery handoff document using the DELIVERY_HANDOFF_TEMPLATE. This captures:

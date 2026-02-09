@@ -4,6 +4,109 @@
 
 ---
 
+## 0. Core Definitions
+
+These definitions are foundational. Every concept in this document builds on them.
+
+### What Is a Business
+
+A **BUSINESS** is an ENTITY that drives IMPACT by providing UTILITY to PEOPLE in exchange for MONEY.
+
+- **ENTITY** — officially recognized (registered, incorporated, or by uniform consent). People recognize it as an actual thing.
+- **UTILITY** — the high-value proposition that makes people spend their time, effort, and dollars. It must cross a desirability threshold sufficient to change someone's workflow or life. Minimum desirability has a higher threshold than most founders assume — one tool often isn't enough; it's the right combination that's game-changing.
+- **PEOPLE** — individuals who exchange something of VALUE for something of VALUE. The business provides UTILITY; people provide MONEY. Both sides are predictable.
+- **MONEY** — financial return. Not necessarily the end goal — it may simply fund sustainability and rainy days. Profit-and-purpose model preferred over pure profit maximization.
+- **IMPACT** — the emerging property between the SYSTEMS under a business and its stakeholders. A business can ASSURE UTILITY but cannot assure IMPACT. Impact is market response — where preparation meets opportunity. It is the prediction, not the guarantee.
+
+A business is NOT a system. A system may create and manage the entity that is a business. The entity requires SYSTEMS to drive value, but the business itself is the human intent, the context, the purpose.
+
+### What Is a System
+
+A **SYSTEM** is the thing that delivers UTILITY. It is internal, controllable, buildable, testable, deployable. Systems are concerned with: does it work? Is it up? Is it fast? Does it serve the user?
+
+There is no distinction between "business system" and "user system" at the system level. All systems are simply SYSTEMS. The business is the CONTEXT in which systems operate — not a system itself.
+
+### What Is 1KH
+
+**1KH is a WRAPPER** that employs AI to create, manage, and monitor SYSTEMS that drive business objectives.
+
+- **WRAPPER** — lightweight utilities with high impact. Small real estate. Think KU-scale tooling, not enterprise platforms. The wrapper coordinates; the systems do the work.
+- **AI-employed** — Claude Code sessions are the workers. 1KH is the governance layer that tells them what to build, verifies what they built, and learns from the results.
+- **Systems-focused** — when 1KH initiates, it is immediately oriented toward SYSTEMS that DRIVE A BUSINESS. That's its objective.
+
+### The Three Questions
+
+Every system 1KH creates must pass three filters:
+
+1. **DESIRABILITY** — "Do they want/need it?" Does the target audience want the UTILITY we can deliver? Market demand, user pain, behavioral pull.
+2. **FEASIBILITY** — "Can we build it?" Can we reliably create the UTILITY we promise? We are limited by our capability and must know the limits.
+3. **VIABILITY** — "Should we build it?" Even if they want it and we can do it, will there be sufficient IMPACT? Profit, purpose, sustainability. Viability is the market response question — often very different from what customers say they "desire."
+
+These three questions are asked repeatedly at increasing fidelity: lightly during Opening Ceremony, analytically during Simulation, practically during Execution, and verified during Closing Ceremony.
+
+### The Ceremonies (Exchange Events)
+
+Ceremonies are **exchange events** between the system owner and 1KH — moments where human and system interact, review, and align. There are exactly three:
+
+```
+OPENING        SIMULATION        CLOSING
+CEREMONY  ──→  CEREMONY  ──→  [ THE WORK ]  ──→  CEREMONY
+   │               │               │                │
+   ↕               ↕               ↕                ↕
+FOUNDATION     IMAGINATION     All layers        EXECUTION
+(Oracle,       (Risk analysis   fire here:       (UAT, GTM,
+ North Star,    across phases,  INTENT → WORK →   Delivery
+ Context)       stress-test)    GROOMING → EXEC)  Verification)
+```
+
+- **OPENING CEREMONY** — First encounter. Captures the founder's business idea and foundational concepts into Foundation docs (North Star, Oracle, Context). Lightweight conversation, high-level document creation. At this point, neither the founder nor 1KH truly knows if the idea has UTILITY, FEASIBILITY, or VIABILITY. This is brainstorming the grocery list before buying the spaghetti.
+
+- **SIMULATION CEREMONY** — 1KH performs a virtualized walkthrough of the system's path from idea to impact. Considers the CURRENT PHASE and ALL SUBSEQUENT PHASES — it emulates the cycle over many phases, not just one. Tests both the idea AND the process itself (can 1KH orchestrate this?). Evaluates risks: founder behavior patterns, technical challenges, market response, margin sensitivity, scaling costs, competitive dynamics. Especially valuable in Phase 1 where NO MARKET DATA exists — simulation offers REFLECTION-like feedback to IMAGINATION before anything is built. Presents findings back to the founder for review. If the exercise reveals the exercise is a waste of time — that's valuable too.
+
+- **[THE WORK]** — NOT a ceremony. This is the process where all internal layers fire: Foundation → Imagination → Intent → Work → Grooming → Execution. Systems get built, tested, delivered. Local-first, TDD, opinionated stack. The Orchestrator follows EXECUTOR STANDARDS for how to build and ORCHESTRATOR STANDARDS for how to plan (MVP). This is where USER FLOWS get built, tested, and proven.
+
+- **CLOSING CEREMONY** — Verifies what was built. UAT preparation, test data seeding, flow demonstration, results reporting. Produces a UAT Delivery Package and GTM Requirements manifest. The USER FLOW CATALOG (from WORK) becomes the verification checklist. See `CLOSING_CEREMONY.md`.
+
+Each ceremony has its own requirements document (see Section 17: File References).
+
+### User Flows — The Book of Life
+
+USER FLOWS are the connective tissue between strategic decisions and verifiable outcomes. They live at the **WORK layer** as a first-class artifact type, parallel to TASKS:
+
+```
+INTENT decides: "Nurture the ordering hypothesis"
+       │
+       ▼
+WORK produces:
+  ├── TASKS (TRoNs): "Build ordering widget", "Build order dashboard", "Add payment integration"
+  └── USER FLOWS: "New customer browses → adds to cart → checks out → receives confirmation"
+                  "Existing customer re-orders from history → applies loyalty discount"
+                  "Returning interrupted customer resumes abandoned cart"
+```
+
+**USER FLOWS are not TASKS.** Tasks describe what to BUILD. User flows describe what a PERSON EXPERIENCES. A single user flow may span multiple TRoNs. A single TRoN may serve multiple user flows.
+
+**The lifecycle of a USER FLOW:**
+
+| Layer | What happens to the flow |
+|-------|-------------------------|
+| **WORK** | Flow is defined — who, what journey, what lifecycle state (NEW / EXISTING / RETURNING_INTERRUPTED) |
+| **GROOMING** | Flow becomes acceptance criteria context — the handoff says "this TRoN must support these flows" |
+| **EXECUTION** | Flow is implemented and tested — Playwright tests cover the journey end-to-end |
+| **CLOSING CEREMONY** | Flow is verified — UAT demonstrates the journey works with real-feeling seed data |
+
+The **USER FLOW CATALOG** is the "Book of Life" for a system. It is the discrete, enumerable set of journeys that a user can take. When the catalog is complete and all flows are verified, the system is done.
+
+### Minimum Viable Product (MVP) Philosophy
+
+Pushing the founder to MVP is key. Identify the minimum capability to deliver minimum desirability for minimum viability.
+
+Minimum desirability has a higher threshold than most assume. One tool often isn't enough to change someone's workflow. The RIGHT tool or the RIGHT series of tools that changes a workflow in such a way that serious progress occurs — that's game-changing. That's the MVP threshold.
+
+The hypothesis chain should be based on this: not "what's the smallest thing we can ship" but "what's the smallest thing that actually changes someone's life."
+
+---
+
 ## 1. The v3 Flow
 
 v3 introduces a layered architecture where each layer is a **loop** with forward output and backward feedback. The layers go from abstract (Foundation documents) to concrete (source code, tests, deployed artifacts).
@@ -21,8 +124,8 @@ FOUNDATION  ←→  (reflection)  ←→  IMAGINATION  ←→  (hypothesis)  ←
 │  │FOUNDATION│ ←─→ │ IMAGINATION │ ←─→ │ INTENT │ ←─→ │ WORK │ ←─→ │GROOMING │     │
 │  └──────────┘     └─────────────┘     └────────┘     └──────┘     └────┬────┘     │
 │       ↑               ↑                   ↑              ↑              │           │
-│       │               │                   │              │              │ (REQ      │
-│       │           reflection          hypothesis     decisions         │  HANDOFF) │
+│       │               │                   │              │              │(GROOMING  │
+│       │           reflection          hypothesis     decisions         │ HANDOFF)  │
 │       │           feedback            feedback       feedback          │           │
 │       │               │                   │              ↑              ▼           │
 │       │               │                   │              │        ┌──────────┐     │
@@ -107,14 +210,16 @@ Metrics can be derived at practically every layer:
 - PIVOT — new direction, major pruning (requires human approval)
 - RESTART — fundamentally different vision, archive and begin again
 
-**Two system types** (simplified from v2):
+**Systems** (evolved from v2 — see Section 0 for definitions):
 
-Every 1KH project requires a **Business System** and at least one **User System**:
+A business is NOT a system. The business is the CONTEXT — the entity, the purpose, the impact goal. SYSTEMS are what deliver UTILITY under that context. 1KH creates and manages SYSTEMS; the business is the objective they serve.
 
-- **Business System** = the coach. Concerned with EXTERNAL factors it can't directly control — market response, user adoption, impact, revenue. Metrics: whatever the owner cares about (revenue, profit, social impact, reach). Nonprofits have business systems too — they just measure impact instead of revenue. The business system IS the wrapper around its user systems.
-- **User System** = a player on the team. Offers functionality. Concerned with INTERNAL factors it CAN control — does it work? is it up? is it fast? Metrics: uptime, latency, test coverage, feature completion.
+Every 1KH project has one BUSINESS CONTEXT and one or more SYSTEMS:
 
-Analogy: A tennis coach (business system) with one player (user system). A football coach (business system) with a full team (many user systems). The coach worries about winning matches (external). The players worry about their skills and fitness (internal). The coach optimizes its players — they practice, improve, handle knowns and unknowns, slowly pushing the needle.
+- **BUSINESS CONTEXT** = the coach. Concerned with EXTERNAL factors it can't directly control — market response, user adoption, impact, revenue. Metrics: whatever the owner cares about (revenue, profit, social impact, reach). Captured in Foundation docs (North Star, Oracle, Context). This is not a system — it's the purpose that systems serve.
+- **SYSTEM** = a player on the team. Offers functionality. Concerned with INTERNAL factors it CAN control — does it work? is it up? is it fast? Metrics: uptime, latency, test coverage, feature completion. This is what 1KH builds, tests, deploys, and monitors.
+
+Analogy: A tennis coach (business context) with one player (system). A football coach (business context) with a full team (many systems). The coach worries about winning matches (external). The players worry about their skills and fitness (internal). The coach optimizes its players — they practice, improve, handle knowns and unknowns, slowly pushing the needle.
 
 **Modes**: `1kh init` (fresh project) or `1kh adopt` (existing project — scans existing docs, detects tech stack, wraps with 1KH Foundation).
 
@@ -153,11 +258,11 @@ Analogy: A tennis coach (business system) with one player (user system). A footb
 **Forward output**: Stateless TASKS delivered to GROOMING.
 
 **Backward feedback from GROOMING**:
-- "This task should be split — parts belong to different build workflows"
+- "This task should be split — parts belong to different grooming scopes"
 - "This task overlaps with an existing task — consider merging"
 - "This task's scope is unclear — needs refinement"
 
-**Key distinction**: TASKS from WORK are **stateless** — they describe *what* needs to happen but don't carry project context, build workflow assignment, or session state. That's GROOMING's job.
+**Key distinction**: TASKS from WORK are **stateless** — they describe *what* needs to happen but don't carry project context, triage classification, or session state. That's GROOMING's job.
 
 **Task granularity: TRoNs (Tiniest Runnable Notions).** WORK decomposes into the smallest unit that delivers independently verifiable user value. The test: "Can a user see or test this in isolation?" If yes, it's a TRoN. If no, it's an implementation detail that belongs inside a larger TRoN.
 
@@ -184,29 +289,29 @@ These pre-authorization options let the user set risk tolerance once instead of 
 
 #### Function 1: Task Hydration (Forward — WORK → GROOMING → EXECUTION)
 
-Takes a **stateless TASK** and produces a **stateful CC REQUIREMENT HANDOFF**:
+Takes a **stateless TASK** and produces a **stateful GROOMING HANDOFF** (the hydrated analysis that EXECUTION consumes):
 
 1. **Reads** the incoming task from WORK
 2. **Hydrates** with project context (TECH_STACK, ROADMAP, existing architecture docs, PRIMER)
-3. **Classifies** triage level:
-   - **FEATURE** — new functionality, significant additions
-   - **MAJOR_FIX** — bug fix with broad impact
-   - **SMALL_FIX** — targeted fix, config change, tweak
-   - **DOCUMENTATION** — doc-only changes
-4. **Assigns** workflow type:
-   - **Build Workflow** — for features, big defects (the standard path)
-   - **Meta Build Workflow** — when the required Build Workflow *does not yet exist*
-   - **Document Workflow** — for basic document updates, global code fixes
-5. **Produces** a REQ_HANDOFF document following KU's template structure:
-   - Status, Triage, Objective, Background (current → target state), Architecture
+3. **Classifies** triage level (per KU MASTER_GROOMING_STANDARDS):
+   - **FEATURE** — new functionality, significant additions → full analysis
+   - **MAJOR_FIX** — bug fix with broad impact → full analysis
+   - **SMALL_FIX** — targeted fix, config change, tweak → lightweight analysis
+   - **DOCUMENTATION** — doc-only changes → lightweight analysis
+4. **Emits** triage classification: `[TRIAGE: FEATURE]` (or MAJOR_FIX, SMALL_FIX, DOCUMENTATION)
+5. **Produces** a GROOMING HANDOFF containing:
+   - Objective, Background (current → target state), Architecture
    - Database Schema, Files to Create/Modify
-   - Success Criteria, Out of Scope, Questions, CC Processing Notes
+   - Success Criteria, Out of Scope, Questions, Processing Notes
+   - USER FLOW references (which flows from the catalog does this task serve?)
 
-**The WHAT-not-HOW principle:** GROOMING specifies WHAT needs to change and WHY — not HOW to implement it. The handoff should contain: objective, architecture diagrams, database schema, success criteria (testable outcomes), files map, and out of scope. It should NOT contain: exact HTML snippets, JavaScript function implementations, or line-by-line code changes. That's EXECUTION's job.
+**The WHAT-not-HOW principle** (from KU MASTER_GROOMING_STANDARDS): GROOMING specifies WHAT needs to change and WHY — not HOW to implement it. The handoff should contain: objective, architecture diagrams, database schema, success criteria (testable outcomes), files map, and out of scope. It should NOT contain: exact HTML snippets, JavaScript function implementations, or line-by-line code changes. That's EXECUTION's job.
 
 Why this matters: EXECUTION reads the actual codebase and makes its own implementation decisions based on what it finds. Over-specified handoffs waste tokens twice — once when GROOMING writes the code, and again when EXECUTION reads the codebase and deviates from the spec anyway. A 1,000-line handoff full of code snippets is slower to ingest and produces more "deviations" than a 400-line handoff with clear constraints and testable outcomes. GROOMING provides the constraints that define done; EXECUTION provides the implementation that meets them.
 
 **Exception**: Database schemas and migration SQL SHOULD be specified — these are structural contracts, not implementation opinions. Architecture diagrams showing data flow and component relationships SHOULD be specified. These constrain EXECUTION without micro-managing it.
+
+**Phase markers** (from KU MASTER_GROOMING_STANDARDS): The single-session model tracks progress with markers: `[PHASE: GROOMING_COMPLETE]` → `[PHASE: DEVELOPMENT_COMPLETE]` → `[PHASE: UPDATE_COMPLETE]`. These replace the old workflow assignment system.
 
 **If GROOMING realizes parts of a task are genuinely unrelated** (different hypotheses, different user-facing features, no shared context), it sends feedback to WORK to decompose. But if a task is one coherent feature with multiple implementation phases (intake flow + persistence + portal pages + tests), it stays as one task. The phases are interdependent — splitting them into separate sessions wastes context re-ingestion without adding value. GROOMING detects overlap and merger opportunities across tasks.
 
@@ -225,7 +330,7 @@ Receives a **DELIVERY HANDOFF** from EXECUTION and:
 - If project lacks capabilities needed for this task → flag and escalate
 - If task doesn't fit the current project architecture → escalate with specific misalignment details
 
-**Risk ownership: PROJECT RISK.** GROOMING identifies risks specific to the project context — "we don't have a database yet but this task assumes one", "this requires a shared component we haven't built", "this conflicts with our existing auth approach." HIGH PROJECT RISK → escalate to human before producing REQ_HANDOFF. By the time something passes GROOMING, it should have the best chance of succeeding in EXECUTION because business risk (INTENT), technical risk (WORK), and project risk (GROOMING) have all been filtered.
+**Risk ownership: PROJECT RISK.** GROOMING identifies risks specific to the project context — "we don't have a database yet but this task assumes one", "this requires a shared component we haven't built", "this conflicts with our existing auth approach." HIGH PROJECT RISK → escalate to human before producing the grooming handoff. By the time something passes GROOMING, it should have the best chance of succeeding in EXECUTION because business risk (INTENT), technical risk (WORK), and project risk (GROOMING) have all been filtered.
 
 **Model**: Sonnet (fast triage, context assembly)
 **Tools**: Read, Write, Glob, Grep (no execution tools)
@@ -237,13 +342,13 @@ Receives a **DELIVERY HANDOFF** from EXECUTION and:
 
 **Two execution paths:**
 
-#### Path A: Build/Meta Build Workflow (from REQ HANDOFF)
+#### Path A: Feature / Major Fix (from GROOMING HANDOFF)
 
 ```
-REQ HANDOFF (includes Test Execution Contract — see Section 6.1)
+GROOMING HANDOFF (includes Test Execution Contract — see Section 6.1)
     │
     ▼
-Build Workflow (or Meta Build Workflow)
+Development Phase
     │
     ├──→ FIRST: Create TEST assets (Playwright specs, unit tests, workflow tests)
     │         + Create test runner script (bash, JSON output — see Section 6.2)
@@ -252,7 +357,7 @@ Build Workflow (or Meta Build Workflow)
     │
     ├──→ Run tests via bash runner → read summary.json (token-efficient)
     │         │
-    │         ├── ALL PASS → Mark Build Workflow as VALID
+    │         ├── ALL PASS → Emit [PHASE: DEVELOPMENT_COMPLETE]
     │         │                Send DELIVERY HANDOFF (success + summary.json) → GROOMING
     │         │
     │         └── ANY FAIL → Read failure detail → Fix code → Re-run
@@ -260,7 +365,6 @@ Build Workflow (or Meta Build Workflow)
     │                  ├── Fixed → Loop back (re-run, read summary, check)
     │                  │
     │                  └── Same failure 3x →
-    │                       Mark Build Workflow as INVALID
     │                       Send DELIVERY HANDOFF (escalation + summary.json) → GROOMING
     │
     └──→ Evaluate: Is this REUSABLE or ONE-OFF?
@@ -326,7 +430,7 @@ WORK creates TASK: "Build user authentication system"
 ```
 
 **When GROOMING pushes back:**
-- Task spans multiple build workflow domains → split
+- Task spans multiple unrelated scopes → split
 - Task duplicates or overlaps with existing work → merge suggestion
 - Task scope is ambiguous → request refinement with specific questions
 
@@ -372,7 +476,7 @@ REFLECTION is not a single layer — it operates **across** all layers, analyzin
 | North Star flat for N cycles | Challenge Foundation (ADJUST? PIVOT?) |
 | Same hypothesis types keep failing | Shift IMAGINATION strategy |
 | Tasks consistently getting split by GROOMING | WORK needs better decomposition |
-| Build Workflows frequently invalid | Escalate — possible architectural issue |
+| Grooming handoffs frequently failing in execution | Escalate — possible architectural issue |
 | Test coverage declining | Execution quality needs attention |
 | SLAs degrading (OPERATE phase) | IMAGINATION proposes optimizations |
 
@@ -380,13 +484,14 @@ REFLECTION is not a single layer — it operates **across** all layers, analyzin
 
 ## 5. Learning System and Shared Capabilities
 
-### 5.1 The Collapse: No More BUILD_WORKFLOW or META_BUILD_WORKFLOW
+### 5.1 The Collapse: Grooming Standards Replace Build Workflows
 
-v3 eliminates these abstractions. They were unnecessary layers:
+v3 (and KU's evolution) eliminated the BUILD_WORKFLOW and META_BUILD_WORKFLOW abstractions. They were unnecessary layers:
 
-- **META_BUILD_WORKFLOW = GROOMING.** Creating build instructions for a new type of task is exactly what GROOMING does — it hydrates a task with project context and produces a REQ_HANDOFF. There's no separate "meta" step.
-- **BUILD_WORKFLOW = REQ_HANDOFF.** The handoff document IS the build instructions. It contains architecture, implementation plan, test plan, deployment steps. That's a "build workflow" in every practical sense.
-- **"Shared build patterns" = accumulated DELIVERY_HANDOFFs.** Institutional memory, not a formal artifact.
+- **META_BUILD_WORKFLOW = GROOMING.** Creating build instructions for a new type of task is exactly what GROOMING does — it hydrates a task with project context and produces a grooming handoff. There's no separate "meta" step. KU's MASTER_GROOMING_STANDARDS now defines this directly.
+- **BUILD_WORKFLOW = GROOMING HANDOFF.** The handoff document IS the build instructions. It contains architecture, success criteria, triage classification, and testable outcomes. That's a "build workflow" in every practical sense.
+- **REQ_HANDOFF_TEMPLATE → MASTER_GROOMING_STANDARDS.** The old template-based approach was replaced by grooming standards that define HOW grooming is conducted, with phase markers (`[PHASE: GROOMING_COMPLETE]`, `[PHASE: DEVELOPMENT_COMPLETE]`, `[PHASE: UPDATE_COMPLETE]`) tracking progress.
+- **"Shared build patterns" = accumulated DELIVERY_HANDOFFs.** Institutional memory, not a formal artifact. KU still uses MASTER_DELIVERY_HANDOFF_TEMPLATE for documenting completed work.
 
 ### 5.2 Three-Tier Learning System
 
@@ -410,25 +515,25 @@ Actual utility functions, modules, or services that multiple features import. Th
 
 Managed as a catalog (inventory file listing available components with paths, descriptions, and consumer lists). GROOMING references the catalog when hydrating to avoid rebuilding what already exists. Consumer linking enables impact assessment before changes.
 
-**Tier 3: REQ_HANDOFF_TEMPLATE updates (template evolution)**
+**Tier 3: Grooming Standards evolution (template evolution)**
 
-When GROOMING finds itself referencing the same PATTERN or SHARED_COMPONENT in 3+ consecutive handoffs, the update phase should fold it into the local REQ_HANDOFF_TEMPLATE. This is organic template growth — the template evolves to reflect what the project actually needs, not what we guessed at init time.
+When GROOMING finds itself referencing the same PATTERN or SHARED_COMPONENT in 3+ consecutive handoffs, the update phase should fold it into the project's local grooming standards. This is organic template growth — the standards evolve to reflect what the project actually needs, not what we guessed at init time.
 
 ### 5.3 Learning Flow
 
 ```
 EXECUTION produces DELIVERY_HANDOFF
          │
-         ├── Update phase reviews delivery
+         ├── Update phase reviews delivery [PHASE: UPDATE_COMPLETE]
          │         │
          │         ├── Lessons learned? → Add to PATTERNS.md
          │         │
          │         ├── New reusable utility? → Add to SHARED_COMPONENTS catalog
          │         │
-         │         └── Pattern repeated 3+ times? → Update REQ_HANDOFF_TEMPLATE
+         │         └── Pattern repeated 3+ times? → Update local grooming standards
          │
          └── Next GROOMING session reads all three
-                   → Produces better REQ_HANDOFF
+                   → Produces better grooming handoffs
                    → Faster execution, fewer surprises
 ```
 
@@ -436,7 +541,7 @@ EXECUTION produces DELIVERY_HANDOFF
 
 ## 6. The Test-First Standard
 
-BUILD WORKFLOW always follows this pattern:
+Development always follows this pattern:
 
 ```
 1. Create TEST assets first
@@ -461,7 +566,7 @@ BUILD WORKFLOW always follows this pattern:
 
 ### 6.1 The Execution Session Test Loop
 
-The REQ HANDOFF must instruct the execution session to be **aggressive about test cycling**. This is not "write tests, write code, run once, report." This is:
+The GROOMING HANDOFF must instruct the execution session to be **aggressive about test cycling**. This is not "write tests, write code, run once, report." This is:
 
 1. Write tests that cover every acceptance criterion
 2. Write implementation
@@ -474,7 +579,7 @@ The REQ HANDOFF must instruct the execution session to be **aggressive about tes
    - Same failure persists after 3 fix attempts → mark INVALID, produce escalation DELIVERY HANDOFF
    - New failures appear after a fix → treat as new failures, reset retry count for those
 
-**The REQ HANDOFF template must include this loop instruction explicitly.** It's not optional behavior — it's the standard execution contract. The session doesn't get to say "here's a checklist for you to verify." It verifies itself.
+**The GROOMING HANDOFF must include this loop instruction explicitly.** It's not optional behavior — it's the standard execution contract (codified in KU's MASTER_GROOMING_STANDARDS). The session doesn't get to say "here's a checklist for you to verify." It verifies itself.
 
 ### 6.2 Token-Efficient Test Execution
 
@@ -503,7 +608,7 @@ EXECUTION SESSION (Opus)
     └── Final summary.json goes into DELIVERY HANDOFF
 ```
 
-**The runner script** is itself a deliverable of the build workflow. It:
+**The runner script** is itself a deliverable of the development phase. It:
 - Runs the test suite with JSON reporter
 - Parses output into `summary.json` (pass/fail counts, test names, durations)
 - Extracts failure details into `failures/[test-name].txt` (just the error message and stack trace, not full DOM)
@@ -521,22 +626,22 @@ EXECUTION SESSION (Opus)
 STATELESS                          STATEFUL
 (no session context)               (full project context)
 
-  Foundation docs                    REQ HANDOFF
+  Foundation docs                    GROOMING HANDOFF
   Hypotheses                         (hydrated with project context,
   Decisions                           tech stack, architecture,
-  Tasks from WORK                     assigned workflow, triage)
+  Tasks from WORK                     triage classification)
        │                                    │
        └──── GROOMING BOUNDARY ─────────────┘
              (this is where hydration happens)
 ```
 
-**Why this matters**: Claude Code sessions are stateless by default. Each session starts fresh. The REQ HANDOFF document is the mechanism that gives a session everything it needs to execute — it IS the state.
+**Why this matters**: Claude Code sessions are stateless by default. Each session starts fresh. The GROOMING HANDOFF is the mechanism that gives a session everything it needs to execute — it IS the state.
 
 ### 7.2 Four Storage Types
 
 Each storage type serves a different purpose at a different layer:
 
-**Markdown files** — Human-readable documents that CC sessions consume and produce. Foundation docs (Oracle, North Star, Context), handoff documents (REQ_HANDOFF, DELIVERY_HANDOFF), project docs (ROADMAP, PRIMER, ARCHITECTURE), PATTERNS.md. These ARE the state for the abstract layers. REFLECTION reads Foundation + project docs. GROOMING reads project docs + patterns + handoff history.
+**Markdown files** — Human-readable documents that CC sessions consume and produce. Foundation docs (Oracle, North Star, Context), handoff documents (GROOMING_HANDOFF, DELIVERY_HANDOFF), project docs (ROADMAP, PRIMER, ARCHITECTURE), PATTERNS.md. These ARE the state for the abstract layers. REFLECTION reads Foundation + project docs. GROOMING reads project docs + patterns + handoff history.
 
 **JSON files** — Simple configuration. `config.json` for orchestration settings (models, tools, paths, polling intervals). Lightweight, human-editable, no relationships needed.
 
@@ -566,7 +671,7 @@ Each storage type serves a different purpose at a different layer:
 │  EXECUTION ENGINE (1KH internal)                  │
 │                                                   │
 │  Filesystem dirs (1_draft → 6_complete)           │
-│  Markdown (REQ_HANDOFFs, DELIVERY_HANDOFFs)      │
+│  Markdown (GROOMING_HANDOFFs, DELIVERY_HANDOFFs)  │
 │                                                   │
 └─────────────────────────────────────────────────┘
 ```
@@ -635,9 +740,9 @@ Here's how a complete cycle works in v3:
 5. GROOMING receives Task A:
    - Hydrates with project context (tech stack: Next.js, Supabase, Temporal)
    - Triage: FEATURE
-   - Assigns: Build Workflow
-   - Produces: CC_HANDOFF_ORDERING_WIDGET.md
-     (architecture, DB schema, implementation plan, test plan, deployment)
+   - Triage classification emitted: `[TRIAGE: FEATURE]`
+   - Produces: GROOMING_HANDOFF_ORDERING_WIDGET.md
+     (architecture, DB schema, success criteria, test execution contract)
 
 6. EXECUTION receives handoff:
    - Creates Playwright test: "widget loads, user can add items, submit order"
@@ -668,11 +773,11 @@ Here's how a complete cycle works in v3:
 | Task execution | Conceptual (3 factories, no implementation) | Concrete (Build Workflows via KU patterns) |
 | Grooming | Not present | First-class component with 3 functions |
 | Feedback loops | Forward-only (loop → loop) | Bidirectional at every layer |
-| Handoff documents | Not present | REQ_HANDOFF and DELIVERY_HANDOFF (from KU) |
+| Handoff documents | Not present | GROOMING_HANDOFF and DELIVERY_HANDOFF (evolved from KU) |
 | State management | Conceptual | Filesystem queue + JSON state (from KU) |
 | Model selection | Not specified | Sonnet/Opus by phase (from KU) |
 | Shared capabilities | Deferred to Phase 13 | Three-tier learning system (PATTERNS, SHARED_COMPONENTS, template evolution) |
-| Meta Build | "Factory of factories" concept | **Eliminated** — GROOMING IS the meta build; REQ_HANDOFF IS the build workflow |
+| Meta Build | "Factory of factories" concept | **Eliminated** — GROOMING IS the meta build; the grooming handoff IS the build spec |
 | Test standard | TDD philosophy | Test-first with zero-manual-verification standard |
 | Escalation paths | Human approval for pivots | Multi-level (GROOMING→WORK, EXECUTION→GROOMING→WORK→human) |
 | Concurrency | Not addressed | Parallel pipelines with configurable limits |
@@ -1070,7 +1175,7 @@ Then: validation errors appear on all required fields
 
 These are perfectly valid acceptance criteria that don't need Given/When/Then framing. GROOMING should pick the format that communicates the criterion most clearly to EXECUTION. The goal is unambiguous, testable criteria — the syntax is a means, not an end.
 
-**Where it applies**: Success Criteria section of REQ_HANDOFFs only. The rest of the requirements chain uses natural language. This is a communication convention between GROOMING and EXECUTION, not a system-wide format. The system writes acceptance criteria; human 1KH owners don't need to use any specific syntax.
+**Where it applies**: Success Criteria section of grooming handoffs only. The rest of the requirements chain uses natural language. This is a communication convention between GROOMING and EXECUTION, not a system-wide format. The system writes acceptance criteria; human 1KH owners don't need to use any specific syntax.
 
 ---
 
@@ -1138,7 +1243,7 @@ Current KU delivery produces verification checklists like:
 * [ ] No console errors in browser
 ```
 
-Every single one of these can be a Playwright assertion. The execution session has all the tools to run these tests itself — it just wasn't instructed to loop through them aggressively. The problem isn't capability, it's the handoff contract. The REQ HANDOFF didn't demand "run until green or escalate." It let the session stop at "here's what to check."
+Every single one of these can be a Playwright assertion. The execution session has all the tools to run these tests itself — it just wasn't instructed to loop through them aggressively. The problem isn't capability, it's the handoff contract. The grooming handoff didn't demand "run until green or escalate." It let the session stop at "here's what to check."
 
 ### 14.2 The v3 Standard: Zero Manual Verification
 
@@ -1166,9 +1271,9 @@ MANUAL VERIFICATION NEEDED: None
 
 The key difference from v2/KU: the execution session doesn't hand off a checklist. It ran the checklist itself, fixed what broke, and is handing back proof.
 
-### 14.3 REQ HANDOFF Amendment
+### 14.3 Grooming Handoff Amendment
 
-To make this standard enforceable, the REQ HANDOFF template must include a **Test Execution Contract** section:
+To make this standard enforceable, the grooming handoff must include a **Test Execution Contract** section:
 
 ```markdown
 ## Test Execution Contract
@@ -1181,7 +1286,7 @@ To make this standard enforceable, the REQ HANDOFF template must include a **Tes
 - Any item that cannot be automated must be flagged with reason
 ```
 
-This contract is not a suggestion — GROOMING bakes it into every REQ HANDOFF. The execution session has clear instructions: you are not done until tests are green or you've hit the retry ceiling and escalated.
+This contract is not a suggestion — GROOMING bakes it into every handoff (enforced by KU's MASTER_GROOMING_STANDARDS). The execution session has clear instructions: you are not done until tests are green or you've hit the retry ceiling and escalated.
 
 ### 14.4 Acceptable Exceptions (Short-Term)
 
@@ -1248,10 +1353,10 @@ This means: we reference v2 and KU as **study material**, not as code to copy. T
 | KU Component | Location | What to absorb | What to leave behind |
 |-------------|----------|----------------|---------------------|
 | **ku.sh orchestrator** (2,067 lines) | `kanban-utility/bin/ku.sh` | The entire state machine: 6-state filesystem-as-queue, file movement as transition, COMPLETE: marker parsing, signal handling (Ctrl+C kills process group), sentinel-based graceful stop (`ku stop`), session debug logging (full JSON + prompt saved), `ku logs` with stream-json tailing, `ku resume` for checkpoint-based session recovery. This is the execution engine blueprint. | Single dev concurrency (`max_concurrent.develop = 1`). v3 lifts this. |
-| **MASTER_REQ_HANDOFF template** (143 lines) | `kanban-utility/templates/MASTER_REQ_HANDOFF_TEMPLATE.md` | Lean handoff blueprint enforcing WHAT-not-HOW: objective, background (current/target state), architecture (diagrams not code), DB schema (DDL only), files to create/modify, success criteria, out of scope. No Implementation section. Triage-aware content scoping (SMALL_FIX uses 3 sections, FEATURE uses 7). | v3 evolves: add Test Execution Contract (Section 6.1), shared capability references. |
+| **MASTER_GROOMING_STANDARDS** | `kanban-utility/templates/MASTER_GROOMING_STANDARDS.md` | Grooming phase standards enforcing WHAT-not-HOW, triage classification (FEATURE/MAJOR_FIX/SMALL_FIX/DOCUMENTATION), phase markers (`[PHASE: GROOMING_COMPLETE]` etc.), testing expectations by triage level. Replaced the old REQ_HANDOFF_TEMPLATE with a standards-driven approach. | v3 evolves: add Test Execution Contract (Section 6.1), USER FLOW references, shared capability references. |
 | **MASTER_DELIVERY_HANDOFF template** (92 lines) | `kanban-utility/templates/MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Compact delivery format: summary with deviation assessment, completed/blocked/future items, deployments checklist, test table, doc updates needed (project-specific rows injected at init). | v3 evolves: add summary.json contents, shared capability publish/consume log. Replace manual verification checklist with automated test results (Section 14). |
 | **Master + local template pattern** | `templates/MASTER_*.md` → `.kanban/templates/` | Immutable master blueprints at package level. `ku init` generates local copies injected with project-specific doc references. Local templates evolve per-project; masters don't change. This IS the Tier 3 learning infrastructure (Section 5.2). | Directly adopted. |
-| **Interactive doc selection** | ku.sh `select_project_docs()` + `cmd_init()` | Scans project for `.md` files, interactive numbered menu, user selects which docs matter. Stored in `config.json` as `known_docs[]` (relative paths). Three template generators inject these into REQ, DELIVERY, and UPDATE templates. Zero Claude calls during init. Re-running init picks up new docs. | v3 extends: Foundation doc detection (`init` vs `adopt`), build workflow catalog injection. |
+| **Interactive doc selection** | ku.sh `select_project_docs()` + `cmd_init()` | Scans project for `.md` files, interactive numbered menu, user selects which docs matter. Stored in `config.json` as `known_docs[]` (relative paths). Template generators inject these into grooming and delivery contexts. Zero Claude calls during init. Re-running init picks up new docs. | v3 extends: Foundation doc detection (`init` vs `adopt`), USER FLOW CATALOG injection. |
 | **WHAT-not-HOW groom prompt** | ku.sh groom prompt (lines 770-806) | Explicit instruction: "Specify WHAT needs to change and WHY, not HOW. NO code snippets. Architecture = flow diagrams only. Database = DDL only." Dev prompt mirrors: "The handoff is a constraint doc, not a recipe." | Directly adopted — this is the lean handoff principle (Section 3.5) working in practice. |
 | **Triage-aware content scoping** | ku.sh groom + dev prompts | FEATURE/MAJOR_FIX/SMALL_FIX/DOCUMENTATION — classified once by groom, all downstream phases adjust. SMALL_FIX skips E2E + uses only 3 handoff sections. DOCUMENTATION skips tests and gets lightweight update. Triage embedded as HTML comment. | Nothing — this is clean and directly adopted. |
 | **Checkpoint resume** | ku.sh `cmd_resume()` (lines 1514-1711) | Re-attaches to prior session via `claude --resume <session_id>`. Moves file back to active queue. Injects minimal resume prompt. Extracts new session_id (can chain resumes). Phase-aware: knows which phase to resume based on item state. | v3 extends: add progress detection (scan working dir for created/modified files, compare against handoff files-to-modify). |
@@ -1268,7 +1373,7 @@ These are components that don't exist in either v2 or KU and must be designed fr
 
 | New Component | Purpose | Why it's new |
 |--------------|---------|-------------|
-| **GROOMING engine** | Hydrates tasks with project context, assigns workflows, produces REQ HANDOFFs | KU does this manually (user writes tasks). v3 automates it as a CC session. |
+| **GROOMING engine** | Hydrates tasks with project context, classifies triage, produces grooming handoffs | KU does this manually (user writes tasks). v3 automates it as a CC session. |
 | **WORK layer with task state** | Manages task queue with awareness of what's in-progress, complete, blocked | v2 had WORK conceptually but no state tracking. KU has state but no WORK layer above it. |
 | **Multi-session coordinator** | Orchestrates parallel GROOMING + EXECUTION sessions | KU is single-session. v3 needs a coordinator that can manage N concurrent pipelines. |
 | **Test runner framework** | Bash runner script + JSON summary + failure extraction | Neither v2 nor KU had this. Required for token-efficient test cycling (Section 6.2). |
@@ -1282,8 +1387,8 @@ These are components that don't exist in either v2 or KU and must be designed fr
 v3 implementation should follow this sequence (each item proves out the next):
 
 1. **Shell coordinator** — The ku.sh equivalent that manages state directories, spawns CC sessions, handles concurrency. This is the backbone.
-2. **GROOMING session** — Given a task file and project context, produce a REQ_HANDOFF. Prove this works with a real task.
-3. **EXECUTION session with test loop** — Given a REQ_HANDOFF, build code, run tests, cycle through failures, produce DELIVERY_HANDOFF. Prove end-to-end.
+2. **GROOMING session** — Given a task file and project context, produce a grooming handoff following MASTER_GROOMING_STANDARDS. Prove this works with a real task.
+3. **EXECUTION session with test loop** — Given a grooming handoff, build code, run tests, cycle through failures, produce DELIVERY_HANDOFF. Prove end-to-end.
 4. **WORK layer** — Task state management, dependency ordering, queue processing. Connect to GROOMING.
 5. **REFLECTION session** — Read state files, analyze patterns, produce recommendations. Connect to Foundation.
 6. **IMAGINATION + INTENT** — Hypothesis generation and strategic decisions. These are the abstract layers that feed WORK.
@@ -1296,15 +1401,27 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 ## 17. File References
 
+### 1KH Process Documents
+
 | Document | Location | Purpose |
 |----------|----------|---------|
 | This document | `/1KH/thousandhand_v3/ARCH_V3.md` | v3 architecture specification |
+| Opening Ceremony | `/1KH/thousandhand_v3/OPENING_CEREMONY.md` | Foundation doc creation process |
+| Closing Ceremony | `/1KH/thousandhand_v3/CLOSING_CEREMONY.md` | UAT preparation & delivery process |
+| Executor Standards | `/1KH/thousandhand_v3/EXECUTOR_STANDARDS.md` | Opinionated local-first build guidelines |
+| Orchestrator Standards | `/1KH/thousandhand_v3/ORCHESTRATOR_STANDARDS.md` | MVP planning + simulation framework |
 | Reflection | `/1KH/thousandhand_v3/REFLECTION.md` | v2→v3 transition reflection |
+| Intermediate Artifacts | `/1KH/thousandhand_v3/DRAFT_INTERMEDIATE_ARTIFACTS.md` | JSON schemas for hypotheses, tasks, events |
 | v2 Archive | `/1KH/archive/thousandhand_v2/` | Complete v2 codebase and docs |
+
+### KU References
+
+| Document | Location | Purpose |
+|----------|----------|---------|
 | **KU (primary)** | `/kanban-utility/` | **Production execution engine — lean on this heavily** |
-| KU Orchestrator | `/kanban-utility/bin/ku.sh` | 2,067-line state machine coordinator |
-| KU MASTER REQ Template | `/kanban-utility/templates/MASTER_REQ_HANDOFF_TEMPLATE.md` | 143-line lean handoff blueprint (WHAT not HOW) |
-| KU MASTER DELIVERY Template | `/kanban-utility/templates/MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | 92-line delivery blueprint |
+| KU Orchestrator | `/kanban-utility/bin/ku.sh` | State machine coordinator |
+| KU MASTER Grooming Standards | `/kanban-utility/templates/MASTER_GROOMING_STANDARDS.md` | Grooming phase standards (triage, WHAT-not-HOW, phase markers) |
+| KU MASTER DELIVERY Template | `/kanban-utility/templates/MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Delivery handoff blueprint |
 | KU Default Config | `/kanban-utility/defaults/config.json` | Model/tool/concurrency config + user-curated known_docs |
 | KU Default State | `/kanban-utility/defaults/state.json` | Per-item state with per-phase session tracking |
 | KU User Guide | `/kanban-utility/docs/KANBAN_UTILITY_POC.md` | Usage documentation |
@@ -1315,4 +1432,4 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 *This is the v3 architecture. It is a plan, not yet code. Implementation begins when this document is approved.*
 
-*Last Updated: 2026-02-07*
+*Last Updated: 2026-02-09*

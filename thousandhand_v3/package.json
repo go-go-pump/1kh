@@ -1,0 +1,14 @@
+{
+  "name": "thousandhand",
+  "version": "0.1.0",
+  "description": "1KH - Filesystem-based Claude workflow orchestration",
+  "bin": {
+    "kh": "./bin/kh.sh"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "defaults/",
+    "docs/"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "project_name": "my-project",
+  "project_root": ".",
+  "claude_context_path": "",
+  "docs_path": "docs",
+  "handoffs_path": "docs/handoffs",
+  "model": "opus",
+  "known_docs": [],
+  "polling_interval_seconds": 30
+}

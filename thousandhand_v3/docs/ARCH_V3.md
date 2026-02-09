@@ -1313,9 +1313,11 @@ Handled by the test loop in Section 6.1. Summary:
 
 ## 15. Open Questions (Remaining)
 
-1. **Intermediate artifact schemas** — v2 defined ReflectionResult, Hypothesis, Task, ExecutionResult as Python dataclasses. v3 needs these as JSON schemas for bash/CC runtime. Exact schemas need calibration with real data — current thresholds (0.65 approval, 0.40 escalation) are placeholders. (See: `thousandhand_v3/DRAFT_INTERMEDIATE_ARTIFACTS.md` for current reference.)
+**No blocking open questions remain.** All questions from prior revisions have been resolved.
 
-*Resolved since last revision: Cost management (token estimation + budget ceilings, Section 8). BUILD_WORKFLOW/META_BUILD collapse (Section 5). Risk layering across layers (Sections 3.3-3.6). State management storage types (Section 7). Data-first development directive (Section 12.4). User preference trend detection (Section 11.6 — moving-average on SQLite decisions table, 70% threshold over sliding window, REFLECTION proposes, human approves). Shared capability conflict resolution (Section 11.7 — simple local queue with filesystem lockfiles). Watch mode implementation (Section 11.8 — log tailing MVP from KU patterns, tmux multi-pane build-out). Simulation → production handoff (Section 11.9 — early research, knowledge center, seed/purge scripts, env templates, business risk escalation for mock data).*
+*Resolved this revision: Intermediate artifact schemas — JSON schemas for ReflectionResult, Hypothesis, Task, UserFlow, ExecutionResult, Event promoted from draft to `INTERMEDIATE_ARTIFACTS.md`. Thresholds (0.65 approval, 0.40 escalation) shipped as initial values with calibration process defined. See Section 17 for file reference.*
+
+*Resolved prior revisions: Cost management (Section 8). BUILD_WORKFLOW/META_BUILD collapse → Grooming Standards (Section 5). Risk layering (Sections 3.3-3.6). State management storage (Section 7). Data-first development (Section 12.4). User preference trend detection (Section 11.6). Shared capability conflict resolution (Section 11.7). Watch mode (Section 11.8). Simulation → production handoff (Section 11.9). KU terminology alignment — REQ_HANDOFF → GROOMING_HANDOFF, MASTER_GROOMING_STANDARDS replaces old templates. Ceremony model — 3 ceremonies (Opening, Simulation, Closing) + the work as a process. User Flow Catalog as first-class WORK layer artifact (Section 0).*
 
 ---
 
@@ -1410,9 +1412,9 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 | Closing Ceremony | `/1KH/thousandhand_v3/CLOSING_CEREMONY.md` | UAT preparation & delivery process |
 | Executor Standards | `/1KH/thousandhand_v3/EXECUTOR_STANDARDS.md` | Opinionated local-first build guidelines |
 | Orchestrator Standards | `/1KH/thousandhand_v3/ORCHESTRATOR_STANDARDS.md` | MVP planning + simulation framework |
-| Reflection | `/1KH/thousandhand_v3/REFLECTION.md` | v2→v3 transition reflection |
-| Intermediate Artifacts | `/1KH/thousandhand_v3/DRAFT_INTERMEDIATE_ARTIFACTS.md` | JSON schemas for hypotheses, tasks, events |
+| Intermediate Artifacts | `/1KH/thousandhand_v3/INTERMEDIATE_ARTIFACTS.md` | JSON schemas for hypotheses, tasks, user flows, events |
 | v2 Archive | `/1KH/archive/thousandhand_v2/` | Complete v2 codebase and docs |
+| v2→v3 Reflection (archived) | `/1KH/archive/REFLECTIONS_FROM_v2_TO_v3.md` | Historical transition notes (archived — do not reference for current state) |
 
 ### KU References
 
@@ -1430,6 +1432,6 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 ---
 
-*This is the v3 architecture. It is a plan, not yet code. Implementation begins when this document is approved.*
+*This is the v3 architecture. No blocking open questions remain. Implementation begins when the founder approves.*
 
 *Last Updated: 2026-02-09*

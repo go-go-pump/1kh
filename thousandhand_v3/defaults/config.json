@@ -6,5 +6,7 @@
   "handoffs_path": "docs/handoffs",
   "model": "opus",
   "known_docs": [],
-  "polling_interval_seconds": 30
+  "polling_interval_seconds": 30,
+  "execution_context": "local",
+  "template_version": "0.2.0"
 }

@@ -38,6 +38,7 @@ while [ -L "$_KH_SCRIPT" ]; do
 done
 KH_HOME="$(cd "$(dirname "$_KH_SCRIPT")/.." && pwd)"
 KH_TEMPLATES="${KH_HOME}/templates"
+KH_PROTOCOLS="${KH_HOME}/protocols"
 KH_DEFAULTS="${KH_HOME}/defaults"
 
 # Colors
@@ -625,8 +626,12 @@ ${doc_section}
 cmd_init() {
   local project_dir="$PWD"
   local kh_dir="${project_dir}/.kh"
+  local is_reinit=false
+
+  [[ -d "$kh_dir" ]] && is_reinit=true
 
   echo -e "${BLUE}Initializing ThousandHand in: ${project_dir}${NC}"
+  [[ "$is_reinit" == "true" ]] && echo -e "${YELLOW}Re-initializing — config and state preserved, templates refreshed.${NC}"
 
   mkdir -p "${kh_dir}/draft" "${kh_dir}/developing" "${kh_dir}/complete" "${kh_dir}/sessions"
 
@@ -637,23 +642,61 @@ cmd_init() {
        '.project_name = $name | .project_root = $root' \
        "${KH_DEFAULTS}/config.json" > "${kh_dir}/config.json"
     log "INFO" "Created config.json"
+  else
+    # Ensure new config fields exist (migration for existing projects)
+    local temp_file; temp_file=$(mktemp)
+    jq '. + {execution_context: (.execution_context // "local"), template_version: (.template_version // "0.0.0")}' \
+       "${kh_dir}/config.json" > "$temp_file" && mv "$temp_file" "${kh_dir}/config.json"
   fi
 
   [[ -f "${kh_dir}/state.json" ]] || cp "${KH_DEFAULTS}/state.json" "${kh_dir}/state.json"
 
   mkdir -p "${project_dir}/docs/handoffs"
 
-  select_project_docs "$project_dir" "${kh_dir}/config.json"
+  # Execution context selection (only on first init or if explicitly re-selecting)
+  local current_context
+  current_context=$(jq -r '.execution_context // "local"' "${kh_dir}/config.json")
+  if [[ "$is_reinit" == "false" ]] || [[ "$current_context" == "local" && "$is_reinit" == "true" ]]; then
+    echo ""
+    echo -e "${YELLOW}Execution Context:${NC}"
+    echo "  1) local       — SQLite, mocks, localhost (early development)"
+    echo "  2) mixed       — Some cloud services live, some local (incremental integration)"
+    echo "  3) production  — All services production (post-go-live)"
+    echo ""
+    read -p "Select execution context [1/2/3] (current: ${current_context}): " ctx_choice
+    case "$ctx_choice" in
+      2|mixed)      current_context="mixed" ;;
+      3|production) current_context="production" ;;
+      1|local|"")   current_context="local" ;;
+      *)            current_context="local" ;;
+    esac
+    local temp_file; temp_file=$(mktemp)
+    jq --arg ctx "$current_context" '.execution_context = $ctx' \
+       "${kh_dir}/config.json" > "$temp_file" && mv "$temp_file" "${kh_dir}/config.json"
+    log "INFO" "Execution context set to: ${current_context}"
+  fi
+  echo -e "  Context: ${CYAN}${current_context}${NC}"
 
+  # Doc selection (only on first init)
+  if [[ "$is_reinit" == "false" ]]; then
+    select_project_docs "$project_dir" "${kh_dir}/config.json"
+  else
+    echo -e "  ${GREEN}Skipping doc selection (re-init). Run with existing known_docs.${NC}"
+  fi
+
+  # Always regenerate templates (this is the staleness fix)
   generate_grooming_standards "$kh_dir" "$project_dir"
   log "INFO" "Generated .kh/templates/GROOMING_STANDARDS.md"
 
   generate_local_delivery_template "$kh_dir" "$project_dir"
   log "INFO" "Generated .kh/templates/DELIVERY_HANDOFF_TEMPLATE.md"
 
-  # Copy executor standards for session injection
-  cp "${KH_TEMPLATES}/EXECUTOR_STANDARDS.md" "${kh_dir}/templates/EXECUTOR_STANDARDS.md"
+  cp "${KH_PROTOCOLS}/EXECUTOR_STANDARDS.md" "${kh_dir}/templates/EXECUTOR_STANDARDS.md"
   log "INFO" "Copied .kh/templates/EXECUTOR_STANDARDS.md"
+
+  # Update template version
+  local temp_file; temp_file=$(mktemp)
+  jq '.template_version = "0.2.0"' "${kh_dir}/config.json" > "$temp_file" && mv "$temp_file" "${kh_dir}/config.json"
 
   # User Flow Catalog — look for existing, create from template if missing
   local user_flows_found=false
@@ -696,7 +739,8 @@ cmd_init() {
   fi
 
   LOG_FILE="${kh_dir}/kh.log"
-  log "INFO" "ThousandHand initialized in ${project_dir}"
+  log "INFO" "ThousandHand initialized in ${project_dir} [context: ${current_context}]"
+  success "ThousandHand ready [${current_context}]"
 }
 
 cmd_add() {
@@ -857,13 +901,17 @@ cmd_process_item() {
   local draft_content
   draft_content=$(cat "${DEV_DIR}/${filename}")
 
+  # Read execution context
+  local exec_context
+  exec_context=$(jq -r '.execution_context // "local"' "$CONFIG_FILE")
+
   # Resolve templates
   local grooming_standards="${KH_DIR}/templates/GROOMING_STANDARDS.md"
   [[ -f "$grooming_standards" ]] || grooming_standards="${KH_TEMPLATES}/MASTER_GROOMING_STANDARDS.md"
   local del_template="${KH_DIR}/templates/DELIVERY_HANDOFF_TEMPLATE.md"
   [[ -f "$del_template" ]] || del_template="${KH_TEMPLATES}/MASTER_DELIVERY_HANDOFF_TEMPLATE.md"
   local executor_standards="${KH_DIR}/templates/EXECUTOR_STANDARDS.md"
-  [[ -f "$executor_standards" ]] || executor_standards="${KH_TEMPLATES}/EXECUTOR_STANDARDS.md"
+  [[ -f "$executor_standards" ]] || executor_standards="${KH_PROTOCOLS}/EXECUTOR_STANDARDS.md"
 
   # Locate user flow catalog
   local user_flows_path=""
@@ -889,8 +937,25 @@ cmd_process_item() {
 4. Include flow references in your success criteria"
   fi
 
+  # Context-specific environment instructions
+  local context_instructions=""
+  case "$exec_context" in
+    local)
+      context_instructions="ENVIRONMENT: LOCAL — Use SQLite, local file storage, mock integrations. Everything at localhost. See Executor Standards Section 2.1." ;;
+    mixed)
+      context_instructions="ENVIRONMENT: MIXED — Some services are production, some local. USE THE ACTUAL DATABASE AND SERVICES that the project has configured. Check .env files and existing integration code to determine what's real vs mocked. Seed data into the REAL database, not into mocks or demo modes. If Supabase is configured, query Supabase. If S3 is configured, use S3. See Executor Standards Section 2.2." ;;
+    production)
+      context_instructions="ENVIRONMENT: PRODUCTION — All services are production. Every mutation is real. Seed data must be clearly identifiable (test_* prefix) and cleanly removable. Extra caution on migrations and data changes. See Executor Standards Section 2.3." ;;
+  esac
+
+  # Uppercase context for display (bash 3.2 compatible — no ${var^^})
+  local exec_context_upper
+  exec_context_upper=$(echo "$exec_context" | tr '[:lower:]' '[:upper:]')
+
   # Consolidated 3-phase prompt
   local prompt="> BEST EFFORTS / AGGRESSIVE EXECUTION. Move fast, assume and document.
+> [EXECUTION_CONTEXT: ${exec_context_upper}]
+> ${context_instructions}
 
 You are processing a task through 3 phases in a SINGLE SESSION:
 GROOMING -> DEVELOPMENT -> UPDATE.
@@ -947,19 +1012,33 @@ COMPLETE: DELIVERY_${feature_name}.md"
   local stream_file="${KH_DIR}/sessions/${id}_stream.jsonl"
   echo "$stream_file" > "${KH_DIR}/active_stream"
 
+  # Write prompt to temp file — avoids CLI argument length limits and quoting issues
+  local prompt_file="${KH_DIR}/sessions/${id}_prompt.txt"
+  printf '%s' "$prompt" > "$prompt_file"
+
   touch "$stream_file"
   start_phase_monitor "$id" "$stream_file"
 
   local exit_code=0
-  ( cd "$PROJECT_ROOT" && claude -p "$prompt" \
+  ( cd "$PROJECT_ROOT" && claude -p \
     --model "$MODEL" \
     --dangerously-skip-permissions \
     --verbose --output-format stream-json \
     --max-turns 100 \
+    < "$prompt_file" \
   ) > "$stream_file" 2>&1 || exit_code=$?
 
   stop_phase_monitor
-  rm -f "${KH_DIR}/active_stream"
+  rm -f "${KH_DIR}/active_stream" "$prompt_file"
+
+  # Surface errors to terminal if session produced no output
+  if [[ $exit_code -ne 0 && ! -s "$stream_file" ]]; then
+    warn "Claude session exited with code $exit_code but produced no output"
+  elif [[ $exit_code -ne 0 ]]; then
+    local first_error
+    first_error=$(head -5 "$stream_file" | grep -i "error" || true)
+    [[ -n "$first_error" ]] && warn "Claude error: $first_error"
+  fi
 
   finalize_item "$id" "$stream_file" "$exit_code" "false"
 }
@@ -1230,17 +1309,23 @@ When fully complete, output EXACTLY: COMPLETE: DELIVERY_${feature_name}.md" ;;
   esac
 
   echo "$stream_file" > "${KH_DIR}/active_stream"
+
+  # Write resume prompt to temp file
+  local prompt_file="${KH_DIR}/sessions/${safe_name}_resume_prompt.txt"
+  printf '%s' "$resume_prompt" > "$prompt_file"
+
   start_phase_monitor "$safe_name" "$stream_file"
 
   local exit_code=0
   ( cd "$PROJECT_ROOT" && claude --resume "$session_id" \
-    -p "$resume_prompt" \
+    -p \
     --dangerously-skip-permissions \
     --verbose --output-format stream-json \
+    < "$prompt_file" \
   ) >> "$stream_file" 2>&1 || exit_code=$?
 
   stop_phase_monitor
-  rm -f "${KH_DIR}/active_stream"
+  rm -f "${KH_DIR}/active_stream" "$prompt_file"
 
   finalize_item "$safe_name" "$stream_file" "$exit_code" "true"
 }
@@ -1424,10 +1509,10 @@ cmd_close() {
   update_global "active_session" "$safe_name"
 
   # Resolve templates
-  local closing_ceremony_doc="${KH_DIR}/../docs/CLOSING_CEREMONY.md"
+  local closing_ceremony_doc="${KH_PROTOCOLS}/CLOSING_CEREMONY.md"
   [[ -f "$closing_ceremony_doc" ]] || closing_ceremony_doc="${DOCS_PATH}/CLOSING_CEREMONY.md"
   local executor_standards="${KH_DIR}/templates/EXECUTOR_STANDARDS.md"
-  [[ -f "$executor_standards" ]] || executor_standards="${KH_TEMPLATES}/EXECUTOR_STANDARDS.md"
+  [[ -f "$executor_standards" ]] || executor_standards="${KH_PROTOCOLS}/EXECUTOR_STANDARDS.md"
 
   # Locate user flow catalog
   local user_flows_path=""
@@ -1435,10 +1520,19 @@ cmd_close() {
     [[ -f "$uf" ]] && user_flows_path="$uf" && break
   done
 
+  # Read execution context for closing ceremony
+  local exec_context
+  exec_context=$(jq -r '.execution_context // "local"' "$CONFIG_FILE")
+  local exec_context_upper
+  exec_context_upper=$(echo "$exec_context" | tr '[:lower:]' '[:upper:]')
+
   # Build the closing ceremony prompt
   local prompt="> CLOSING CEREMONY — Comprehensive review + test gap analysis + UAT preparation.
+> [EXECUTION_CONTEXT: ${exec_context_upper}]
 
 You are executing a CLOSING CEREMONY for this project. This is NOT a feature build. This is a comprehensive review of everything that has been built, with the goal of preparing a UAT delivery package for the system owner.
+
+IMPORTANT: Execution context is ${exec_context_upper}. Seed data and tests must target the ACTUAL infrastructure the project uses (see Executor Standards Section 2 for context-specific rules).
 
 REFERENCE FILES (read ALL at start):
 - Closing ceremony requirements: ${closing_ceremony_doc}
@@ -1497,19 +1591,33 @@ COMPLETE: UAT_GUIDE${modifier:+_${modifier}}.md"
   local stream_file="${KH_DIR}/sessions/${safe_name}_stream.jsonl"
   echo "$stream_file" > "${KH_DIR}/active_stream"
 
+  # Write prompt to temp file — avoids CLI argument length limits and quoting issues
+  local prompt_file="${KH_DIR}/sessions/${safe_name}_prompt.txt"
+  printf '%s' "$prompt" > "$prompt_file"
+
   touch "$stream_file"
   start_phase_monitor "$safe_name" "$stream_file"
 
   local exit_code=0
-  ( cd "$PROJECT_ROOT" && claude -p "$prompt" \
+  ( cd "$PROJECT_ROOT" && claude -p \
     --model "$MODEL" \
     --dangerously-skip-permissions \
     --verbose --output-format stream-json \
     --max-turns 150 \
+    < "$prompt_file" \
   ) > "$stream_file" 2>&1 || exit_code=$?
 
   stop_phase_monitor
-  rm -f "${KH_DIR}/active_stream"
+  rm -f "${KH_DIR}/active_stream" "$prompt_file"
+
+  # Surface errors to terminal if session produced no output
+  if [[ $exit_code -ne 0 && ! -s "$stream_file" ]]; then
+    warn "Claude session exited with code $exit_code but produced no output"
+  elif [[ $exit_code -ne 0 ]]; then
+    local first_error
+    first_error=$(head -5 "$stream_file" | grep -i "error" || true)
+    [[ -n "$first_error" ]] && warn "Claude error: $first_error"
+  fi
 
   finalize_item "$safe_name" "$stream_file" "$exit_code" "false"
 }

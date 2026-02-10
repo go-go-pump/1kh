@@ -539,6 +539,29 @@ EXECUTION produces DELIVERY_HANDOFF
 
 ---
 
+## 5.5 Execution Context
+
+The executor operates in one of three contexts, set during `kh init` and injected into every session as `[EXECUTION_CONTEXT: LOCAL|MIXED|PRODUCTION]`. The context determines where data lives, how integrations work, what gets mocked, and how seed data is created.
+
+**LOCAL** — Early development. SQLite, mocks, localhost. Maximum velocity, zero dependencies on external services. This is the default and the starting point for every project.
+
+**MIXED** — Some services are production, some are local. The critical rule: DO NOT fall back to demo/mock data when real infrastructure exists. If the project has a Supabase database, seed THAT database. If S3 is configured, upload to S3. The executor reads `.env` files and existing integration code to determine what's real.
+
+**PRODUCTION** — All services are production. Every mutation is real. Seed data must be clearly identifiable and cleanly removable. Extra caution required.
+
+The executor fires TWICE in a full phase lifecycle — once during LOCAL/MIXED development, and again in PRODUCTION for post-go-live fixes and hotfixes. The same GROOMING and EXECUTION protocols apply in both, but the environment rules differ radically. See `protocols/EXECUTOR_STANDARDS.md` Section 2 for full context-specific rules.
+
+```
+EXECUTOR (LOCAL/MIXED)  ──→  CLOSING CEREMONY  ──→  GO-LIVE  ──→  EXECUTOR (PRODUCTION)
+     │                                                                  │
+     └── Build it right                                                 └── Make it real
+         (SQLite/Supabase, mocks/real)                                     (all production)
+```
+
+`kh init` allows re-running to change context as the project evolves. Templates are always refreshed on re-init; config and state are preserved.
+
+---
+
 ## 6. The Test-First Standard
 
 Development always follows this pattern:
@@ -1403,26 +1426,37 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 ## 17. File References
 
-### 1KH Process Documents (docs/)
+### docs/ — Foundational Architecture (guides source creation)
 
-| Document | Location | Purpose |
-|----------|----------|---------|
-| This document | `docs/ARCH_V3.md` | v3 architecture specification |
-| Opening Ceremony | `docs/OPENING_CEREMONY.md` | Foundation doc creation process |
-| Closing Ceremony | `docs/CLOSING_CEREMONY.md` | UAT preparation & delivery process |
-| Executor Standards | `docs/EXECUTOR_STANDARDS.md` | Opinionated local-first build guidelines (also in templates/ for session injection) |
-| Orchestrator Standards | `docs/ORCHESTRATOR_STANDARDS.md` | MVP planning + simulation framework |
-| Intermediate Artifacts | `docs/INTERMEDIATE_ARTIFACTS.md` | JSON schemas for hypotheses, tasks, user flows, events |
+| Document | Purpose |
+|----------|---------|
+| `docs/ARCH_V3.md` | v3 architecture specification — the primary document |
 
-### KH Templates (templates/)
+### protocols/ — Runtime Protocols (consumed as-is by kh.sh sessions)
+
+| Protocol | Consumed By | Purpose |
+|----------|-------------|---------|
+| `protocols/EXECUTOR_STANDARDS.md` | `kh run` (DEVELOPMENT phase) | Opinionated local-first build guidelines + TDD protocol |
+| `protocols/CLOSING_CEREMONY.md` | `kh close` | UAT preparation & delivery process |
+
+### templates/ — Per-Project Templates (customized during kh init)
 
 | Template | Purpose |
 |----------|---------|
 | `MASTER_GROOMING_STANDARDS.md` | Grooming phase standards: triage, WHAT-not-HOW, user flow management, phase markers |
-| `EXECUTOR_STANDARDS.md` | Build philosophy + TDD protocol — injected during DEVELOPMENT phase |
 | `MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Delivery handoff blueprint with project-specific doc rows |
 | `USER_FLOWS_TEMPLATE.md` | Starter user flow catalog — created by `kh init` if no catalog exists |
 | `ARCHITECTURE_TEMPLATE.md` | Starter architecture doc — created by `kh init` if no arch doc exists |
+
+### staging/ — TBD (not yet integrated into source)
+
+| Document | Future Home | Dependency |
+|----------|-------------|------------|
+| `OPENING_CEREMONY.md` | → `protocols/` | When `kh open` is built |
+| `ORCHESTRATOR_STANDARDS.md` | → `protocols/` | When orchestrator layer is built |
+| `INTERMEDIATE_ARTIFACTS.md` | → absorbed into ARCH or `protocols/` | When full layer coordination is built (see note below) |
+
+> **Note on INTERMEDIATE_ARTIFACTS:** Defines JSON schemas for inter-layer data contracts (ReflectionResult, Hypothesis, Task, UserFlow, ExecutionResult, Event). Currently referenced by ARCH_V3 but not consumed by kh.sh at runtime. Two futures: (a) ARCH_V3 absorbs the schemas inline, or (b) when the full layer system is built (IMAGINATION→INTENT→WORK→GROOMING→EXECUTION as coordinated sessions), the schemas become a runtime protocol. Decision deferred until that work begins.
 
 ### KH CLI Commands
 

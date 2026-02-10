@@ -2,9 +2,10 @@
 
 > **Type:** Process Requirements Document (Generic)
 > **Consumed By:** Execution sessions (Claude Code), GROOMING (for handoff context)
-> **Purpose:** Defines HOW systems are built during the Orchestrator phase
-> **Version:** 1.0
+> **Purpose:** Defines HOW systems are built — adapted to the current execution context
+> **Version:** 2.0
 > **Created:** 2026-02-09
+> **Updated:** 2026-02-09
 
 ---
 
@@ -14,33 +15,76 @@ These standards define the opinionated defaults for how 1KH EXECUTION sessions b
 
 The Orchestrator reads these standards before initiating any execution. GROOMING references them when hydrating handoffs. EXECUTION follows them unless the project's Foundation docs (Oracle, Context) explicitly override them.
 
+**These standards are context-aware.** The execution context (LOCAL, MIXED, or PRODUCTION) determines which environment rules apply. The context is set in the project's `config.json` and injected into every session prompt.
+
 ---
 
-## 2. Environment: Local Only
+## 2. Execution Context
 
-### Rule: Create within and deploy to LOCAL ENV only.
+The executor operates in ONE of three contexts. The context determines where data lives, how integrations work, what gets mocked, and how to seed/test.
 
-During the Orchestrator phase, everything runs on the founder's machine. No cloud deployments. No production pushes. No DNS configuration. The system must work at `localhost`.
+### 2.1 Context: LOCAL
 
-**Why:** Cloud setup is a blocking dependency. Registration, API keys, billing, DNS propagation — these take time and create failure modes outside the executor's control. Local-first means the executor can build, test, and demonstrate without waiting on anything.
+**When:** Early development. Building from scratch. No cloud services configured yet.
 
-**What "local" means:**
+| Concern | Approach |
+|---------|----------|
+| **Database** | SQLite file (single file, no server, no credentials) |
+| **Auth** | Local mock (test users with bypass tokens, skip-OTP flags) |
+| **File storage** | Local filesystem (download/upload to local directories) |
+| **Payments** | Mock (simulated transactions, seeded data) |
+| **Email/SMS** | Mock (written to local file or console log) |
+| **Web server** | `localhost:8080` (or equivalent) |
+| **Seed data** | SQLite inserts, local JSON fixtures |
+| **Deployments** | None — everything is localhost |
 
-- Web server: `localhost:8080` (or equivalent)
-- Database: SQLite file (single file, no server, no credentials)
-- Auth: Local mock (test users with bypass tokens)
-- Payments: Mock (simulated transactions, seeded data)
-- Email/SMS: Mock (written to local file or console log)
-- File storage: Local filesystem
-- Scheduling: Mock (seeded appointment data)
+**Why local first:** Cloud setup is a blocking dependency. Registration, API keys, billing, DNS propagation — these create failure modes outside the executor's control. Local-first means build, test, and demonstrate without waiting on anything. High velocity early.
 
-Production integrations are documented as GTM requirements (see CLOSING_CEREMONY.md) but NOT implemented during execution.
+### 2.2 Context: MIXED
+
+**When:** Some services are production, some are local. Typical state after initial development when cloud services are being integrated incrementally.
+
+| Concern | Approach |
+|---------|----------|
+| **Database** | USE THE ACTUAL DATABASE — if the project uses Supabase, query Supabase. If it uses SQLite locally, use that. Read the project's config/env to determine which. |
+| **Auth** | Use whatever auth the project actually uses — if Supabase Auth is configured, use it. Keep bypass/skip-OTP for dev convenience but test real auth flows too. |
+| **File storage** | If S3 is configured, use S3. If local, use local. Check the project's existing integration code. |
+| **Payments** | Use sandbox/test mode if configured, otherwise mock |
+| **Email/SMS** | If SES/Twilio is configured, use sandbox mode. Otherwise mock to console/file. |
+| **Web server** | Localhost pointing to whatever backend is configured |
+| **Seed data** | Seed into the ACTUAL database, not into mocks. If Supabase, use Supabase inserts. If SQLite, use SQLite inserts. Seed data must be visible in the actual UI. |
+| **Deployments** | Only if the task explicitly requires it. Default: no deployment. |
+
+**The critical rule for MIXED context:** DO NOT fall back to demo/mock data when real infrastructure exists. If the project has a Supabase database with tables, seed THAT database. If the project has S3 file storage, upload to S3. The whole point of MIXED is testing with real infrastructure. Falling back to local mocks defeats the purpose.
+
+**How to detect MIXED state:** Look for `.env` files, `supabase/` directories, existing API integrations in the codebase. If cloud services are wired up and working, use them.
+
+### 2.3 Context: PRODUCTION
+
+**When:** Post-closing-ceremony. Preparing for or maintaining a live system. All services are production.
+
+| Concern | Approach |
+|---------|----------|
+| **Database** | Production database (Supabase, PostgreSQL, etc.) — use with care |
+| **Auth** | Production auth — real users, real sessions |
+| **File storage** | Production storage (S3, etc.) |
+| **Payments** | Production payment processor (Stripe live mode, etc.) — NEVER use test data in production payment systems without explicit founder approval |
+| **Email/SMS** | Production messaging (SES, Twilio with A2P registration) |
+| **Web server** | Production deployment (CloudFront, Vercel, etc.) |
+| **Seed data** | Test data must be clearly identifiable and isolated. Use naming conventions (`test_*`, `555-000-XXXX`). Never pollute production data. |
+| **Deployments** | Yes — CDN invalidation, edge function deployment, database migrations |
+
+**Extra caution in PRODUCTION:** Every mutation is real. Seed data must be cleanly removable. Test users must not collide with real users. Migration rollbacks must be planned.
+
+### 2.4 Context Detection in Session
+
+The execution context is injected into the session prompt as `[EXECUTION_CONTEXT: LOCAL|MIXED|PRODUCTION]`. The executor MUST read this and adapt behavior accordingly. When in doubt about which services are real vs mocked, read the project's configuration files (`.env`, `supabase/config.toml`, existing service integration code) to determine actual state.
 
 ---
 
 ## 3. Tech Stack: Opinionated Defaults
 
-### Default Stack
+### Default Stack (LOCAL context)
 
 | Layer | Technology | Reason |
 |-------|-----------|--------|
@@ -49,6 +93,10 @@ Production integrations are documented as GTM requirements (see CLOSING_CEREMONY
 | **Frontend** | Plain vanilla HTML/CSS/JS | No build step, no bundler, no framework overhead. Edit and refresh. |
 | **Auth** | Local mock with test users | Real auth is a GTM concern, not an MVP concern |
 | **Testing** | Playwright (browser) + Node test runner (unit) | TDD standard from ARCH_V3 Section 6 |
+
+### Stack in MIXED/PRODUCTION context
+
+When the execution context is MIXED or PRODUCTION, the "default stack" is whatever the project ACTUALLY uses. Read the codebase. If it uses Supabase + Express + vanilla JS, that's the stack. Don't introduce SQLite when Supabase is already configured. Don't mock auth when Supabase Auth is wired up. The project's existing infrastructure IS the stack.
 
 ### When to Override
 
@@ -106,12 +154,22 @@ Every system must include:
 - **Test users** — At least 3 per user type (NEW, EXISTING, RETURNING_INTERRUPTED)
 - **Seeded tables** — All database tables populated with realistic data
 - **Realistic product/pricing data** — Not placeholder "Product A $10" but actual representative data
-- **Mock integrations** — Every external service call has a local mock that returns realistic responses
+- **Mock integrations** — In LOCAL context: every external service call has a local mock. In MIXED/PRODUCTION context: use real integrations where configured, mock only what's not yet wired up.
 - **E2E test suites** — Full flow coverage for CRITICAL and HIGH risk paths
+
+**Context-specific seeding:**
+
+| Context | Where to seed | How |
+|---------|--------------|-----|
+| LOCAL | SQLite + local fixtures | SQL inserts, JSON files, filesystem |
+| MIXED | The ACTUAL database (Supabase, PostgreSQL, etc.) | Supabase client inserts, SQL migrations, API calls |
+| PRODUCTION | Production database with isolated test data | Clearly prefixed test data (`test_*`), separate test org/tenant if possible |
+
+**The seed data must be visible in the actual UI.** If the user opens their browser and the page shows "No data" or falls back to "demo mode," the seeding failed. Seed the real database, not a mock layer.
 
 ### Data Persistence
 
-Use persisted data from DB over localStorage alone. Both may be necessary (localStorage for offline/draft state, DB for durable state), but the DB is the source of truth. If a system has user data, it goes in SQLite — not just `window.localStorage`.
+Use persisted data from DB over localStorage alone. Both may be necessary (localStorage for offline/draft state, DB for durable state), but the DB is the source of truth. In LOCAL context, "the DB" is SQLite. In MIXED/PRODUCTION context, "the DB" is whatever cloud database the project uses.
 
 ---
 

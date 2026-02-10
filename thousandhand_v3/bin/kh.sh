@@ -65,6 +65,7 @@ to_feature_name() {
   echo "$1" | tr '-' '_' | tr '[:lower:]' '[:upper:]'
 }
 
+
 # Generic state update — replaces 5 separate functions from KU
 update_item() {
   local id="$1" field="$2" value="$3"
@@ -771,9 +772,9 @@ cmd_add() {
   next_priority=$(jq '.items | length' "$STATE_FILE")
   temp_file=$(mktemp)
 
-  jq --arg id "$safe_name" --arg file "${safe_name}.md" --arg ts "$timestamp" --argjson pri "$next_priority" \
+  jq --arg id "$safe_name" --arg nm "$name" --arg file "${safe_name}.md" --arg ts "$timestamp" --argjson pri "$next_priority" \
      '.items += [{
-       "id": $id, "draft_file": $file, "state": "draft", "phase": null,
+       "id": $id, "name": $nm, "draft_file": $file, "state": "draft", "phase": null,
        "session_id": null, "delivery_handoff": null, "triage": null,
        "priority": $pri, "tokens": {}, "started_at": $ts,
        "completed_at": null, "error": null
@@ -818,11 +819,11 @@ cmd_status() {
     echo -e "${emoji} ${YELLOW}${label}${NC} ($count items):"
     if [[ "$count" -gt 0 ]]; then
       case "$qtype" in
-        draft)      ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | xargs -I {} basename {} | sed 's/^/   /' ;;
-        complete)   ls -1 "$COMPLETE_DIR"/*.md 2>/dev/null | xargs -I {} basename {} | sed 's/^/   /' ;;
-        grooming)   jq -r '.items[] | select(.state == "developing" and .phase == "grooming") | "   \(.id).md"' "$STATE_FILE" ;;
-        developing) jq -r '.items[] | select(.state == "developing" and .phase == "development") | "   \(.id).md"' "$STATE_FILE" ;;
-        updating)   jq -r '.items[] | select(.state == "developing" and .phase == "update") | "   \(.id).md"' "$STATE_FILE" ;;
+        draft)      ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | xargs -I {} basename {} .md | sed 's/^/   /' ;;
+        complete)   ls -1 "$COMPLETE_DIR"/*.md 2>/dev/null | xargs -I {} basename {} .md | sed 's/^/   /' ;;
+        grooming)   jq -r '.items[] | select(.state == "developing" and .phase == "grooming") | "   \(.id)"' "$STATE_FILE" ;;
+        developing) jq -r '.items[] | select(.state == "developing" and .phase == "development") | "   \(.id)"' "$STATE_FILE" ;;
+        updating)   jq -r '.items[] | select(.state == "developing" and .phase == "update") | "   \(.id)"' "$STATE_FILE" ;;
       esac
     else
       echo "   (empty)"

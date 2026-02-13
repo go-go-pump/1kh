@@ -14,6 +14,20 @@ They are the **base truth** — features, tasks, and tests derive from journey s
 - **User Flow** → A scene within the movie (single actor, specific system interaction)
 - **Task** → A buildable unit that implements part of a user flow
 
+### Journey Status Lifecycle
+
+| Status | Meaning | Set By |
+|--------|---------|--------|
+| `PLANNED` | Identified during `kh breakdown` — exists as placeholder | Breakdown (auto) |
+| `DEFINED` | Steps and flows written out | Grooming / Manual |
+| `IN PROGRESS` | Some steps implemented, others pending | Executor |
+| `IMPLEMENTED` | All defined steps built and delivered | Executor (at delivery) |
+| `VERIFIED` | Confirmed during closing ceremony | Closing ceremony |
+
+> Note: `kh breakdown` may auto-create `[PLANNED]` journey entries when processing raw brain dumps
+> that contain items classified as `JM_NEW`. These entries are placeholders with a note:
+> "Steps to be defined during grooming." Grooming refines them into full journey definitions.
+
 ### Format Reference
 
 Each journey follows this structure:
@@ -45,7 +59,7 @@ ID: journey-[kebab-case-id]
 Actors: [Actor1, Actor2, System (list systems)]
 Trigger: [What starts this journey]
 Outcome: [What the end state looks like]
-Status: [Which steps are implemented]
+Status: PLANNED | DEFINED | IN PROGRESS | IMPLEMENTED | VERIFIED
 ```
 
 #### STEPS

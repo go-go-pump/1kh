@@ -113,6 +113,8 @@ v3 introduces a layered architecture where each layer is a **loop** with forward
 
 ```
 FOUNDATION  ←→  (reflection)  ←→  IMAGINATION  ←→  (hypothesis)  ←→  INTENT  ←→  (decisions)  ←→  WORK  ←→  (tasks)  ←→  GROOMING  ←→  (handoffs)  →  EXECUTION
+
+PRE-FLOW (optional):  RAW  →  BREAKDOWN  →  DRAFT  →  (enters GROOMING as discrete items)
 ```
 
 ### Full Flow Diagram
@@ -407,6 +409,88 @@ This preserves the session's accumulated context (what it read, what decisions i
 - NOT implemented → escalation with explanation + suggestion for WORK to re-decompose with alternative approach
 
 When EXECUTION fails on implementation, the failure routes back through GROOMING → WORK. WORK understands the hypothesis context and can present an alternative path that still serves the North Star. If the user pre-authorized "proceed with auto-fallback" (from WORK's risk assessment), this happens automatically.
+
+### 3.7 PRE-FLOW PIPELINE: Raw → Breakdown → Draft ← NEW IN v3
+
+**What it is**: An optional pre-flow that handles unstructured bulk input (brain dumps, observation lists, meeting notes) and decomposes them into discrete, categorized draft items ready for GROOMING.
+
+**Why it exists**: The WORK → GROOMING → EXECUTION pipeline assumes discrete, scoped tasks. But real product work often starts as messy brain dumps — 30+ observations in a single stream-of-consciousness document. Without a pre-flow, these either: (a) get dumped into GROOMING which rejects them as overloaded, or (b) require manual splitting before they enter the system. The pre-flow automates the splitting.
+
+**The pipeline:**
+
+```
+BRAIN DUMP              BREAKDOWN                    DRAFT
+(raw input)         (AI-powered triage)         (discrete items)
+    │                      │                          │
+    ▼                      ▼                          ▼
+raw/{name}.md  ──→  Categorize each item  ──→  draft/{group}.md
+                    Map to JM + Step + UF      draft/{standalone}.md
+                    Suggest groups             raw/{name}_deferred.md
+                    Flag deferred/rejected     raw/{name}_rejected.md
+                    Check redundancy           raw/{name}_breakdown.md
+                                                      │
+                                                      ▼
+                                              USER_FLOWS.md  ← [PLANNED] entries
+                                              JOURNEY_MAPPINGS.md ← [PLANNED] entries
+```
+
+**Key principles:**
+
+1. **Raw is storage, not processing.** `kh raw add "name" < file.md` stores the input in `raw/` and records it in state.json. No classification happens at intake — just storage.
+
+2. **Breakdown is classification, not scoping.** `kh breakdown "name"` runs an AI analysis that categorizes each item against known JMs, UFs, and existing work. It does NOT write acceptance criteria, implementation details, or estimates. That's grooming's job.
+
+3. **Raw input is never deleted.** The original file stays in `raw/` as the permanent record. Breakdown appends a `_breakdown.md` report alongside it.
+
+4. **Deferred and rejected are terminal states.** They are NOT queues. If a deferred item becomes relevant later, create a NEW raw input. The deferred file is a parking lot, not a waiting room.
+
+5. **Breakdown is optional.** Discrete items go straight to `draft/` via `kh add`. Breakdown exists for bulk input that would overload grooming. When grooming receives an overloaded draft, it emits `[PHASE: GROOMING_REJECTED — OVERLOADED]` and routes it back to `raw/` for breakdown.
+
+**Classification categories:**
+
+| Category | Meaning | Action |
+|----------|---------|--------|
+| JM_EXISTING_UF | Maps to known JM + known UF | Promote to draft |
+| JM_NEW_UF | Maps to known JM, new user flow | Promote to draft + add [PLANNED] to USER_FLOWS.md |
+| JM_NEW | Entirely new journey | Promote to draft + add [PLANNED] to JOURNEY_MAPPINGS.md |
+| CHORE | Infrastructure, compliance, DX | Promote to draft |
+| FUTURE_JM | Good idea, not current scope | Defer (terminal) |
+| DEFERRED_PROMOTED | Previously deferred, now has a JM | Promote to draft |
+| REDUNDANCY | Already covered by existing work | Note only |
+| VAGUE | Can't determine meaning | Reject for human review |
+| NON_IMPLEMENTATION | Not a software task | Reject |
+
+**Grouping intelligence:** After categorizing, breakdown suggests execution groups. Items that share the same JM + Step + Actor get grouped into a SINGLE draft (prevents over-splitting). Each group becomes one draft file. Standalone items get their own draft. If two groups serve the same system concern at different JM steps, breakdown adds a merge hint for grooming.
+
+**Two-stage catalog update lifecycle:**
+
+This is the mechanism by which JM/UF catalog docs stay current:
+
+| Stage | When | What happens to catalogs |
+|-------|------|--------------------------|
+| **Breakdown** | After raw → draft promotion | New UFs get `[PLANNED]` entries in USER_FLOWS.md. New JMs get `[PLANNED]` entries in JOURNEY_MAPPINGS.md. |
+| **Grooming** | During draft hydration | Groomer sees [PLANNED] entries, refines them (fills steps, verifies mapping), updates to `[GROOMED]`. |
+| **Execution** | At delivery | Executor updates `[GROOMED]` or `[PLANNED]` → `[IMPLEMENTED]`. Fills test file paths, verification mode. |
+
+This ensures catalogs always reflect both planned and completed work. Future breakdowns see what's been identified. Grooming sees what's been refined. Execution confirms what's real.
+
+**Deferred re-evaluation:** Each breakdown run reads ALL existing `_deferred.md` files as context. For each previously deferred item, the AI checks: does it NOW map to a known JM? If yes, it's reclassified as DEFERRED_PROMOTED and promoted to draft alongside the new raw input's items. This makes deferred items self-correcting — they surface automatically when their JM arrives.
+
+**Ambiguity handling:** Brain dumps often contain lines that could be either section headers or standalone observations (e.g., "CROSS-OP (medical-consult and labs)"). The prompt instructs: "When in doubt, promote — don't absorb." Let grooming merge if redundant, rather than losing an item by treating it as decoration.
+
+**Output protocol:** Breakdown produces both a human-readable markdown report AND a machine-parseable JSON block between `[BREAKDOWN_JSON]` / `[/BREAKDOWN_JSON]` markers. kh.sh extracts the JSON to auto-create draft files, deferred/rejected files, and catalog entries. The markdown report is saved as `raw/{name}_breakdown.md` for human review.
+
+**Relationship to GROOMING:** Breakdown and grooming are distinct phases with a hard boundary:
+
+| Concern | Breakdown | Grooming |
+|---------|-----------|----------|
+| **Input** | Raw brain dump (unstructured) | Single draft item (structured) |
+| **Output** | Categorized draft files | Hydrated grooming handoff |
+| **Scope** | "What is this and where does it go?" | "What exactly do we build and how do we verify it?" |
+| **JM work** | Maps items to JMs, suggests placement | Confirms placement, writes acceptance criteria |
+| **Kickback** | N/A (raw input has no prior phase) | Grooming can reject overloaded items back to raw/ |
+
+**See also:** `EXECUTOR_STANDARDS.md` Section 7 (Catalog Updates at Delivery) for the execution-side catalog update. `MASTER_GROOMING_STANDARDS.md` User Flow Management section for how grooming handles [PLANNED] entries.
 
 ---
 
@@ -1443,10 +1527,19 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 | Template | Purpose |
 |----------|---------|
-| `MASTER_GROOMING_STANDARDS.md` | Grooming phase standards: triage, WHAT-not-HOW, user flow management, phase markers |
+| `MASTER_GROOMING_STANDARDS.md` | Grooming phase standards: triage, WHAT-not-HOW, user flow management, [PLANNED] entry handling, phase markers |
 | `MASTER_DELIVERY_HANDOFF_TEMPLATE.md` | Delivery handoff blueprint with project-specific doc rows |
 | `USER_FLOWS_TEMPLATE.md` | Starter user flow catalog — created by `kh init` if no catalog exists |
 | `ARCHITECTURE_TEMPLATE.md` | Starter architecture doc — created by `kh init` if no arch doc exists |
+| `JOURNEY_MAPPINGS_TEMPLATE.md` | Starter journey mappings catalog — created by `kh init` if no JM doc exists |
+| `JM_COMPLETENESS_CHECKLIST.md` | 5-layer gap-detection checklist (Actor Enumeration, Entity State Mapping, Sad Paths, Temporal Gaps, Other Screen Test) — used as heuristic during breakdown and full run during JM creation |
+| `JM_PATTERNS.md` | Reusable journey mapping patterns — common step shapes, actor interactions |
+
+### archive/ — Completed Design Documents (reference only)
+
+| Document | Purpose |
+|----------|---------|
+| `archive/DESIGN_RAW_BREAKDOWN_DRAFT.md` | Design analysis for the raw → breakdown → draft pre-flow pipeline. Contains resolved decisions, walked examples, and architectural rationale. Reference material for Section 3.7. Archived 2026-02-13 — all decisions implemented and documented. |
 
 ### staging/ — TBD (not yet integrated into source)
 
@@ -1462,11 +1555,15 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 | Command | Purpose |
 |---------|---------|
-| `kh init` | Initialize .kh structure, select project docs, create USER_FLOWS.md and ARCHITECTURE.md if missing |
+| `kh init` | Initialize .kh structure, select project docs, discover Journey Mappings + User Flows + Architecture, copy templates (incl. JM_COMPLETENESS_CHECKLIST, JM_PATTERNS) |
 | `kh add "name"` | Add draft task from stdin. Flows are managed by AI during grooming (no separate add-flow needed) |
+| `kh raw add "name"` | **Pre-flow intake** — store unstructured brain dump in `raw/` for later breakdown |
+| `kh raw list` | List all raw inputs with status (pending/broken_down) |
+| `kh raw show "name"` | Show raw input + breakdown report + deferred + rejected |
+| `kh breakdown "name"` | **Pre-flow triage** — AI-powered classification of raw input into categorized drafts. Reads JMs, UFs, existing drafts, completed items, and deferred items as context. Creates draft files, deferred/rejected files, and [PLANNED] catalog entries. Supports `--dry-run`. |
 | `kh run` | Process all drafts through GROOMING → DEVELOPMENT → UPDATE |
 | `kh close [modifier]` | **Closing ceremony** — comprehensive test review, flow coverage audit, UAT preparation |
-| `kh status` | Show queue status + user flow coverage + token usage |
+| `kh status` | Show queue status (raw inputs, broken down, drafts, active, complete) + user flow coverage + token usage |
 | `kh logs` | Live-tail active session or show last completed |
 | `kh resume "name"` | Resume a failed session from checkpoint |
 | `kh demote/promote/remove` | Manual queue management |
@@ -1485,4 +1582,4 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 *This is the v3 architecture. No blocking open questions remain. Implementation begins when the founder approves.*
 
-*Last Updated: 2026-02-09*
+*Last Updated: 2026-02-13*

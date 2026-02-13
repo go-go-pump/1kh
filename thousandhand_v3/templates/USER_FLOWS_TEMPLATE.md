@@ -41,11 +41,20 @@
 - **Serves tasks:** [task-id-1, task-id-2]
 - **Verification:** playwright | manual | mixed
 - **Test file:** [path to test file, or "none" if not yet created]
-- **Status:** DEFINED | IMPLEMENTED | TESTED | VERIFIED
+- **Status:** PLANNED | DEFINED | GROOMED | IMPLEMENTED | TESTED | VERIFIED
+
+Status lifecycle:
+  PLANNED      — Created by `kh breakdown` during raw input triage (auto-generated)
+  DEFINED      — Created manually by grooming when no [PLANNED] entry exists
+  GROOMED      — [PLANNED] entry refined by grooming (steps filled, mapping verified)
+  IMPLEMENTED  — Built and delivered by executor (test file assigned)
+  TESTED       — Playwright/manual tests passing
+  VERIFIED     — Confirmed during closing ceremony
 
 -->
 
 _No flows defined yet. Flows will be identified and added during grooming as tasks are processed._
+_Note: `kh breakdown` may auto-create [PLANNED] entries here when processing raw brain dumps._
 
 ---
 
@@ -53,7 +62,9 @@ _No flows defined yet. Flows will be identified and added during grooming as tas
 
 | Status | Count |
 |--------|-------|
+| Planned (from breakdown) | 0 |
 | Defined | 0 |
+| Groomed | 0 |
 | Implemented | 0 |
 | Tested | 0 |
 | Verified (closing ceremony) | 0 |

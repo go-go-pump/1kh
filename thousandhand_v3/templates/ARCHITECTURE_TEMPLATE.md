@@ -116,3 +116,4 @@ _See task queue (`kh status`) for current priorities._
 ---
 
 *Per EXECUTOR_STANDARDS Section 6: this document is read at the START and updated at the END of every feature session.*
+*Per EXECUTOR_STANDARDS Section 7: when a task delivers a [PLANNED] flow or journey, update the catalog docs (USER_FLOWS.md, JOURNEY_MAPPINGS.md) from [PLANNED] → [IMPLEMENTED].*

@@ -80,12 +80,32 @@
 
 ---
 
+## Catalog Updates (per EXECUTOR_STANDARDS Section 7)
+
+> If this task was tagged as JM_NEW_UF, JM_NEW, or DEFERRED_PROMOTED during breakdown,
+> the executor MUST update the catalog docs below. Check each that applies.
+
+### USER_FLOWS.md
+- [ ] Found `[PLANNED]` entry with flow ID: `flow-{draft_id}` → Updated to `[IMPLEMENTED]`
+- [ ] Filled in `Steps:` with actual implemented steps
+- [ ] Updated `Test file:` with Playwright test path
+- [ ] Updated `Verification:` from TBD to playwright/manual/mixed
+- [ ] N/A — this task does not serve a [PLANNED] user flow
+
+### JOURNEY_MAPPINGS.md
+- [ ] Found `[PLANNED]` journey entry → Updated to `IN PROGRESS` or `IMPLEMENTED`
+- [ ] Added step definitions
+- [ ] N/A — this task does not introduce a new journey
+
+---
+
 ## Documentation Updates Needed
 
 > The update phase should update these docs based on this delivery
 
 | Document | Update Type | Details |
 |----------|-------------|---------|
-| `ARCHITECTURE_STATUS.md` | Add section | [what to add] |
+| `ARCHITECTURE.md` | Add section / Update feature log | [what to add] |
+| `docs/USER_FLOWS.md` | Update flow status | [which flows — see Catalog Updates above] |
+| `docs/JOURNEY_MAPPINGS.md` | Update journey status | [which journeys — see Catalog Updates above] |
 | `ROADMAP.md` | Mark complete | [which items] |
-| `WORKFLOW_CATALOG.md` | Add diagram | [workflow name] |

@@ -235,7 +235,38 @@ Commit code to local git repo to close off each feature. Use descriptive commit 
 
 ---
 
-## 7. Decision Making
+## 7. Catalog Updates at Delivery
+
+When execution completes a task that was tagged during breakdown/grooming as a JM_NEW_UF, JM_NEW, or DEFERRED_PROMOTED item, the executor MUST update the project's catalog documents at delivery time:
+
+### USER_FLOWS.md — Status Update
+
+For tasks that serve user flows with `Status: PLANNED` (created during breakdown):
+1. Find the flow entry by its `flow-{draft_id}` ID
+2. Update `Status: PLANNED` → `Status: IMPLEMENTED`
+3. Fill in the `Steps:` section with the actual implemented steps (replacing "(defined during grooming)")
+4. Update `Test file:` with the actual test file path (if Playwright tests were written)
+5. Update `Verification:` from `TBD` to the appropriate mode (playwright/manual/mixed)
+
+### JOURNEY_MAPPINGS.md — Status Update
+
+For tasks that introduce a new journey (JM_NEW):
+1. Find the journey entry by its ID
+2. Update status from `PLANNED` to `IN PROGRESS` or `IMPLEMENTED` depending on scope
+3. Add step definitions as they become clear during implementation
+
+### Why at Delivery
+
+Breakdown creates [PLANNED] entries so future breakdowns and grooming sessions have context. Execution converts them to [IMPLEMENTED] so the catalogs reflect reality. This two-stage update ensures:
+- Grooming always sees what's been identified (even if not yet built)
+- Future breakdowns don't re-discover items that are already in the pipeline
+- The catalogs are always an accurate reflection of both planned and completed work
+
+See also: ARCH_V3 Section 3.7 (Pre-Flow Pipeline) for how [PLANNED] entries are created during breakdown.
+
+---
+
+## 8. Decision Making
 
 ### Rule: Recommend and proceed.
 
@@ -262,7 +293,7 @@ The expectation is a **fully functioning LOCAL site** at the end of a session. N
 
 ---
 
-## 8. Development Cycle
+## 9. Development Cycle
 
 ### Context Window Management
 
@@ -306,11 +337,11 @@ Since everything is local, no deployment scripts are needed during execution. De
 
 ---
 
-## 9. Relationship to Other Documents
+## 10. Relationship to Other Documents
 
 | Document | How Executor Standards Relates |
 |----------|-------------------------------|
-| **ARCH_V3.md** | Executor Standards implements the principles from Sections 6 (Test-First), 12 (Local-First), and 14 (Automated Verification) |
+| **ARCH_V3.md** | Executor Standards implements the principles from Sections 6 (Test-First), 12 (Local-First), and 14 (Automated Verification). Section 7 (Catalog Updates at Delivery) ensures that ARCH_V3 Section 3.7 (Pre-Flow Pipeline) [PLANNED] entries transition to [IMPLEMENTED] at execution completion. |
 | **GROOMING_STANDARDS** | Defines the grooming phase: triage classification, WHAT-not-HOW, scope validation, user flow management. Grooming sets the testing expectations; Executor Standards defines the TDD protocol for meeting them. |
 | **OPENING_CEREMONY.md** | Produces the Foundation docs that inform executor preferences (especially Context) |
 | **ORCHESTRATOR_STANDARDS.md** | Defines when and how the Orchestrator invokes execution sessions using these standards |
@@ -319,7 +350,7 @@ Since everything is local, no deployment scripts are needed during execution. De
 
 ---
 
-## 10. Overrides
+## 11. Overrides
 
 These standards are defaults. They can be overridden by:
 

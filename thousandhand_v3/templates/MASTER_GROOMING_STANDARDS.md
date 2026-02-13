@@ -77,6 +77,8 @@ relevant JM step(s):
 This surfaces missing flows, states, actors, and edge cases BEFORE development begins.
 Flag gaps found but do not block — document as future work if out of scope.
 
+> **See also:** ARCH_V3 Section 3.7 (Pre-Flow Pipeline) for the full raw → breakdown → draft → grooming → execute lifecycle, and how [PLANNED] catalog entries feed into grooming context.
+
 ---
 
 ## Testing Requirements (by Triage)
@@ -115,6 +117,15 @@ During grooming, the user flow catalog must be consulted and maintained:
    - **JOURNEY** — describes a user experience → define flow(s) in catalog, derive tasks
    - **TASK** — describes something to build → check which existing flows it serves, create new ones if this task introduces new journeys
    - **INFRASTRUCTURE/CHORE** — no user-facing journey → mark as flow-independent, proceed normally
+
+> **Note:** Some user flows may already have `Status: PLANNED` entries in `docs/USER_FLOWS.md`, created during the `kh breakdown` pre-flow. When grooming encounters a draft that maps to a `[PLANNED]` flow, grooming should:
+> - Verify the [PLANNED] entry is accurate (correct JM mapping, correct lifecycle)
+> - Fill in the `Steps:` section with concrete step definitions
+> - Update `Status: PLANNED` → `Status: GROOMED` (indicating grooming has refined it)
+> - Reference the flow in the grooming handoff's success criteria
+>
+> This avoids duplicate flow creation and maintains the breakdown → grooming → execution lifecycle.
+
 3. **Update** `docs/USER_FLOWS.md` with any new or modified flows
 4. **Include** flow references in success criteria — "this task serves flows: [list]"
 

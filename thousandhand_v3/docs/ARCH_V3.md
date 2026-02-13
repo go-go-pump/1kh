@@ -1693,6 +1693,7 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 | `kh raw show "name"` | Show raw input + breakdown report + deferred + rejected |
 | `kh breakdown "name"` | **Pre-flow triage** — AI-powered classification of raw input into categorized drafts. Reads JMs, UFs, existing drafts, completed items, deferred items, and scope-deferred items as context. Creates draft files, deferred/rejected/scope-deferred files, and [PLANNED] catalog entries. Applies scope gating: JM_NEW items are auto-deferred when active JMs exist. Supports `--dry-run`. |
 | `kh run` | Process all drafts through GROOMING → DEVELOPMENT → UPDATE |
+| `kh run "name"` | Process a single specific draft item (validates item is in draft state) |
 | `kh close [modifier]` | **Closing ceremony** — comprehensive test review, flow coverage audit, UAT preparation |
 | `kh status` | Show queue status (raw inputs, broken down, drafts, active, complete) + user flow coverage + token usage |
 | `kh logs` | Live-tail active session or show last completed |

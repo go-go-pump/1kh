@@ -16,6 +16,7 @@
 #   kh prioritize "name" <n>   Set task priority (lower = first)
 #
 #   kh run                     Process all drafts (single Opus session per item)
+#   kh run "name"              Process a single specific draft item
 #   kh logs                    Live-tail active Claude session
 #   kh watch                   Continuous monitoring mode
 #   kh stop                    Stop a running watch/run (from another terminal)
@@ -956,6 +957,7 @@ cmd_status() {
 }
 
 cmd_process_item() {
+  local target_id="${1:-}"
   load_config
 
   # Check no active session
@@ -966,10 +968,22 @@ cmd_process_item() {
     return
   fi
 
-  # Find next draft by priority
   local next_id
-  next_id=$(jq -r '[.items[] | select(.state == "draft")] | sort_by(.priority // 0, .started_at) | .[0].id // empty' "$STATE_FILE")
-  [[ -z "$next_id" ]] && { log "INFO" "No draft items to process"; return; }
+  if [[ -n "$target_id" ]]; then
+    # Specific item requested — validate it exists as a draft
+    local safe_target; safe_target=$(to_safe_name "$target_id")
+    local target_state
+    target_state=$(jq -r --arg id "$safe_target" '.items[] | select(.id == $id) | .state // empty' "$STATE_FILE" 2>/dev/null)
+    if [[ "$target_state" != "draft" ]]; then
+      error "Item '${safe_target}' is not in draft state (current: ${target_state:-not found})"
+      return 1
+    fi
+    next_id="$safe_target"
+  else
+    # Find next draft by priority
+    next_id=$(jq -r '[.items[] | select(.state == "draft")] | sort_by(.priority // 0, .started_at) | .[0].id // empty' "$STATE_FILE")
+    [[ -z "$next_id" ]] && { log "INFO" "No draft items to process"; return; }
+  fi
 
   local id="$next_id"
   local filename="${id}.md"
@@ -1129,12 +1143,23 @@ COMPLETE: DELIVERY_${feature_name}.md"
 }
 
 cmd_run() {
+  local target_item="${1:-}"
   load_config
   log "INFO" "Running..."
   header
   echo -e "${BLUE}                     THOUSANDHAND RUN                         ${NC}"
   header
   echo ""
+
+  # Single-item mode: process one specific item and exit
+  if [[ -n "$target_item" ]]; then
+    echo -e "  ${YELLOW}Single-item mode:${NC} ${target_item}"
+    echo ""
+    cmd_process_item "$target_item"
+    log "INFO" "Run complete (single item: $target_item)"
+    success "Run complete!"
+    return $?
+  fi
 
   local consecutive_failures=0
   local max_failures=3
@@ -2527,7 +2552,7 @@ main() {
     status)
       cmd_status ;;
     run)
-      cmd_run ;;
+      cmd_run "${2:-}" ;;
     watch)
       cmd_watch ;;
     logs)
@@ -2558,6 +2583,7 @@ main() {
       echo ""
       echo -e "${YELLOW}Processing:${NC}"
       echo "  run                     Process all drafts (single session per item)"
+      echo "  run \"name\"              Process a single specific draft item"
       echo "  logs                    Live-tail active session (or show last)"
       echo "  watch                   Continuous monitoring mode"
       echo "  stop                    Graceful halt (from another terminal)"

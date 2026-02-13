@@ -22,6 +22,7 @@ kh view "name"                 View a task file and its metadata
 kh prioritize "name" <n>       Set task priority (lower = first)
 
 kh run                         Process all drafts (grooming → execution per item)
+kh run "name"                  Process a single specific draft item
 kh logs                        Live-tail the active Claude session
 kh watch                       Continuous monitoring mode
 kh stop                        Stop a running watch/run

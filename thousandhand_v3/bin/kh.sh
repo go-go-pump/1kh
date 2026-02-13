@@ -6,7 +6,7 @@
 #   kh raw "name"              Add raw brain dump from stdin
 #   kh raw list                List all raw inputs + status
 #   kh raw show "name"         Show raw input + breakdown report
-#   kh breakdown "name"        AI triage: split raw into discrete drafts
+#   kh breakdown "name"        AI triage: split raw into discrete drafts (scope-gates JM_NEW)
 #   kh breakdown "name" --dry-run  Preview breakdown without creating files
 #
 #   kh init                    Initialize .kh structure in current directory
@@ -23,7 +23,7 @@
 #   kh close [modifier]        Closing ceremony — comprehensive review + UAT prep
 #
 #   kh demote "name"           Move task back to draft (redo from scratch)
-#   kh promote "name"          Manually advance task to complete
+#   kh promote "name"          Manually advance task to complete (or promote from scope-deferred)
 #   kh resume "name"           Resume a failed Claude session from checkpoint
 #   kh remove "name"           Permanently remove an item and its files
 #

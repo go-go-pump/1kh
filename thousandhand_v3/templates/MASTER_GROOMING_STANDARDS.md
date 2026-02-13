@@ -48,6 +48,35 @@ Emit the classification as: `[TRIAGE: FEATURE]` (or MAJOR_FIX, SMALL_FIX, DOCUME
 - Large scope items may benefit from being broken into smaller tasks (TRoNs)
 - Flag scope concerns but proceed — do not block on scope alone
 
+### Overload Detection (Grooming ≠ Breakdown)
+
+If a draft item is clearly **multiple unrelated items** crammed into one file (a brain dump,
+a list of 10+ observations, mixed JM concerns), grooming should NOT attempt to split and
+classify it. Instead:
+
+1. **Emit** `[PHASE: GROOMING_REJECTED — OVERLOADED]`
+2. **Document** why: "This draft contains N distinct items spanning M JMs. Breakdown needed."
+3. **Route** the item back to `raw/` for the `breakdown` pre-flow
+
+Grooming handles ONE discrete, scoped item. If the item isn't discrete, it belongs in
+breakdown — not grooming. This is a hard boundary.
+
+> **See also:** `JM_COMPLETENESS_CHECKLIST.md` — the 5-layer gap-detection checklist used
+> during JM creation, step grooming, and bulk intake triage.
+
+## JM Completeness Checklist
+
+When grooming a FEATURE or MAJOR_FIX that introduces or modifies a journey, run the
+**JM Completeness Checklist** (`templates/JM_COMPLETENESS_CHECKLIST.md`) against the
+relevant JM step(s):
+
+- **New JM creation:** Run all 5 layers against the initial prompt/description
+- **Step grooming:** Run Layers 2-5 against the step being groomed
+- **Post-implementation review:** Run Layer 5 to verify cross-actor visibility
+
+This surfaces missing flows, states, actors, and edge cases BEFORE development begins.
+Flag gaps found but do not block — document as future work if out of scope.
+
 ---
 
 ## Testing Requirements (by Triage)

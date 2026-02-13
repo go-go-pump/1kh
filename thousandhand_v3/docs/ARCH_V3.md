@@ -496,54 +496,19 @@ This ensures catalogs always reflect both planned and completed work. Future bre
 
 **What it is**: The strategy for ordering execution across journey mappings, user flows, and build layers. This defines WHEN things get built — the macro execution plan.
 
-**Three levels of sequencing:**
+**Five dimensions of sequencing:**
+
+Every execution decision can be located on five independent axes. Each axis follows a "complete this before moving to next" rule:
 
 ```
-LEVEL 1: ACROSS JMs         → JM-complete, sequential by priority
-LEVEL 2: WITHIN A JM        → Layer-horizontal (all UFs at DATA, then all at APP, etc.)
-LEVEL 3: ACROSS PHASES      → Happy paths first, then escalation paths
+DIM 1: PATH       Happy → Critical Escalation → Remaining Escalation
+DIM 2: WORK UNIT  JM → UF → Task
+DIM 3: STAGE      Local → Mixed → Production
+DIM 4: LAYER      DATA → APP → UX-MIN → UX-FIN
+DIM 5: SCOPE      Core/Shared → Specialized
 ```
 
-#### Level 1: JM-Complete Delivery
-
-Each JM is a self-contained delivery unit. Complete a JM through ALL layers before moving to the next:
-
-```
-JM1:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
-JM2:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
-JM3:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
-```
-
-**NOT** all DATA across all JMs first. That produces a massive data layer and zero working features.
-
-**Why JM-complete:**
-
-- A finished JM is demoable, testable, and validatable end-to-end
-- Feedback from JM1 informs JM2's design (especially shared schemas)
-- JMs that share tables build incrementally via migrations — JM2 adds columns/relations JM1 didn't need
-- Predicting JM2's schema needs during JM1's DATA phase is premature optimization
-
-#### Level 2: Layer-Horizontal Within a JM
-
-Within a single JM, execute all user flows at the same layer before moving up:
-
-```
-JM1:  UF1-DATA → UF2-DATA → UF3-DATA        (schema settles)
-      UF1-APP  → UF2-APP  → UF3-APP          (API settles)
-      UF1-UX   → UF2-UX   → UF3-UX           (UI settles)
-      UF1-FIN  → UF2-FIN  → UF3-FIN          (polish pass)
-```
-
-**NOT** UF1 through all layers → UF2 through all layers (vertical/flow-first).
-
-**Why layer-horizontal:**
-
-- UFs within a JM share infrastructure (tables, RLS policies, Supabase functions)
-- Building all DATA first means the complete schema exists before APP layer starts — no mid-stream migrations
-- Staying in one layer across UFs reduces context-switching cost (SQL mode vs route-handler mode vs component mode)
-- The cement metaphor: each layer "settles" before the next is poured on top
-
-#### Level 3: Happy Paths Before Escalation Paths
+#### Dimension 1: Path — Happy → Escalation → Other
 
 Across all JMs, execute happy path user flows before escalation/sad path variants:
 
@@ -560,18 +525,87 @@ PHASE 2 — Critical escalation paths (same pattern per JM):
 PHASE 3 — Remaining escalation paths by priority
 ```
 
-**Why happy first:**
-
-- Happy paths ARE the product — escalation paths are the safety net
-- You can demo, validate, and soft-launch with happy paths only
-- A user who hits an edge case on a working feature will be annoyed; a user who can't start the NEXT journey will leave
-- Feedback from happy path execution often reshapes escalation requirements
+Happy paths ARE the product — escalation paths are the safety net. You can demo, validate, and soft-launch with happy paths only. A user who hits an edge case on a working feature will be annoyed; a user who can't start the NEXT journey will leave. Feedback from happy path execution often reshapes escalation requirements.
 
 **Exception — critical escalation paths**: If an escalation path occurs in >50% of real usage (e.g., "patient needs RX after consult"), it's effectively a second happy path and belongs in Phase 1. True escalation paths (system down, bad data, timeout, admin intervention) wait for Phase 2/3.
 
+#### Dimension 2: Work Unit — JM → UF → Task (JM-Complete Delivery)
+
+Each JM is a self-contained delivery unit. Complete a JM through ALL layers before moving to the next:
+
+```
+JM1:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+JM2:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+JM3:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+```
+
+**NOT** all DATA across all JMs first. That produces a massive data layer and zero working features.
+
+A finished JM is demoable, testable, and validatable end-to-end. Feedback from JM1 informs JM2's design (especially shared schemas). JMs that share tables build incrementally via migrations — JM2 adds columns/relations JM1 didn't need. Predicting JM2's schema needs during JM1's DATA phase is premature optimization.
+
+#### Dimension 3: Stage — Local → Mixed → Production
+
+Complete each environment stage before graduating to the next:
+
+```
+LOCAL:      SQLite, mock auth, local filesystem, localhost
+              ✓ all happy paths working locally
+                │
+MIXED:      Supabase, real auth, cloud storage, localhost
+              ✓ all features working against real infrastructure
+                │
+PRODUCTION: Production database, production auth, CDN, live domain
+              ✓ UAT-verified, ready for users
+```
+
+Local-first means build, test, and demonstrate without waiting on cloud setup. Cloud integration is introduced incrementally when logic is proven. See `EXECUTOR_STANDARDS.md` Section 2 (Execution Context) for environment-specific rules.
+
+#### Dimension 4: Layer — DATA → APP → UX-MIN → UX-FIN
+
+Within a single JM, execute all user flows at the same layer before moving up:
+
+```
+JM1:  UF1-DATA → UF2-DATA → UF3-DATA        (schema settles)
+      UF1-APP  → UF2-APP  → UF3-APP          (API settles)
+      UF1-UX   → UF2-UX   → UF3-UX           (UI settles)
+      UF1-FIN  → UF2-FIN  → UF3-FIN          (polish pass)
+```
+
+**NOT** UF1 through all layers → UF2 through all layers (vertical/flow-first).
+
+UFs within a JM share infrastructure (tables, RLS policies, Supabase functions). Building all DATA first means the complete schema exists before APP layer starts — no mid-stream migrations. Staying in one layer across UFs reduces context-switching cost (SQL mode vs route-handler mode vs component mode). Each layer "settles" before the next is poured on top. See `EXECUTOR_STANDARDS.md` Section 5.1 (Single Feature Layer Order) for per-feature detail.
+
+#### Dimension 5: Scope — Core/Shared → Specialized
+
+Within a layer, build components that multiple UFs depend on before specialized ones:
+
+```
+DATA layer example:
+  patients table (used by 5 UFs)      → FIRST
+  appointments table (used by 3 UFs)  → SECOND
+  prescription_refills (used by 1 UF) → LAST
+```
+
+Core schemas, shared components, and common API routes get built before single-use specializations. This is dependency-ordered construction — topological sorting of shared infrastructure. When UF1's DATA and UF2's DATA both need the `patients` table, it gets built once during UF1 and extended during UF2.
+
+#### Dimensions Combined — The Full Model
+
+All five dimensions operate simultaneously. The complete execution sequence for a project:
+
+```
+FOR EACH phase IN [happy, critical-escalation, remaining-escalation]:     ← Dim 1: Path
+  FOR EACH jm IN [JM1, JM2, ...JMn] (priority order):                    ← Dim 2: Work Unit
+    FOR EACH stage IN [local, mixed, production]:                         ← Dim 3: Stage
+      FOR EACH layer IN [DATA, APP, UX-MIN, UX-FIN]:                     ← Dim 4: Layer
+        FOR EACH uf IN jm.user_flows (core-first, then specialized):     ← Dim 5: Scope
+          execute(uf, layer)
+```
+
+In practice, Dimension 3 (Stage) is less granular — most projects complete all happy paths locally, then graduate to mixed, rather than switching stages per-JM. But the model holds: complete the current stage before moving up.
+
 **Relationship to GROOMING:** Grooming sequences drafts to align with this model. Happy path UFs are groomed first. Within a JM, UFs are groomed in journey-step order. Escalation UFs are flagged as Phase 2/3 and groomed after all happy paths are ready. See `MASTER_GROOMING_STANDARDS.md` Sequencing Guidance section.
 
-**Relationship to EXECUTOR_STANDARDS:** Section 5 (Build Order) defines the layer order for a single feature. Section 5.1 extends this to multi-UF and multi-JM execution. See `EXECUTOR_STANDARDS.md` Section 5.
+**Relationship to EXECUTOR_STANDARDS:** Section 2 (Execution Context) details Dimension 3. Section 5 (Build Order) details Dimensions 2, 4, and 5. See `EXECUTOR_STANDARDS.md`.
 
 ---
 

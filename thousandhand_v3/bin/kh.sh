@@ -3,8 +3,14 @@
 # ThousandHand (KH) - Filesystem-based Claude workflow orchestration
 #
 # Usage:
+#   kh raw "name"              Add raw brain dump from stdin
+#   kh raw list                List all raw inputs + status
+#   kh raw show "name"         Show raw input + breakdown report
+#   kh breakdown "name"        AI triage: split raw into discrete drafts
+#   kh breakdown "name" --dry-run  Preview breakdown without creating files
+#
 #   kh init                    Initialize .kh structure in current directory
-#   kh add "name"              Add draft from stdin (supports multi-line)
+#   kh add "name"              Add discrete draft from stdin (skip pre-flow)
 #   kh status                  Show current queue status + active phase
 #   kh view "name"             View a task file and its metadata
 #   kh prioritize "name" <n>   Set task priority (lower = first)
@@ -150,6 +156,7 @@ resolve_paths() {
   DRAFT_DIR="${KH_DIR}/draft"
   DEV_DIR="${KH_DIR}/developing"
   COMPLETE_DIR="${KH_DIR}/complete"
+  RAW_DIR="${KH_DIR}/raw"
 }
 
 load_config() {
@@ -634,7 +641,7 @@ cmd_init() {
   echo -e "${BLUE}Initializing ThousandHand in: ${project_dir}${NC}"
   [[ "$is_reinit" == "true" ]] && echo -e "${YELLOW}Re-initializing — config and state preserved, templates refreshed.${NC}"
 
-  mkdir -p "${kh_dir}/draft" "${kh_dir}/developing" "${kh_dir}/complete" "${kh_dir}/sessions"
+  mkdir -p "${kh_dir}/draft" "${kh_dir}/developing" "${kh_dir}/complete" "${kh_dir}/sessions" "${kh_dir}/raw"
 
   if [[ ! -f "${kh_dir}/config.json" ]]; then
     local project_name
@@ -695,9 +702,36 @@ cmd_init() {
   cp "${KH_PROTOCOLS}/EXECUTOR_STANDARDS.md" "${kh_dir}/templates/EXECUTOR_STANDARDS.md"
   log "INFO" "Copied .kh/templates/EXECUTOR_STANDARDS.md"
 
+  # Copy additional templates (checklist, patterns, etc.)
+  for tmpl in JM_COMPLETENESS_CHECKLIST.md JM_PATTERNS.md; do
+    if [[ -f "${KH_TEMPLATES}/${tmpl}" ]]; then
+      cp "${KH_TEMPLATES}/${tmpl}" "${kh_dir}/templates/${tmpl}"
+      log "INFO" "Copied .kh/templates/${tmpl}"
+    fi
+  done
+
   # Update template version
   local temp_file; temp_file=$(mktemp)
   jq '.template_version = "0.2.0"' "${kh_dir}/config.json" > "$temp_file" && mv "$temp_file" "${kh_dir}/config.json"
+
+  # Journey Mappings — look for existing, create from template if missing
+  local jm_found=false
+  for jm_path in \
+    "${project_dir}/docs/JOURNEY_MAPPINGS.md" \
+    "${project_dir}/JOURNEY_MAPPINGS.md" \
+    "${project_dir}/docs/journey_mappings.md" \
+    "${project_dir}/docs/journey-mappings.md"; do
+    if [[ -f "$jm_path" ]]; then
+      jm_found=true
+      log "INFO" "Found existing journey mappings catalog: ${jm_path}"
+      break
+    fi
+  done
+  if [[ "$jm_found" == "false" ]]; then
+    cp "${KH_TEMPLATES}/JOURNEY_MAPPINGS_TEMPLATE.md" "${project_dir}/docs/JOURNEY_MAPPINGS.md"
+    log "INFO" "Created docs/JOURNEY_MAPPINGS.md from template"
+    success "Created journey mappings catalog: docs/JOURNEY_MAPPINGS.md"
+  fi
 
   # User Flow Catalog — look for existing, create from template if missing
   local user_flows_found=false
@@ -796,6 +830,30 @@ cmd_status() {
   fi
   echo ""
 
+  # --- PRE-FLOW: Raw → Breakdown → Draft ---
+  local raw_pending=0 raw_done=0
+  if [[ -f "$STATE_FILE" ]]; then
+    raw_pending=$(jq '[.raw_items // [] | .[] | select(.status == "pending")] | length' "$STATE_FILE" 2>/dev/null || echo 0)
+    raw_done=$(jq '[.raw_items // [] | .[] | select(.status == "broken_down")] | length' "$STATE_FILE" 2>/dev/null || echo 0)
+  fi
+
+  echo -e "📥 ${YELLOW}RAW${NC} (${raw_pending} items):"
+  if [[ $raw_pending -gt 0 ]]; then
+    jq -r '.raw_items // [] | .[] | select(.status == "pending") | "   \(.id)  → kh breakdown \"\(.id)\""' "$STATE_FILE" 2>/dev/null || true
+  else
+    echo "   (empty)"
+  fi
+  echo ""
+
+  echo -e "🔀 ${YELLOW}BROKEN DOWN${NC} (${raw_done} items):"
+  if [[ $raw_done -gt 0 ]]; then
+    jq -r '.raw_items // [] | .[] | select(.status == "broken_down") | "   \(.id)  → \(.promoted_drafts | length) drafts promoted"' "$STATE_FILE" 2>/dev/null || true
+  else
+    echo "   (empty)"
+  fi
+  echo ""
+
+  # --- EXECUTION FLOW: Draft → Groom → Develop → Update → Complete ---
   local draft_count complete_count grooming_count developing_count updating_count
   draft_count=$(ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ' || echo 0)
   complete_count=$(ls -1 "$COMPLETE_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ' || echo 0)
@@ -1632,6 +1690,628 @@ cmd_stop() {
 }
 
 # ═══════════════════════════════════════════════════════════
+# RAW + BREAKDOWN (pre-flow)
+# ═══════════════════════════════════════════════════════════
+
+cmd_raw() {
+  local subcmd="${1:-}"
+  case "$subcmd" in
+    list) cmd_raw_list ;;
+    show)
+      [[ -z "${2:-}" ]] && { echo "Usage: kh raw show \"name\""; exit 1; }
+      cmd_raw_show "$2" ;;
+    "")
+      echo "Usage:"
+      echo "  kh raw \"name\" <<< 'messy input'    # Intake from stdin"
+      echo "  kh raw \"name\" < file.md             # Intake from file"
+      echo "  kh raw list                          # List all raw inputs"
+      echo "  kh raw show \"name\"                   # Show raw input + breakdown"
+      ;;
+    *)
+      cmd_raw_add "$@" ;;
+  esac
+}
+
+cmd_raw_add() {
+  local name="$1"
+  local safe_name; safe_name=$(to_safe_name "$name")
+  mkdir -p "$RAW_DIR"
+  local raw_file="${RAW_DIR}/${safe_name}.md"
+
+  log "INFO" "Adding raw input: $name"
+
+  local content
+  [[ -t 0 ]] && echo -e "${YELLOW}Enter raw input (Ctrl+D when done):${NC}"
+  content=$(cat)
+
+  if [[ -z "$content" ]]; then
+    error "No content provided."
+    echo "  kh raw \"name\" <<< 'one-liner'"
+    echo "  kh raw \"name\" < braindump.md"
+    exit 1
+  fi
+
+  # Check for existing raw input with same name
+  if [[ -f "$raw_file" ]]; then
+    warn "Raw input '${safe_name}' already exists."
+    read -p "Overwrite or create versioned? [overwrite/version] " choice
+    case "$choice" in
+      v|version)
+        local version=2
+        while [[ -f "${RAW_DIR}/${safe_name}_v${version}.md" ]]; do
+          version=$((version + 1))
+        done
+        safe_name="${safe_name}_v${version}"
+        raw_file="${RAW_DIR}/${safe_name}.md"
+        ;;
+      *) ;; # overwrite
+    esac
+  fi
+
+  printf '%s\n' "$content" > "$raw_file"
+
+  # Add/update raw_items in state.json
+  local timestamp temp_file
+  timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  temp_file=$(mktemp)
+
+  # Check if item already exists in raw_items
+  local exists
+  exists=$(jq -r --arg id "$safe_name" '.raw_items // [] | map(select(.id == $id)) | length' "$STATE_FILE" 2>/dev/null)
+
+  if [[ "$exists" -gt 0 ]]; then
+    # Update existing
+    jq --arg id "$safe_name" --arg ts "$timestamp" \
+       '(.raw_items[] | select(.id == $id)).status = "pending" |
+        (.raw_items[] | select(.id == $id)).breakdown_at = null |
+        .last_updated = $ts' \
+       "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+  else
+    # Add new
+    jq --arg id "$safe_name" --arg file "raw/${safe_name}.md" --arg ts "$timestamp" \
+       '.raw_items = (.raw_items // []) + [{
+         "id": $id, "raw_file": $file, "status": "pending",
+         "breakdown_file": null, "promoted_drafts": [],
+         "deferred_count": 0, "rejected_count": 0,
+         "breakdown_at": null, "created_at": $ts
+       }] | .last_updated = $ts' \
+       "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+  fi
+
+  log "INFO" "Raw input saved: $raw_file"
+  success "Raw input saved: ${safe_name}"
+  echo -e "  Next: ${BLUE}kh breakdown \"${safe_name}\"${NC}"
+}
+
+cmd_raw_list() {
+  echo ""
+  header
+  echo -e "${BLUE}                       RAW INPUTS                            ${NC}"
+  header
+  echo ""
+
+  local has_items=false
+  if [[ -f "$STATE_FILE" ]]; then
+    local raw_count
+    raw_count=$(jq '.raw_items // [] | length' "$STATE_FILE" 2>/dev/null)
+    if [[ "$raw_count" -gt 0 ]]; then
+      has_items=true
+      jq -r '.raw_items // [] | .[] |
+        "\(if .status == "pending" then "📋" elif .status == "broken_down" then "✅" else "❓" end)  \(.id)\t[\(.status)]"' \
+        "$STATE_FILE" 2>/dev/null
+    fi
+  fi
+
+  if [[ "$has_items" == "false" ]]; then
+    echo -e "  ${YELLOW}(no raw inputs)${NC}"
+    echo ""
+    echo "  Add one: kh raw \"name\" <<< 'brain dump here'"
+  fi
+
+  echo ""
+  header
+}
+
+cmd_raw_show() {
+  local name="$1"
+  local safe_name; safe_name=$(to_safe_name "$name")
+  local raw_file="${RAW_DIR}/${safe_name}.md"
+
+  [[ -f "$raw_file" ]] || { error "No raw input found: ${safe_name}"; exit 1; }
+
+  header
+  echo -e "  ${YELLOW}Raw: ${safe_name}${NC}"
+  header
+  echo ""
+  echo -e "${CYAN}── Raw Input ──${NC}"
+  cat "$raw_file"
+  echo ""
+
+  local breakdown_file="${RAW_DIR}/${safe_name}_breakdown.md"
+  if [[ -f "$breakdown_file" ]]; then
+    echo -e "${CYAN}── Breakdown Report ──${NC}"
+    cat "$breakdown_file"
+    echo ""
+  else
+    echo -e "${YELLOW}Not yet broken down. Run: kh breakdown \"${safe_name}\"${NC}"
+  fi
+
+  local deferred_file="${RAW_DIR}/${safe_name}_deferred.md"
+  if [[ -f "$deferred_file" ]]; then
+    echo -e "${CYAN}── Deferred Items ──${NC}"
+    cat "$deferred_file"
+    echo ""
+  fi
+
+  local rejected_file="${RAW_DIR}/${safe_name}_rejected.md"
+  if [[ -f "$rejected_file" ]]; then
+    echo -e "${CYAN}── Rejected Items ──${NC}"
+    cat "$rejected_file"
+    echo ""
+  fi
+}
+
+cmd_breakdown() {
+  local name="$1"
+  local dry_run=false
+  [[ "${2:-}" == "--dry-run" ]] && dry_run=true
+
+  local safe_name; safe_name=$(to_safe_name "$name")
+  local raw_file="${RAW_DIR}/${safe_name}.md"
+
+  [[ -f "$raw_file" ]] || { error "No raw input found: ${safe_name}"; exit 1; }
+
+  log "INFO" "Running breakdown on: ${safe_name}${dry_run:+ (dry-run)}"
+  echo -e "${BLUE}Breaking down: ${safe_name}${NC}"
+  [[ "$dry_run" == "true" ]] && echo -e "${YELLOW}(dry-run — no files will be created)${NC}"
+
+  local raw_content
+  raw_content=$(cat "$raw_file")
+
+  # Gather context — JMs, UFs, existing drafts, completions
+  local jm_context="(no journey mappings found)"
+  for jm_path in "${PROJECT_ROOT}/docs/JOURNEY_MAPPINGS.md" "${DOCS_PATH}/JOURNEY_MAPPINGS.md"; do
+    [[ -f "$jm_path" ]] && jm_context=$(cat "$jm_path") && break
+  done
+
+  local uf_context="(no user flows found)"
+  for uf_path in "${PROJECT_ROOT}/docs/USER_FLOWS.md" "${PROJECT_ROOT}/USER_FLOWS.md"; do
+    [[ -f "$uf_path" ]] && uf_context=$(cat "$uf_path") && break
+  done
+
+  local drafts_list=""
+  drafts_list=$(ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | xargs -I {} basename {} .md | tr '\n' ', ' || echo "(none)")
+  [[ -z "$drafts_list" ]] && drafts_list="(none)"
+
+  local complete_list=""
+  complete_list=$(ls -1 "$COMPLETE_DIR"/*.md 2>/dev/null | xargs -I {} basename {} .md | tr '\n' ', ' || echo "(none)")
+  [[ -z "$complete_list" ]] && complete_list="(none)"
+
+  # Read checklist for heuristic reference
+  local checklist_context=""
+  local checklist_file="${KH_DIR}/templates/JM_COMPLETENESS_CHECKLIST.md"
+  [[ -f "$checklist_file" ]] || checklist_file="${KH_TEMPLATES}/JM_COMPLETENESS_CHECKLIST.md"
+  [[ -f "$checklist_file" ]] && checklist_context=$(cat "$checklist_file")
+
+  # Gather previously deferred items for re-evaluation
+  local deferred_context="(none)"
+  local deferred_files
+  deferred_files=$(ls -1 "${RAW_DIR}"/*_deferred.md 2>/dev/null || true)
+  if [[ -n "$deferred_files" ]]; then
+    deferred_context=""
+    while IFS= read -r df; do
+      local df_name
+      df_name=$(basename "$df")
+      deferred_context+="--- From: ${df_name} ---
+$(cat "$df")
+"
+    done <<< "$deferred_files"
+  fi
+
+  # Build the breakdown prompt
+  local prompt="> BREAKDOWN ANALYSIS — Split raw input into discrete, actionable items.
+> You are NOT grooming. You are NOT implementing. You are TRIAGING.
+> Work TOP-DOWN: JM → UF → Task.
+
+## RAW INPUT
+${raw_content}
+
+## CONTEXT — Known Journey Mappings
+${jm_context}
+
+## CONTEXT — Known User Flows
+${uf_context}
+
+## CONTEXT — Existing Drafts in Queue
+${drafts_list}
+
+## CONTEXT — Already Completed Items
+${complete_list}
+
+## CONTEXT — Previously Deferred Items
+${deferred_context}
+
+## CLASSIFICATION RULES
+
+For each DISTINCT observation or request in the raw input:
+1. Does it map to a known JM? Which step?
+2. Within that step, does it map to a known UF? Which one?
+3. If it's a new UF within an existing JM, say so.
+4. If it doesn't map to any JM: is it a new JM, a CHORE, VAGUE, or NON_IMPLEMENTATION?
+
+AMBIGUITY RULE: If a line could be either a section header OR a standalone observation,
+err toward classifying it as a standalone item. Let grooming merge it if redundant.
+Brain dumps often have labels like 'CROSS-OP' or 'APP UPDATES' that look like headers
+but actually represent a distinct feature request. When in doubt, promote — don't absorb.
+
+Categories (assign exactly one per item):
+- JM_EXISTING_UF — maps to known JM + known UF → promote to draft
+- JM_NEW_UF — maps to known JM but is a new user flow → promote to draft
+- JM_NEW — entirely new journey → promote to draft as JM definition
+- CHORE — infrastructure, refactor, DX, rename → promote to draft
+- FUTURE_JM — good idea but not current scope → defer
+- DEFERRED_PROMOTED — previously deferred item that NOW maps to a known JM → promote to draft
+- REDUNDANCY — already covered by existing draft or completed item → note only
+- VAGUE — cannot determine what this means → reject for human review
+- NON_IMPLEMENTATION — not a software task → reject
+
+## DEFERRED RE-EVALUATION
+
+Check the 'Previously Deferred Items' context above. For each deferred item, ask:
+does it NOW map to a known JM that exists in the Journey Mappings context?
+If yes, re-classify it as DEFERRED_PROMOTED and include it in the breakdown output
+as a promoted item. Add it to the appropriate execution group or as standalone.
+If it still doesn't map, leave it deferred — do NOT re-defer it (it's already in a deferred file).
+
+## GROUPING RULES
+
+After categorizing, suggest execution groups. Items that share the same JM + Step + Actor
+should be grouped into a SINGLE draft (prevents over-splitting into tiny tasks).
+Each group becomes one draft file. Standalone items (CHORE, unique step) get their own draft.
+
+MERGE HINTS: If two groups serve the same system concern (e.g., both are 'system sends
+notifications to client' but at different JM steps), keep them as separate drafts but add
+a note in the report: 'Groups X and Y could be merged during grooming if scope allows.'
+This helps grooming make informed merge decisions without breakdown overstepping.
+
+## JM COMPLETENESS CHECKLIST (use as heuristic)
+
+Use these layers to help classify items:
+- Layer 1 (Actors): Does item introduce a new actor? → might be new JM
+- Layer 2 (States): Does item describe a missing entity state? → gap in existing JM
+- Layer 3 (Sad paths): Is it a 'what if they don't?' scenario? → existing step's sad path
+- Layer 5 (Other screen): Is it about what another actor sees? → cross-actor visibility gap
+
+## OUTPUT FORMAT
+
+Produce TWO sections:
+
+### SECTION 1: Markdown Breakdown Report
+A human-readable report with:
+- Summary line: \"Items found: N | Promoted: N | Deferred: N | Rejected: N | Redundant: N\"
+  IMPORTANT: Count items AFTER full classification, not before. The summary counts MUST
+  match the actual rows in your table. Promoted = items going to draft (groups + standalone).
+  Total = Promoted + Deferred + Rejected. Redundant is a separate note count (not added to total).
+- Each item numbered: title, category, maps_to, reasoning (1 sentence)
+- Suggested execution groups with group letter and member items
+- Deferred items with reasoning
+- Rejected items with reasoning
+
+### SECTION 2: JSON Block
+After the markdown, output a JSON block between markers. This MUST be valid JSON.
+
+[BREAKDOWN_JSON]
+{
+  \"summary\": { \"total\": 0, \"promoted\": 0, \"deferred\": 0, \"rejected\": 0, \"redundant\": 0 },
+  \"groups\": [
+    {
+      \"id\": \"A\",
+      \"label\": \"Human-readable group label\",
+      \"draft_id\": \"safe-kebab-case-id\",
+      \"item_numbers\": [1, 2],
+      \"category\": \"JM_EXISTING_UF\",
+      \"maps_to\": \"JM1, Step 1, Client UX\",
+      \"maps_to_uf\": \"UF-C01 or null if new\",
+      \"draft_content\": \"# Group A: Label\n\nSource: raw/${safe_name}.md\nCategory: ...\nMaps to: ...\n\n## Observations\n\n### Item 1: title\nOriginal text...\n\n### Item 2: title\nOriginal text...\"
+    }
+  ],
+  \"standalone\": [
+    {
+      \"draft_id\": \"safe-kebab-case-id\",
+      \"label\": \"Human-readable standalone label\",
+      \"item_number\": 1,
+      \"category\": \"CHORE\",
+      \"maps_to\": \"JM1 (general)\",
+      \"maps_to_uf\": null,
+      \"draft_content\": \"# title\n\nSource: raw/${safe_name}.md\nCategory: CHORE\nMaps to: ...\n\nOriginal text...\"
+    }
+  ],
+  \"deferred\": [
+    { \"item_number\": 8, \"title\": \"...\", \"category\": \"FUTURE_JM\", \"reasoning\": \"...\" }
+  ],
+  \"rejected\": [
+    { \"item_number\": 9, \"title\": \"...\", \"category\": \"VAGUE\", \"reasoning\": \"...\" }
+  ]
+}
+[/BREAKDOWN_JSON]
+
+IMPORTANT:
+- draft_id values must be unique, lowercase, kebab-case
+- draft_content must include the original observation text (don't lose the user's words)
+- draft_content must include the category and maps_to metadata at the top
+- Do NOT include acceptance criteria or implementation details — that's grooming's job
+- Keep reasoning to 1-2 sentences per item"
+
+  # Write prompt to temp file (avoids argument length limits)
+  local prompt_file="${KH_DIR}/sessions/${safe_name}_breakdown_prompt.txt"
+  printf '%s' "$prompt" > "$prompt_file"
+
+  echo -e "  ${CYAN}Running AI analysis...${NC}"
+
+  local output exit_code=0
+  output=$( cd "$PROJECT_ROOT" && claude -p \
+    --model "${MODEL}" \
+    --max-turns 3 \
+    < "$prompt_file" \
+  ) || exit_code=$?
+
+  rm -f "$prompt_file"
+
+  if [[ $exit_code -ne 0 || -z "$output" ]]; then
+    error "Breakdown failed (exit code: $exit_code)"
+    [[ -n "$output" ]] && echo "$output" | tail -20
+    return 1
+  fi
+
+  # --- DRY RUN: just print and exit ---
+  if [[ "$dry_run" == "true" ]]; then
+    echo ""
+    echo "$output" | sed '/\[BREAKDOWN_JSON\]/,/\[\/BREAKDOWN_JSON\]/d'
+    echo ""
+    success "Dry run complete — no files created."
+    return 0
+  fi
+
+  # --- Extract markdown report (everything before [BREAKDOWN_JSON]) ---
+  local report
+  report=$(echo "$output" | sed '/\[BREAKDOWN_JSON\]/,$d')
+  echo "$report" > "${RAW_DIR}/${safe_name}_breakdown.md"
+  log "INFO" "Breakdown report saved: raw/${safe_name}_breakdown.md"
+
+  # --- Extract JSON block ---
+  local json_block
+  json_block=$(echo "$output" | sed -n '/\[BREAKDOWN_JSON\]/,/\[\/BREAKDOWN_JSON\]/p' | grep -v '\[BREAKDOWN_JSON\]\|\[\/BREAKDOWN_JSON\]')
+
+  if [[ -z "$json_block" ]] || ! echo "$json_block" | jq empty 2>/dev/null; then
+    warn "Could not parse breakdown JSON. Report saved but no drafts auto-promoted."
+    warn "Review: ${RAW_DIR}/${safe_name}_breakdown.md"
+    echo "$output" > "${RAW_DIR}/${safe_name}_breakdown.md"  # Save full output
+    return 1
+  fi
+
+  # --- Create draft files from groups ---
+  local promoted_ids=()
+  local timestamp
+  timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Process grouped items
+  local group_count
+  group_count=$(echo "$json_block" | jq '.groups | length' 2>/dev/null || echo 0)
+  local i=0
+  while [[ $i -lt $group_count ]]; do
+    local draft_id draft_content category
+    draft_id=$(echo "$json_block" | jq -r ".groups[$i].draft_id")
+    draft_content=$(echo "$json_block" | jq -r ".groups[$i].draft_content")
+    category=$(echo "$json_block" | jq -r ".groups[$i].category")
+
+    if [[ -n "$draft_id" && "$draft_id" != "null" ]]; then
+      printf '%s\n' "$draft_content" > "${DRAFT_DIR}/${draft_id}.md"
+
+      # Add to state.json items
+      local temp_file; temp_file=$(mktemp)
+      local next_priority; next_priority=$(jq '.items | length' "$STATE_FILE")
+      jq --arg id "$draft_id" --arg file "${draft_id}.md" --arg ts "$timestamp" \
+         --argjson pri "$next_priority" --arg src "$safe_name" \
+         '.items += [{
+           "id": $id, "name": $id, "draft_file": $file, "state": "draft", "phase": null,
+           "session_id": null, "delivery_handoff": null, "triage": null,
+           "priority": $pri, "tokens": {}, "started_at": $ts,
+           "completed_at": null, "error": null, "raw_source": $src
+         }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+
+      promoted_ids+=("$draft_id")
+      echo -e "  ${GREEN}✓${NC} Draft created: ${draft_id} [${category}]"
+    fi
+    i=$((i + 1))
+  done
+
+  # Process standalone items
+  local standalone_count
+  standalone_count=$(echo "$json_block" | jq '.standalone | length' 2>/dev/null || echo 0)
+  i=0
+  while [[ $i -lt $standalone_count ]]; do
+    local draft_id draft_content category
+    draft_id=$(echo "$json_block" | jq -r ".standalone[$i].draft_id")
+    draft_content=$(echo "$json_block" | jq -r ".standalone[$i].draft_content")
+    category=$(echo "$json_block" | jq -r ".standalone[$i].category")
+
+    if [[ -n "$draft_id" && "$draft_id" != "null" ]]; then
+      printf '%s\n' "$draft_content" > "${DRAFT_DIR}/${draft_id}.md"
+
+      local temp_file; temp_file=$(mktemp)
+      local next_priority; next_priority=$(jq '.items | length' "$STATE_FILE")
+      jq --arg id "$draft_id" --arg file "${draft_id}.md" --arg ts "$timestamp" \
+         --argjson pri "$next_priority" --arg src "$safe_name" \
+         '.items += [{
+           "id": $id, "name": $id, "draft_file": $file, "state": "draft", "phase": null,
+           "session_id": null, "delivery_handoff": null, "triage": null,
+           "priority": $pri, "tokens": {}, "started_at": $ts,
+           "completed_at": null, "error": null, "raw_source": $src
+         }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+
+      promoted_ids+=("$draft_id")
+      echo -e "  ${GREEN}✓${NC} Draft created: ${draft_id} [${category}]"
+    fi
+    i=$((i + 1))
+  done
+
+  # --- Create deferred file ---
+  local deferred_count
+  deferred_count=$(echo "$json_block" | jq '.deferred | length' 2>/dev/null || echo 0)
+  if [[ $deferred_count -gt 0 ]]; then
+    {
+      echo "# Deferred Items from: ${safe_name}"
+      echo "> These items are valid but not current scope. Create a new raw input if they become relevant."
+      echo ""
+      echo "$json_block" | jq -r '.deferred[] | "## \(.title)\n- **Category:** \(.category)\n- **Reasoning:** \(.reasoning)\n"'
+    } > "${RAW_DIR}/${safe_name}_deferred.md"
+    echo -e "  ${YELLOW}⟲${NC} Deferred: ${deferred_count} items → raw/${safe_name}_deferred.md"
+  fi
+
+  # --- Create rejected file ---
+  local rejected_count
+  rejected_count=$(echo "$json_block" | jq '.rejected | length' 2>/dev/null || echo 0)
+  if [[ $rejected_count -gt 0 ]]; then
+    {
+      echo "# Rejected Items from: ${safe_name}"
+      echo "> These items need human review — they were too vague or not implementation tasks."
+      echo ""
+      echo "$json_block" | jq -r '.rejected[] | "## \(.title)\n- **Category:** \(.category)\n- **Reasoning:** \(.reasoning)\n"'
+    } > "${RAW_DIR}/${safe_name}_rejected.md"
+    echo -e "  ${RED}✗${NC} Rejected: ${rejected_count} items → raw/${safe_name}_rejected.md"
+  fi
+
+  # --- Update JM/UF catalogs with [PLANNED] entries ---
+  local uf_file=""
+  for uf_path in "${PROJECT_ROOT}/docs/USER_FLOWS.md" "${PROJECT_ROOT}/USER_FLOWS.md"; do
+    if [[ -f "$uf_path" ]]; then
+      uf_file="$uf_path"
+      break
+    fi
+  done
+
+  local jm_file=""
+  for jm_path in "${PROJECT_ROOT}/docs/JOURNEY_MAPPINGS.md" "${DOCS_PATH}/JOURNEY_MAPPINGS.md"; do
+    if [[ -f "$jm_path" ]]; then
+      jm_file="$jm_path"
+      break
+    fi
+  done
+
+  local catalog_updates=0
+
+  # Append [PLANNED] entries for JM_NEW_UF items to USER_FLOWS.md
+  if [[ -n "$uf_file" ]]; then
+    local all_items
+    all_items=$(echo "$json_block" | jq -r '
+      [(.groups[]? | {draft_id, category, maps_to, label}),
+       (.standalone[]? | {draft_id, category, maps_to, label: .draft_id})]
+      | .[] | select(.category == "JM_NEW_UF" or .category == "DEFERRED_PROMOTED")
+      | "\(.draft_id)|\(.maps_to)|\(.label)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$all_items" ]]; then
+      echo "" >> "$uf_file"
+      echo "<!-- [PLANNED] entries added by kh breakdown on ${timestamp} from raw/${safe_name} -->" >> "$uf_file"
+      while IFS='|' read -r uf_id uf_maps uf_label; do
+        if [[ -n "$uf_id" ]]; then
+          # Only add if not already in the file
+          if ! grep -q "flow-${uf_id}" "$uf_file" 2>/dev/null; then
+            {
+              echo ""
+              echo "### ${uf_label}"
+              echo "- **ID:** flow-${uf_id}"
+              echo "- **Lifecycle:** NEW"
+              echo "- **Description:** [PLANNED] — Identified during breakdown. Maps to: ${uf_maps}"
+              echo "- **Steps:** (defined during grooming)"
+              echo "- **Serves tasks:** ${uf_id}"
+              echo "- **Verification:** TBD"
+              echo "- **Test file:** none"
+              echo "- **Status:** PLANNED"
+            } >> "$uf_file"
+            catalog_updates=$((catalog_updates + 1))
+          fi
+        fi
+      done <<< "$all_items"
+    fi
+  fi
+
+  # Append [PLANNED] entries for JM_NEW items to JOURNEY_MAPPINGS.md index
+  if [[ -n "$jm_file" ]]; then
+    local new_jms
+    new_jms=$(echo "$json_block" | jq -r '
+      [(.groups[]? | {draft_id, category, label}),
+       (.standalone[]? | {draft_id, category, label: .draft_id})]
+      | .[] | select(.category == "JM_NEW")
+      | "\(.draft_id)|\(.label)"
+    ' 2>/dev/null || true)
+
+    if [[ -n "$new_jms" ]]; then
+      echo "" >> "$jm_file"
+      echo "<!-- [PLANNED] journeys added by kh breakdown on ${timestamp} from raw/${safe_name} -->" >> "$jm_file"
+      while IFS='|' read -r jm_id jm_label; do
+        if [[ -n "$jm_id" ]]; then
+          if ! grep -q "$jm_id" "$jm_file" 2>/dev/null; then
+            {
+              echo ""
+              echo "## JOURNEY: ${jm_label} [PLANNED]"
+              echo ""
+              echo "| ID | Name | Status |"
+              echo "|----|------|--------|"
+              echo "| ${jm_id} | ${jm_label} | PLANNED — identified during breakdown from raw/${safe_name} |"
+              echo ""
+              echo "> Steps to be defined during grooming."
+            } >> "$jm_file"
+            catalog_updates=$((catalog_updates + 1))
+          fi
+        fi
+      done <<< "$new_jms"
+    fi
+  fi
+
+  if [[ $catalog_updates -gt 0 ]]; then
+    echo -e "  ${CYAN}📘${NC} Updated catalogs: ${catalog_updates} [PLANNED] entries added"
+    log "INFO" "Added ${catalog_updates} [PLANNED] entries to JM/UF catalogs"
+  fi
+
+  # --- Update raw_items state ---
+  local temp_file; temp_file=$(mktemp)
+  local promoted_json
+  promoted_json=$(printf '%s\n' "${promoted_ids[@]}" | jq -R . | jq -s .)
+  jq --arg id "$safe_name" --arg ts "$timestamp" --argjson promoted "$promoted_json" \
+     --arg bfile "raw/${safe_name}_breakdown.md" \
+     --argjson deferred "$deferred_count" --argjson rejected "$rejected_count" \
+     '(.raw_items[] | select(.id == $id)) |= (
+       .status = "broken_down" |
+       .breakdown_file = $bfile |
+       .promoted_drafts = $promoted |
+       .deferred_count = $deferred |
+       .rejected_count = $rejected |
+       .breakdown_at = $ts
+     ) | .last_updated = $ts' \
+     "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+
+  # --- Summary ---
+  echo ""
+  local total_promoted=${#promoted_ids[@]}
+  local summary_json
+  summary_json=$(echo "$json_block" | jq -r '.summary // {}')
+  local redundant_count
+  redundant_count=$(echo "$summary_json" | jq -r '.redundant // 0')
+
+  header
+  echo -e "  ${GREEN}Breakdown complete: ${safe_name}${NC}"
+  echo -e "  Promoted to draft: ${GREEN}${total_promoted}${NC}"
+  [[ $deferred_count -gt 0 ]] && echo -e "  Deferred:          ${YELLOW}${deferred_count}${NC}"
+  [[ $rejected_count -gt 0 ]] && echo -e "  Rejected:          ${RED}${rejected_count}${NC}"
+  [[ "$redundant_count" -gt 0 ]] && echo -e "  Redundant:         ${CYAN}${redundant_count}${NC}"
+  echo ""
+  echo -e "  Report: ${BLUE}raw/${safe_name}_breakdown.md${NC}"
+  echo -e "  Next:   ${BLUE}kh status${NC} to see promoted drafts"
+  header
+}
+
+# ═══════════════════════════════════════════════════════════
 # MAIN DISPATCH
 # ═══════════════════════════════════════════════════════════
 
@@ -1639,6 +2319,11 @@ main() {
   case "${1:-}" in
     init)
       cmd_init ;;
+    raw)
+      load_config; cmd_raw "${2:-}" "${3:-}" ;;
+    breakdown)
+      [[ -z "${2:-}" ]] && { echo "Usage: kh breakdown \"name\" [--dry-run]"; exit 1; }
+      load_config; cmd_breakdown "$2" "${3:-}" ;;
     add)
       [[ -z "${2:-}" ]] && { echo "Usage: kh add \"item-name\" <<< 'draft content'"; exit 1; }
       load_config; cmd_add "$2" ;;
@@ -1678,9 +2363,16 @@ main() {
       echo ""
       echo "Usage: kh <command>"
       echo ""
+      echo -e "${YELLOW}Pre-flow (brain dump → discrete items):${NC}"
+      echo "  raw \"name\"              Add raw brain dump from stdin (pipe or heredoc)"
+      echo "  raw list                List all raw inputs + breakdown status"
+      echo "  raw show \"name\"         Show raw input + breakdown report"
+      echo "  breakdown \"name\"        AI triage: split raw into drafts (auto-promotes)"
+      echo "  breakdown \"name\" --dry-run  Preview breakdown without creating files"
+      echo ""
       echo -e "${YELLOW}Setup:${NC}"
       echo "  init                    Initialize .kh structure + user flows + architecture doc"
-      echo "  add \"name\"              Add draft from stdin (pipe or heredoc)"
+      echo "  add \"name\"              Add discrete draft from stdin (skip pre-flow)"
       echo "  status                  Show queue status + user flow coverage + active phase"
       echo "  view \"name\"             View task file + metadata"
       echo "  prioritize \"name\" <n>   Set priority (lower = processed first)"
@@ -1709,10 +2401,11 @@ main() {
       echo ""
       echo "Usage: kh <command>"
       echo ""
-      echo "  init | add | status | view | prioritize"
-      echo "  run | logs | watch | stop"
-      echo "  close [modifier]"
-      echo "  demote | promote | resume | remove"
+      echo "  raw | breakdown                          (pre-flow)"
+      echo "  init | add | status | view | prioritize  (setup)"
+      echo "  run | logs | watch | stop                (processing)"
+      echo "  close [modifier]                         (delivery)"
+      echo "  demote | promote | resume | remove       (management)"
       echo ""
       echo "Run 'kh help' for details."
       echo ""

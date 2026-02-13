@@ -492,6 +492,87 @@ This ensures catalogs always reflect both planned and completed work. Future bre
 
 **See also:** `EXECUTOR_STANDARDS.md` Section 7 (Catalog Updates at Delivery) for the execution-side catalog update. `MASTER_GROOMING_STANDARDS.md` User Flow Management section for how grooming handles [PLANNED] entries.
 
+### 3.8 EXECUTION SEQUENCING MODEL ← NEW IN v3
+
+**What it is**: The strategy for ordering execution across journey mappings, user flows, and build layers. This defines WHEN things get built — the macro execution plan.
+
+**Three levels of sequencing:**
+
+```
+LEVEL 1: ACROSS JMs         → JM-complete, sequential by priority
+LEVEL 2: WITHIN A JM        → Layer-horizontal (all UFs at DATA, then all at APP, etc.)
+LEVEL 3: ACROSS PHASES      → Happy paths first, then escalation paths
+```
+
+#### Level 1: JM-Complete Delivery
+
+Each JM is a self-contained delivery unit. Complete a JM through ALL layers before moving to the next:
+
+```
+JM1:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+JM2:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+JM3:  DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+```
+
+**NOT** all DATA across all JMs first. That produces a massive data layer and zero working features.
+
+**Why JM-complete:**
+
+- A finished JM is demoable, testable, and validatable end-to-end
+- Feedback from JM1 informs JM2's design (especially shared schemas)
+- JMs that share tables build incrementally via migrations — JM2 adds columns/relations JM1 didn't need
+- Predicting JM2's schema needs during JM1's DATA phase is premature optimization
+
+#### Level 2: Layer-Horizontal Within a JM
+
+Within a single JM, execute all user flows at the same layer before moving up:
+
+```
+JM1:  UF1-DATA → UF2-DATA → UF3-DATA        (schema settles)
+      UF1-APP  → UF2-APP  → UF3-APP          (API settles)
+      UF1-UX   → UF2-UX   → UF3-UX           (UI settles)
+      UF1-FIN  → UF2-FIN  → UF3-FIN          (polish pass)
+```
+
+**NOT** UF1 through all layers → UF2 through all layers (vertical/flow-first).
+
+**Why layer-horizontal:**
+
+- UFs within a JM share infrastructure (tables, RLS policies, Supabase functions)
+- Building all DATA first means the complete schema exists before APP layer starts — no mid-stream migrations
+- Staying in one layer across UFs reduces context-switching cost (SQL mode vs route-handler mode vs component mode)
+- The cement metaphor: each layer "settles" before the next is poured on top
+
+#### Level 3: Happy Paths Before Escalation Paths
+
+Across all JMs, execute happy path user flows before escalation/sad path variants:
+
+```
+PHASE 1 — Happy paths (JM-complete, layer-horizontal):
+  JM1(happy): DATA → APP → UX-MIN → UX-FIN  ✓ core journey works
+  JM2(happy): DATA → APP → UX-MIN → UX-FIN  ✓ core journey works
+  JM3(happy): DATA → APP → UX-MIN → UX-FIN  ✓ core journey works
+
+PHASE 2 — Critical escalation paths (same pattern per JM):
+  JM1(critical-esc): DATA → APP → UX-MIN → UX-FIN
+  JM2(critical-esc): DATA → APP → UX-MIN → UX-FIN
+
+PHASE 3 — Remaining escalation paths by priority
+```
+
+**Why happy first:**
+
+- Happy paths ARE the product — escalation paths are the safety net
+- You can demo, validate, and soft-launch with happy paths only
+- A user who hits an edge case on a working feature will be annoyed; a user who can't start the NEXT journey will leave
+- Feedback from happy path execution often reshapes escalation requirements
+
+**Exception — critical escalation paths**: If an escalation path occurs in >50% of real usage (e.g., "patient needs RX after consult"), it's effectively a second happy path and belongs in Phase 1. True escalation paths (system down, bad data, timeout, admin intervention) wait for Phase 2/3.
+
+**Relationship to GROOMING:** Grooming sequences drafts to align with this model. Happy path UFs are groomed first. Within a JM, UFs are groomed in journey-step order. Escalation UFs are flagged as Phase 2/3 and groomed after all happy paths are ready. See `MASTER_GROOMING_STANDARDS.md` Sequencing Guidance section.
+
+**Relationship to EXECUTOR_STANDARDS:** Section 5 (Build Order) defines the layer order for a single feature. Section 5.1 extends this to multi-UF and multi-JM execution. See `EXECUTOR_STANDARDS.md` Section 5.
+
 ---
 
 ## 4. Feedback Loops in Detail

@@ -133,6 +133,32 @@ During grooming, the user flow catalog must be consulted and maintained:
 
 ---
 
+## Sequencing Guidance
+
+When multiple drafts are ready for grooming, the groomer sequences them to align with the execution model (ARCH_V3 Section 3.8, EXECUTOR_STANDARDS Section 5):
+
+**Priority order for grooming drafts:**
+
+1. **Happy path UFs of the current JM** — groom these first. Within a JM, groom UFs in journey-step order (the order a user would encounter them).
+2. **Happy path UFs of subsequent JMs** — after the current JM's happy paths are groomed and executing, begin grooming the next JM's happy paths.
+3. **Critical escalation UFs** — escalation paths that occur in >50% of real usage. These are effectively second happy paths and should be groomed before lower-priority work.
+4. **Remaining escalation UFs** — sad paths, error handling, admin intervention flows. Groom these after all happy paths across all JMs are in execution.
+
+**Flagging escalation UFs:** When grooming encounters a draft that represents an escalation/sad path, tag it in the grooming handoff:
+
+```
+[EXECUTION_PHASE: 2]  — Critical escalation (>50% frequency)
+[EXECUTION_PHASE: 3]  — Remaining escalation
+```
+
+Omit the tag for Phase 1 (happy path) items — Phase 1 is the default.
+
+**Why grooming sequences:** Execution follows the sequence grooming provides. If grooming hydrates an escalation UF before happy path UFs are ready, execution will build the safety net before the product. Grooming is the gatekeeper that ensures execution focuses on momentum-generating work first.
+
+> **See also:** ARCH_V3 Section 3.8 (Execution Sequencing Model) for the full rationale. EXECUTOR_STANDARDS Section 5.4 (Happy Paths Before Escalation Paths) for the execution-side rules.
+
+---
+
 ## Delivery Handoff
 
 At the end of DEVELOPMENT (before emitting DEVELOPMENT_COMPLETE), create a delivery handoff document using the DELIVERY_HANDOFF_TEMPLATE. This captures:

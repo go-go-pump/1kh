@@ -175,7 +175,9 @@ Use persisted data from DB over localStorage alone. Both may be necessary (local
 
 ## 5. Build Order
 
-For any feature, follow this priority order:
+### 5.1 Single Feature: Layer Order
+
+For any individual feature or user flow, follow this layer priority:
 
 ```
 1. DATA LAYER
@@ -202,6 +204,47 @@ For any feature, follow this priority order:
 ```
 
 **Why this order:** The data layer is objectively testable. The UX requires subjective judgment. Building data first means the UI wires up to proven, tested endpoints — not sand.
+
+### 5.2 Multi-UF Execution Within a JM: Layer-Horizontal
+
+When a JM contains multiple user flows (UF1, UF2, UF3), execute ALL UFs at the same layer before moving to the next layer:
+
+```
+JM1:  UF1-DATA → UF2-DATA → UF3-DATA        (complete DATA layer)
+      UF1-APP  → UF2-APP  → UF3-APP          (complete APP layer)
+      UF1-UX   → UF2-UX   → UF3-UX           (complete UX-MIN layer)
+      UF1-FIN  → UF2-FIN  → UF3-FIN          (complete UX-FIN layer)
+```
+
+Do NOT execute UF1 through all layers, then UF2 through all layers (vertical/flow-first). Vertical execution causes schema rework — UF2's DATA needs may alter tables UF1 already built, breaking UF1's tests.
+
+**Why layer-horizontal:** UFs within a JM share tables, RLS policies, and API patterns. Building all DATA first means the complete schema exists before APP layer starts. Each layer "settles" before the next is poured.
+
+### 5.3 Multi-JM Execution: JM-Complete Delivery
+
+When executing across multiple JMs, complete each JM through ALL layers before starting the next:
+
+```
+JM1: DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+JM2: DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+JM3: DATA(all UFs) → APP(all UFs) → UX-MIN(all UFs) → UX-FIN(all UFs)  ✓ deliverable
+```
+
+Do NOT execute all DATA across all JMs first. That produces a massive data layer and zero working features for weeks.
+
+**Why JM-complete:** A finished JM is demoable, testable, and validatable end-to-end. Feedback from JM1 informs JM2's schema design. JMs that share tables build incrementally via migrations.
+
+### 5.4 Happy Paths Before Escalation Paths
+
+Across all JMs, execute happy path user flows before escalation/sad path variants:
+
+- **Phase 1:** All JM happy paths (JM-complete, layer-horizontal per JM)
+- **Phase 2:** Critical escalation paths (>50% real usage frequency — these are effectively second happy paths)
+- **Phase 3:** Remaining escalation paths by priority
+
+Happy paths are the product. Escalation paths are the safety net. You can demo and validate with happy paths only. Escalation paths that occur in >50% of usage are reclassified as Phase 1.
+
+**See also:** ARCH_V3 Section 3.8 (Execution Sequencing Model) for the full rationale and visual models.
 
 ---
 
@@ -341,8 +384,8 @@ Since everything is local, no deployment scripts are needed during execution. De
 
 | Document | How Executor Standards Relates |
 |----------|-------------------------------|
-| **ARCH_V3.md** | Executor Standards implements the principles from Sections 6 (Test-First), 12 (Local-First), and 14 (Automated Verification). Section 7 (Catalog Updates at Delivery) ensures that ARCH_V3 Section 3.7 (Pre-Flow Pipeline) [PLANNED] entries transition to [IMPLEMENTED] at execution completion. |
-| **GROOMING_STANDARDS** | Defines the grooming phase: triage classification, WHAT-not-HOW, scope validation, user flow management. Grooming sets the testing expectations; Executor Standards defines the TDD protocol for meeting them. |
+| **ARCH_V3.md** | Executor Standards implements the principles from Sections 6 (Test-First), 12 (Local-First), and 14 (Automated Verification). Section 5 (Build Order) implements the execution sequencing model from ARCH_V3 Section 3.8. Section 7 (Catalog Updates at Delivery) ensures that ARCH_V3 Section 3.7 (Pre-Flow Pipeline) [PLANNED] entries transition to [IMPLEMENTED] at execution completion. |
+| **GROOMING_STANDARDS** | Defines the grooming phase: triage classification, WHAT-not-HOW, scope validation, user flow management, and sequencing guidance (aligns with Section 5 Build Order). Grooming sets the testing expectations; Executor Standards defines the TDD protocol for meeting them. |
 | **OPENING_CEREMONY.md** | Produces the Foundation docs that inform executor preferences (especially Context) |
 | **ORCHESTRATOR_STANDARDS.md** | Defines when and how the Orchestrator invokes execution sessions using these standards |
 | **CLOSING_CEREMONY.md** | Defines what happens after execution — UAT, test reporting, GTM requirements |

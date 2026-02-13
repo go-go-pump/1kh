@@ -446,21 +446,37 @@ raw/{name}.md  ──→  Categorize each item  ──→  draft/{group}.md
 
 5. **Breakdown is optional.** Discrete items go straight to `draft/` via `kh add`. Breakdown exists for bulk input that would overload grooming. When grooming receives an overloaded draft, it emits `[PHASE: GROOMING_REJECTED — OVERLOADED]` and routes it back to `raw/` for breakdown.
 
+6. **Semantic grouping, not format parsing.** Breakdown reads for meaning, not structure. Raw input from notes apps may have inconsistent indentation, missing bullets, or mixed formatting. The AI identifies parent-child relationships between adjacent lines based on semantic context — a broad feature name followed by specific operations forms a group regardless of how it's formatted. This is pre-classification: groups are identified before individual items are categorized.
+
 **Classification categories:**
 
 | Category | Meaning | Action |
 |----------|---------|--------|
 | JM_EXISTING_UF | Maps to known JM + known UF | Promote to draft |
 | JM_NEW_UF | Maps to known JM, new user flow | Promote to draft + add [PLANNED] to USER_FLOWS.md |
-| JM_NEW | Entirely new journey | Promote to draft + add [PLANNED] to JOURNEY_MAPPINGS.md |
+| JM_NEW | Entirely new journey | Promote to draft + add [PLANNED] to JOURNEY_MAPPINGS.md (subject to scope gating — see below) |
 | CHORE | Infrastructure, compliance, DX | Promote to draft |
 | FUTURE_JM | Good idea, not current scope | Defer (terminal) |
+| DEFERRED_SCOPE | Real work, outside active execution scope | Defer (promotable via `kh promote`) |
 | DEFERRED_PROMOTED | Previously deferred, now has a JM | Promote to draft |
 | REDUNDANCY | Already covered by existing work | Note only |
 | VAGUE | Can't determine meaning | Reject for human review |
 | NON_IMPLEMENTATION | Not a software task | Reject |
 
 **Grouping intelligence:** After categorizing, breakdown suggests execution groups. Items that share the same JM + Step + Actor get grouped into a SINGLE draft (prevents over-splitting). Each group becomes one draft file. Standalone items get their own draft. If two groups serve the same system concern at different JM steps, breakdown adds a merge hint for grooming.
+
+**Scope Gating (post-classification filter):** After the AI classifies raw items, kh.sh applies a mechanical scope filter. Items classified as `JM_NEW` are checked against the current execution scope. If active JMs exist (any JM with `IMPLEMENTED` or `IN PROGRESS` status in JOURNEY_MAPPINGS.md), JM_NEW items are redirected to `deferred_scope` instead of `draft`. This enforces the execution sequence model (Dimension 2: complete current JM before starting new ones) at the pipeline level.
+
+The scope filter is mechanical, not judgmental — it doesn't evaluate whether a JM_NEW item is "small enough" to justify breaking sequence. That's a human decision made explicitly via `kh promote`. Classification and scope gating are separate concerns: classification answers "what IS this?", scope gating answers "should we build this NOW?"
+
+Scope-deferred items are stored in `raw/{name}_deferred_scope.md` with their full draft content preserved. They still receive `[PLANNED]` entries in JOURNEY_MAPPINGS.md so the idea is documented. They can be promoted to draft at any time via `kh promote "id"`.
+
+Key distinction between deferral types:
+
+| Type | Where | Meaning | Resurrection |
+|------|-------|---------|-------------|
+| FUTURE_JM | `raw/{name}_deferred.md` | Different system concern, needs own JM definition | Create new raw input |
+| DEFERRED_SCOPE | `raw/{name}_deferred_scope.md` | Real classified work, just not in current execution cycle | `kh promote "id"` |
 
 **Two-stage catalog update lifecycle:**
 
@@ -474,9 +490,9 @@ This is the mechanism by which JM/UF catalog docs stay current:
 
 This ensures catalogs always reflect both planned and completed work. Future breakdowns see what's been identified. Grooming sees what's been refined. Execution confirms what's real.
 
-**Deferred re-evaluation:** Each breakdown run reads ALL existing `_deferred.md` files as context. For each previously deferred item, the AI checks: does it NOW map to a known JM? If yes, it's reclassified as DEFERRED_PROMOTED and promoted to draft alongside the new raw input's items. This makes deferred items self-correcting — they surface automatically when their JM arrives.
+**Deferred re-evaluation:** Each breakdown run reads ALL existing `_deferred.md` and `_deferred_scope.md` files as context. For previously deferred items (FUTURE_JM), the AI checks: does it NOW map to a known JM? For previously scope-deferred items (JM_NEW), the AI checks: does its journey NOW appear as an active JM? If yes in either case, the item is reclassified as DEFERRED_PROMOTED and promoted to draft alongside the new raw input's items. This makes deferred items self-correcting — they surface automatically when their conditions are met.
 
-**Ambiguity handling:** Brain dumps often contain lines that could be either section headers or standalone observations (e.g., "CROSS-OP (medical-consult and labs)"). The prompt instructs: "When in doubt, promote — don't absorb." Let grooming merge if redundant, rather than losing an item by treating it as decoration.
+**Semantic grouping and ambiguity handling:** Brain dumps often contain lines that could be either section headers or standalone observations. Two rules apply: (1) **Semantic grouping** (pre-classification): When consecutive lines describe sub-operations of a broader feature (e.g., "ADMIN LAB ORDERS" followed by CREATE, SIGN, SEND, VIEW), the AI recognizes the parent-child relationship semantically — not by format or indentation — and groups them into a single draft with the parent as the topic and children as observations within it. This is format-agnostic: raw input from notes apps may have inconsistent indentation, missing bullets, or mixed nesting. The AI reads for meaning, not structure. (2) **Ambiguity rule**: For genuinely standalone lines with no clearly related sub-items (e.g., "CROSS-OP (medical-consult and labs)"), err toward promoting as a standalone item rather than absorbing as decoration. Let grooming merge if redundant, rather than losing an item by treating it as a header.
 
 **Output protocol:** Breakdown produces both a human-readable markdown report AND a machine-parseable JSON block between `[BREAKDOWN_JSON]` / `[/BREAKDOWN_JSON]` markers. kh.sh extracts the JSON to auto-create draft files, deferred/rejected files, and catalog entries. The markdown report is saved as `raw/{name}_breakdown.md` for human review.
 
@@ -1675,13 +1691,13 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 | `kh raw add "name"` | **Pre-flow intake** — store unstructured brain dump in `raw/` for later breakdown |
 | `kh raw list` | List all raw inputs with status (pending/broken_down) |
 | `kh raw show "name"` | Show raw input + breakdown report + deferred + rejected |
-| `kh breakdown "name"` | **Pre-flow triage** — AI-powered classification of raw input into categorized drafts. Reads JMs, UFs, existing drafts, completed items, and deferred items as context. Creates draft files, deferred/rejected files, and [PLANNED] catalog entries. Supports `--dry-run`. |
+| `kh breakdown "name"` | **Pre-flow triage** — AI-powered classification of raw input into categorized drafts. Reads JMs, UFs, existing drafts, completed items, deferred items, and scope-deferred items as context. Creates draft files, deferred/rejected/scope-deferred files, and [PLANNED] catalog entries. Applies scope gating: JM_NEW items are auto-deferred when active JMs exist. Supports `--dry-run`. |
 | `kh run` | Process all drafts through GROOMING → DEVELOPMENT → UPDATE |
 | `kh close [modifier]` | **Closing ceremony** — comprehensive test review, flow coverage audit, UAT preparation |
 | `kh status` | Show queue status (raw inputs, broken down, drafts, active, complete) + user flow coverage + token usage |
 | `kh logs` | Live-tail active session or show last completed |
 | `kh resume "name"` | Resume a failed session from checkpoint |
-| `kh demote/promote/remove` | Manual queue management |
+| `kh demote/promote/remove` | Manual queue management. `kh promote` also handles scope-deferred items: promotes from `deferred_scope` → `draft` by extracting stored draft content. |
 
 ### Archive
 

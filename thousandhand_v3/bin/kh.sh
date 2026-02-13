@@ -114,6 +114,18 @@ clear_global() {
      "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
 }
 
+# --- Scope Gating ---
+# Checks if any JM in JOURNEY_MAPPINGS.md has IMPLEMENTED or IN PROGRESS status.
+# Used by cmd_breakdown() to redirect JM_NEW items to deferred_scope.
+
+has_active_jm_scope() {
+  local jm_context="$1"
+  if echo "$jm_context" | grep -qiE 'IMPLEMENTED|IN PROGRESS'; then
+    return 0  # true — active scope exists
+  fi
+  return 1  # false — no active scope
+}
+
 # --- Signal handling ---
 
 cleanup() {
@@ -853,6 +865,20 @@ cmd_status() {
   fi
   echo ""
 
+  # --- SCOPE-DEFERRED: JM_NEW items parked during active execution ---
+  local scope_deferred_total=0
+  scope_deferred_total=$(jq '[.raw_items // [] | .[] | .deferred_scope_count // 0] | add // 0' "$STATE_FILE" 2>/dev/null || echo 0)
+  if [[ $scope_deferred_total -gt 0 ]]; then
+    echo -e "⟲ ${CYAN}SCOPE-DEFERRED${NC} (${scope_deferred_total} items):"
+    # List IDs from deferred_scope files
+    for dsf in "${RAW_DIR}"/*_deferred_scope.md; do
+      [[ -f "$dsf" ]] || continue
+      grep '^\- \*\*ID:\*\*' "$dsf" 2>/dev/null | sed 's/.*\*\*ID:\*\* /   /' || true
+    done
+    echo -e "   ${CYAN}(use kh promote \"id\" to activate)${NC}"
+    echo ""
+  fi
+
   # --- EXECUTION FLOW: Draft → Groom → Develop → Update → Complete ---
   local draft_count complete_count grooming_count developing_count updating_count
   draft_count=$(ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ' || echo 0)
@@ -1263,9 +1289,63 @@ cmd_promote() {
   local safe_name; safe_name=$(to_safe_name "$name")
   local filename="${safe_name}.md"
 
+  # --- Check if this is a scope-deferred item (not in state.json yet) ---
   local current_state
-  current_state=$(jq -r --arg id "$safe_name" '.items[] | select(.id == $id) | .state // empty' "$STATE_FILE")
-  [[ -z "$current_state" ]] && { error "Item '${name}' not found in state.json"; exit 1; }
+  current_state=$(jq -r --arg id "$safe_name" '.items[] | select(.id == $id) | .state // empty' "$STATE_FILE" 2>/dev/null)
+
+  if [[ -z "$current_state" ]]; then
+    # Not in state.json — check if it's in a deferred_scope file
+    local found_scope_file=""
+    local found_draft_content=""
+    for dsf in "${RAW_DIR}"/*_deferred_scope.md; do
+      [[ -f "$dsf" ]] || continue
+      if grep -q "^\- \*\*ID:\*\* ${safe_name}$" "$dsf" 2>/dev/null; then
+        found_scope_file="$dsf"
+        # Extract stored draft content between ``` markers after the matching ID section
+        found_draft_content=$(awk -v id="$safe_name" '
+          /^- \*\*ID:\*\*/ && $0 ~ id { found=1; next }
+          found && /^### Stored Draft Content/ { capture=1; next }
+          capture && /^```$/ && !started { started=1; next }
+          capture && started && /^```$/ { exit }
+          capture && started { print }
+        ' "$dsf")
+        break
+      fi
+    done
+
+    if [[ -z "$found_scope_file" ]]; then
+      error "Item '${name}' not found in state.json or any deferred_scope file"
+      exit 1
+    fi
+
+    # Promote from scope-deferred to draft
+    echo -e "${BLUE}Promoting scope-deferred item: ${safe_name}${NC}"
+
+    if [[ -n "$found_draft_content" ]]; then
+      printf '%s\n' "$found_draft_content" > "${DRAFT_DIR}/${safe_name}.md"
+    else
+      warn "Could not extract stored draft content — creating placeholder draft"
+      echo "# ${safe_name} (promoted from scope-deferred)" > "${DRAFT_DIR}/${safe_name}.md"
+    fi
+
+    # Add to state.json
+    local temp_file; temp_file=$(mktemp)
+    local timestamp; timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local next_priority; next_priority=$(jq '.items | length' "$STATE_FILE")
+    jq --arg id "$safe_name" --arg file "${safe_name}.md" --arg ts "$timestamp" \
+       --argjson pri "$next_priority" \
+       '.items += [{
+         "id": $id, "name": $id, "draft_file": $file, "state": "draft", "phase": null,
+         "session_id": null, "delivery_handoff": null, "triage": null,
+         "priority": $pri, "tokens": {}, "started_at": $ts,
+         "completed_at": null, "error": null, "raw_source": "scope-deferred"
+       }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+
+    success "Promoted from scope-deferred → draft: ${safe_name}"
+    echo -e "  Draft: ${BLUE}draft/${safe_name}.md${NC}"
+    return
+  fi
+
   [[ "$current_state" == "complete" ]] && { echo -e "${YELLOW}Already complete.${NC}"; return; }
 
   local source_dir=""
@@ -1908,6 +1988,28 @@ $(cat "$df")
     done <<< "$deferred_files"
   fi
 
+  # Gather previously scope-deferred items for re-evaluation
+  local deferred_scope_context="(none)"
+  local deferred_scope_files
+  deferred_scope_files=$(ls -1 "${RAW_DIR}"/*_deferred_scope.md 2>/dev/null || true)
+  if [[ -n "$deferred_scope_files" ]]; then
+    deferred_scope_context=""
+    while IFS= read -r dsf; do
+      local dsf_name
+      dsf_name=$(basename "$dsf")
+      deferred_scope_context+="--- From: ${dsf_name} ---
+$(cat "$dsf")
+"
+    done <<< "$deferred_scope_files"
+  fi
+
+  # Determine if active JM scope exists (for post-classification scope gating)
+  local has_scope=false
+  if has_active_jm_scope "$jm_context"; then
+    has_scope=true
+    log "INFO" "Active JM scope detected — JM_NEW items will be scope-deferred"
+  fi
+
   # Build the breakdown prompt
   local prompt="> BREAKDOWN ANALYSIS — Split raw input into discrete, actionable items.
 > You are NOT grooming. You are NOT implementing. You are TRIAGING.
@@ -1931,6 +2033,31 @@ ${complete_list}
 ## CONTEXT — Previously Deferred Items
 ${deferred_context}
 
+## CONTEXT — Previously Scope-Deferred Items
+${deferred_scope_context}
+
+## SEMANTIC GROUPING (pre-classification step)
+
+Before classifying individual items, read the raw input for semantic structure. Look for lines
+that serve as TOPIC DECLARATIONS — broad statements that introduce a feature area — followed
+by lines that describe SUB-OPERATIONS within that topic.
+
+Signals that indicate parent-child relationships (any of these, not all required):
+- A broad feature name followed by specific actions (e.g., 'ADMIN LAB ORDERS' followed by 'SIGN,' 'SEND,' 'VIEW')
+- A line that names a workflow followed by lines that describe steps in that workflow
+- A labeled section (e.g., 'CONSENT WORKFLOW:') followed by actor-specific details
+- Lines that only make sense in the context of the line above them
+
+When you detect a parent-child structure:
+- The parent line becomes the GROUP TITLE, not a standalone observation
+- The child lines become OBSERVATIONS within that group
+- The resulting draft should frame these as a workflow or feature with named operations —
+  not as independent items that happen to be grouped
+
+This is semantic, not format-based. Do NOT rely on indentation, bullet characters, or markdown
+syntax. The raw input may have inconsistent formatting from a notes app — tabs vs spaces,
+missing bullets, mixed nesting. Read for MEANING, not for structure.
+
 ## CLASSIFICATION RULES
 
 For each DISTINCT observation or request in the raw input:
@@ -1940,9 +2067,12 @@ For each DISTINCT observation or request in the raw input:
 4. If it doesn't map to any JM: is it a new JM, a CHORE, VAGUE, or NON_IMPLEMENTATION?
 
 AMBIGUITY RULE: If a line could be either a section header OR a standalone observation,
-err toward classifying it as a standalone item. Let grooming merge it if redundant.
-Brain dumps often have labels like 'CROSS-OP' or 'APP UPDATES' that look like headers
-but actually represent a distinct feature request. When in doubt, promote — don't absorb.
+AND it has no clearly related sub-items following it, err toward classifying it as a
+standalone item. Let grooming merge it if redundant. Brain dumps often have labels like
+'CROSS-OP' or 'APP UPDATES' that look like headers but actually represent a distinct
+feature request. When in doubt, promote — don't absorb.
+HOWEVER: If the line IS followed by sub-items that only make sense in its context,
+treat it as a topic declaration and group the sub-items under it (see SEMANTIC GROUPING above).
 
 Categories (assign exactly one per item):
 - JM_EXISTING_UF — maps to known JM + known UF → promote to draft
@@ -1962,6 +2092,12 @@ does it NOW map to a known JM that exists in the Journey Mappings context?
 If yes, re-classify it as DEFERRED_PROMOTED and include it in the breakdown output
 as a promoted item. Add it to the appropriate execution group or as standalone.
 If it still doesn't map, leave it deferred — do NOT re-defer it (it's already in a deferred file).
+
+Also check the 'Previously Scope-Deferred Items' context above. These were classified as
+JM_NEW but deferred because active JM execution was in progress. For each scope-deferred item:
+does its journey NOW appear as an active JM (IMPLEMENTED or IN PROGRESS) in Journey Mappings?
+If yes, re-classify it as DEFERRED_PROMOTED and include it in the breakdown output.
+If it still doesn't match an active JM, leave it — do NOT re-defer it.
 
 ## GROUPING RULES
 
@@ -2089,38 +2225,57 @@ IMPORTANT:
     return 1
   fi
 
-  # --- Create draft files from groups ---
+  # --- Create draft files from groups and standalone items ---
   local promoted_ids=()
+  local scope_deferred_ids=()
+  local scope_deferred_entries=()
   local timestamp
   timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Helper: promote an item to draft or scope-defer it
+  _promote_or_scope_defer() {
+    local draft_id="$1" draft_content="$2" category="$3" label="$4" maps_to="$5"
+
+    # --- SCOPE GATING: JM_NEW + active scope → deferred_scope ---
+    if [[ "$category" == "JM_NEW" && "$has_scope" == "true" ]]; then
+      scope_deferred_ids+=("$draft_id")
+      scope_deferred_entries+=("$(printf '%s\t%s\t%s\t%s' "$draft_id" "$label" "$maps_to" "$draft_content")")
+      echo -e "  ${CYAN}⟲${NC} Scope-deferred: ${draft_id} [JM_NEW → active scope exists]"
+      return
+    fi
+
+    # --- Normal promotion to draft ---
+    printf '%s\n' "$draft_content" > "${DRAFT_DIR}/${draft_id}.md"
+
+    local temp_file; temp_file=$(mktemp)
+    local next_priority; next_priority=$(jq '.items | length' "$STATE_FILE")
+    jq --arg id "$draft_id" --arg file "${draft_id}.md" --arg ts "$timestamp" \
+       --argjson pri "$next_priority" --arg src "$safe_name" \
+       '.items += [{
+         "id": $id, "name": $id, "draft_file": $file, "state": "draft", "phase": null,
+         "session_id": null, "delivery_handoff": null, "triage": null,
+         "priority": $pri, "tokens": {}, "started_at": $ts,
+         "completed_at": null, "error": null, "raw_source": $src
+       }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
+
+    promoted_ids+=("$draft_id")
+    echo -e "  ${GREEN}✓${NC} Draft created: ${draft_id} [${category}]"
+  }
 
   # Process grouped items
   local group_count
   group_count=$(echo "$json_block" | jq '.groups | length' 2>/dev/null || echo 0)
   local i=0
   while [[ $i -lt $group_count ]]; do
-    local draft_id draft_content category
+    local draft_id draft_content category label maps_to
     draft_id=$(echo "$json_block" | jq -r ".groups[$i].draft_id")
     draft_content=$(echo "$json_block" | jq -r ".groups[$i].draft_content")
     category=$(echo "$json_block" | jq -r ".groups[$i].category")
+    label=$(echo "$json_block" | jq -r ".groups[$i].label")
+    maps_to=$(echo "$json_block" | jq -r ".groups[$i].maps_to")
 
     if [[ -n "$draft_id" && "$draft_id" != "null" ]]; then
-      printf '%s\n' "$draft_content" > "${DRAFT_DIR}/${draft_id}.md"
-
-      # Add to state.json items
-      local temp_file; temp_file=$(mktemp)
-      local next_priority; next_priority=$(jq '.items | length' "$STATE_FILE")
-      jq --arg id "$draft_id" --arg file "${draft_id}.md" --arg ts "$timestamp" \
-         --argjson pri "$next_priority" --arg src "$safe_name" \
-         '.items += [{
-           "id": $id, "name": $id, "draft_file": $file, "state": "draft", "phase": null,
-           "session_id": null, "delivery_handoff": null, "triage": null,
-           "priority": $pri, "tokens": {}, "started_at": $ts,
-           "completed_at": null, "error": null, "raw_source": $src
-         }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
-
-      promoted_ids+=("$draft_id")
-      echo -e "  ${GREEN}✓${NC} Draft created: ${draft_id} [${category}]"
+      _promote_or_scope_defer "$draft_id" "$draft_content" "$category" "$label" "$maps_to"
     fi
     i=$((i + 1))
   done
@@ -2130,30 +2285,47 @@ IMPORTANT:
   standalone_count=$(echo "$json_block" | jq '.standalone | length' 2>/dev/null || echo 0)
   i=0
   while [[ $i -lt $standalone_count ]]; do
-    local draft_id draft_content category
+    local draft_id draft_content category label maps_to
     draft_id=$(echo "$json_block" | jq -r ".standalone[$i].draft_id")
     draft_content=$(echo "$json_block" | jq -r ".standalone[$i].draft_content")
     category=$(echo "$json_block" | jq -r ".standalone[$i].category")
+    label=$(echo "$json_block" | jq -r ".standalone[$i].label // .standalone[$i].draft_id")
+    maps_to=$(echo "$json_block" | jq -r ".standalone[$i].maps_to")
 
     if [[ -n "$draft_id" && "$draft_id" != "null" ]]; then
-      printf '%s\n' "$draft_content" > "${DRAFT_DIR}/${draft_id}.md"
-
-      local temp_file; temp_file=$(mktemp)
-      local next_priority; next_priority=$(jq '.items | length' "$STATE_FILE")
-      jq --arg id "$draft_id" --arg file "${draft_id}.md" --arg ts "$timestamp" \
-         --argjson pri "$next_priority" --arg src "$safe_name" \
-         '.items += [{
-           "id": $id, "name": $id, "draft_file": $file, "state": "draft", "phase": null,
-           "session_id": null, "delivery_handoff": null, "triage": null,
-           "priority": $pri, "tokens": {}, "started_at": $ts,
-           "completed_at": null, "error": null, "raw_source": $src
-         }] | .last_updated = $ts' "$STATE_FILE" > "$temp_file" && mv "$temp_file" "$STATE_FILE"
-
-      promoted_ids+=("$draft_id")
-      echo -e "  ${GREEN}✓${NC} Draft created: ${draft_id} [${category}]"
+      _promote_or_scope_defer "$draft_id" "$draft_content" "$category" "$label" "$maps_to"
     fi
     i=$((i + 1))
   done
+
+  # --- Create scope-deferred file (if any JM_NEW items were intercepted) ---
+  local scope_deferred_count=${#scope_deferred_ids[@]}
+  if [[ $scope_deferred_count -gt 0 ]]; then
+    {
+      echo "# Scope-Deferred Items from: ${safe_name}"
+      echo "> These items were classified as JM_NEW but deferred because active JM execution"
+      echo "> is in progress. Promote to draft with: kh promote \"id\""
+      echo ""
+      for entry in "${scope_deferred_entries[@]}"; do
+        local sd_id sd_label sd_maps sd_content
+        sd_id=$(echo "$entry" | cut -f1)
+        sd_label=$(echo "$entry" | cut -f2)
+        sd_maps=$(echo "$entry" | cut -f3)
+        sd_content=$(echo "$entry" | cut -f4-)
+        echo "## ${sd_label}"
+        echo "- **ID:** ${sd_id}"
+        echo "- **Category:** JM_NEW"
+        echo "- **Maps to:** ${sd_maps}"
+        echo ""
+        echo "### Stored Draft Content"
+        echo '```'
+        echo "${sd_content}"
+        echo '```'
+        echo ""
+      done
+    } > "${RAW_DIR}/${safe_name}_deferred_scope.md"
+    echo -e "  ${CYAN}⟲${NC} Scope-deferred: ${scope_deferred_count} items → raw/${safe_name}_deferred_scope.md"
+  fi
 
   # --- Create deferred file ---
   local deferred_count
@@ -2277,15 +2449,21 @@ IMPORTANT:
   # --- Update raw_items state ---
   local temp_file; temp_file=$(mktemp)
   local promoted_json
-  promoted_json=$(printf '%s\n' "${promoted_ids[@]}" | jq -R . | jq -s .)
+  if [[ ${#promoted_ids[@]} -gt 0 ]]; then
+    promoted_json=$(printf '%s\n' "${promoted_ids[@]}" | jq -R . | jq -s .)
+  else
+    promoted_json='[]'
+  fi
   jq --arg id "$safe_name" --arg ts "$timestamp" --argjson promoted "$promoted_json" \
      --arg bfile "raw/${safe_name}_breakdown.md" \
      --argjson deferred "$deferred_count" --argjson rejected "$rejected_count" \
+     --argjson scope_deferred "$scope_deferred_count" \
      '(.raw_items[] | select(.id == $id)) |= (
        .status = "broken_down" |
        .breakdown_file = $bfile |
        .promoted_drafts = $promoted |
        .deferred_count = $deferred |
+       .deferred_scope_count = $scope_deferred |
        .rejected_count = $rejected |
        .breakdown_at = $ts
      ) | .last_updated = $ts' \
@@ -2302,6 +2480,7 @@ IMPORTANT:
   header
   echo -e "  ${GREEN}Breakdown complete: ${safe_name}${NC}"
   echo -e "  Promoted to draft: ${GREEN}${total_promoted}${NC}"
+  [[ $scope_deferred_count -gt 0 ]] && echo -e "  Scope-deferred:    ${CYAN}${scope_deferred_count}${NC} (JM_NEW → active scope)"
   [[ $deferred_count -gt 0 ]] && echo -e "  Deferred:          ${YELLOW}${deferred_count}${NC}"
   [[ $rejected_count -gt 0 ]] && echo -e "  Rejected:          ${RED}${rejected_count}${NC}"
   [[ "$redundant_count" -gt 0 ]] && echo -e "  Redundant:         ${CYAN}${redundant_count}${NC}"

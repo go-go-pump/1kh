@@ -14,7 +14,7 @@ kh init                        Initialize a .kh/ workspace in any project
 kh raw "name" < dump.md        Capture a brain dump or observation list
 kh raw list                    List all raw inputs + breakdown status
 kh raw show "name"             View raw input + its breakdown report
-kh breakdown "name"            AI-powered triage: split raw into discrete, categorized drafts
+kh breakdown "name"            AI-powered triage: split raw into discrete drafts (scope-gates JM_NEW)
 
 kh add "name" < task.md        Add a pre-scoped task directly (skips pre-flow)
 kh status                      Show current queue + active phases
@@ -29,7 +29,7 @@ kh stop                        Stop a running watch/run
 kh close [modifier]            Closing ceremony: UAT prep, test coverage audit, delivery
 
 kh demote "name"               Move task back to draft (redo from scratch)
-kh promote "name"              Manually advance task to complete
+kh promote "name"              Manually advance task to complete (or promote from scope-deferred)
 kh resume "name"               Resume a failed Claude session from checkpoint
 kh remove "name"               Permanently remove an item and its files
 ```
@@ -39,8 +39,10 @@ The core innovation is the **pre-flow pipeline**: unstructured brain dumps (30+ 
 ```
 BRAIN DUMP ──→ BREAKDOWN (AI triage) ──→ DISCRETE DRAFTS ──→ GROOMING ──→ EXECUTION
                      │
+                     ├── Semantic grouping: detects parent-child structure in raw input
                      ├── Maps each item to Journey Mappings + User Flows
                      ├── Groups related items into execution batches
+                     ├── Scope-gates JM_NEW items when active JMs exist (DEFERRED_SCOPE)
                      ├── Defers out-of-scope ideas (with auto re-evaluation)
                      └── Updates catalogs with [PLANNED] entries
 ```

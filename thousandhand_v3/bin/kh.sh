@@ -903,7 +903,7 @@ cmd_status() {
     echo -e "${emoji} ${YELLOW}${label}${NC} ($count items):"
     if [[ "$count" -gt 0 ]]; then
       case "$qtype" in
-        draft)      ls -1 "$DRAFT_DIR"/*.md 2>/dev/null | xargs -I {} basename {} .md | sed 's/^/   /' ;;
+        draft)      jq -r '[.items[] | select(.state == "draft")] | sort_by(.priority // 999) | to_entries[] | "   \(.key + 1). [\(.value.priority // "?")] \(.value.id)"' "$STATE_FILE" ;;
         complete)   ls -1 "$COMPLETE_DIR"/*.md 2>/dev/null | xargs -I {} basename {} .md | sed 's/^/   /' ;;
         grooming)   jq -r '.items[] | select(.state == "developing" and .phase == "grooming") | "   \(.id)"' "$STATE_FILE" ;;
         developing) jq -r '.items[] | select(.state == "developing" and .phase == "development") | "   \(.id)"' "$STATE_FILE" ;;

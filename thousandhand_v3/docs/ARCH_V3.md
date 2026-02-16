@@ -1712,6 +1712,62 @@ Each step is usable independently — you don't need step 7 to use step 3. This 
 
 ---
 
+---
+
+## SHELVED: Shared Components (Phase 2)
+
+> **Status:** SHELVED — design captured, implementation deferred to phase boundary.
+> **Trigger:** When a second project needs to consume a component built for the first, or at the start of a new phase.
+
+### Concept
+
+Shared components are reusable units (UI tools, Temporal workflows, lambdas, patterns) published to a root-level directory and consumed by one or more projects. KH registers this directory, maintains an index, and enforces lifecycle rules.
+
+### Directory Structure (proposed)
+
+```
+/shared/
+  INDEX.md               ← Manifest: status, name, description, consumers, considerations
+  journey-test-dashboard/ ← Example: first candidate (currently at sites/testing/dashboard/)
+  ...
+```
+
+### Index Fields
+
+| Field | Description |
+|-------|-------------|
+| Name | Component identifier |
+| Status | DRAFT / ACTIVE / DEPRECATED |
+| Description | What it does |
+| Consumers | Which projects use it (important for refactor impact) |
+| Special Considerations | Breaking change risks, external dependencies |
+
+### Lifecycle Rules
+
+1. **Grooming** — Identify potential shared components during grooming. Mark them; don't extract them mid-swing.
+2. **Execution** — For new shared functionality or items specifically marked, create shared components where possible (deterministic over ad-hoc).
+3. **Project-wide refactor** — NOT during normal swing. Happens at phase boundaries where code churn sensitivity is low. Duplicate implementations are identified → qualified as shared components → extracted.
+4. **Component-specific refactor** — Triggered by bug or soft variation in a new implementation. Find the existing shared component, change it, check all consumers. If changes are too debilitating → "ecosystem-wide change" process (TBD).
+
+### When Things Qualify
+
+- Consumed by 2+ projects OR designed for reuse
+- Temporal workflows, lambdas, and executable patterns qualify when they serve multiple JMs or projects
+- Test infrastructure (like the journey test dashboard) qualifies when a second project needs similar testing
+
+### Open Questions (for Phase 2 design)
+
+- [ ] Ecosystem-wide change management process
+- [ ] Versioning strategy for shared components (semver? hash-based?)
+- [ ] KH CLI integration (`kh shared list`, `kh shared publish`?)
+- [ ] At what threshold do Temporal workflows and lambdas move from project to shared?
+
+### First Candidate
+
+**Journey Test Dashboard** — currently at `sites/testing/dashboard/`. Serves MVH journey testing. Lift to `/shared/journey-test-dashboard/` when a second project needs journey-level test infrastructure.
+
+---
+
 *This is the v3 architecture. No blocking open questions remain. Implementation begins when the founder approves.*
 
 *Last Updated: 2026-02-13*

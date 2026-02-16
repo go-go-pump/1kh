@@ -80,6 +80,24 @@ The executor operates in ONE of three contexts. The context determines where dat
 
 The execution context is injected into the session prompt as `[EXECUTION_CONTEXT: LOCAL|MIXED|PRODUCTION]`. The executor MUST read this and adapt behavior accordingly. When in doubt about which services are real vs mocked, read the project's configuration files (`.env`, `supabase/config.toml`, existing service integration code) to determine actual state.
 
+### 2.5 Recommended Stage Naming
+
+Projects MAY adopt **DEV / INTEGRATION / PRODUCTION** naming to better communicate stage intent:
+
+| Executor Context | Recommended Name | Purpose |
+|-----------------|-----------------|---------|
+| LOCAL | **DEV** | Fast offline development, zero external dependencies |
+| MIXED | **INTEGRATION** | Real services with test data, UAT verification |
+| PRODUCTION | **PRODUCTION** | Live system, real users |
+
+The mapping is 1:1 — all behavioral rules from Sections 2.1–2.3 apply unchanged.
+The recommended naming avoids confusion between "LOCAL" (which sounds like a location)
+and "MIXED" (which doesn't communicate what's mixed). See `ARCHITECTURE_TEMPLATE.md` →
+"Preferred Stage Architecture" for the full infrastructure matrix per stage.
+
+**When using the recommended naming**, the context injection becomes:
+`[EXECUTION_CONTEXT: DEV|INTEGRATION|PRODUCTION]`
+
 ---
 
 ## 3. Tech Stack: Opinionated Defaults

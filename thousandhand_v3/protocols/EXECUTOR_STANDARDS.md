@@ -189,6 +189,25 @@ Every system must include:
 
 Use persisted data from DB over localStorage alone. Both may be necessary (localStorage for offline/draft state, DB for durable state), but the DB is the source of truth. In LOCAL context, "the DB" is SQLite. In MIXED/PRODUCTION context, "the DB" is whatever cloud database the project uses.
 
+### Migration Idempotency (REQUIRED)
+
+All SQL migration files MUST be idempotent — safe to re-run without error. This is critical because migration pipelines (e.g., `supabase db push`) run sequentially and **a single failure blocks ALL subsequent migrations**, including unrelated features downstream.
+
+**Required patterns:**
+
+| SQL Statement | Required Idempotent Form |
+|---------------|-------------------------|
+| `CREATE POLICY` | `DROP POLICY IF EXISTS "name" ON table;` before `CREATE POLICY` |
+| `CREATE FUNCTION` | Use `CREATE OR REPLACE FUNCTION` |
+| `ADD CONSTRAINT` | Wrap in `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;` or check `pg_constraint` first |
+| `CREATE INDEX` | Use `CREATE INDEX IF NOT EXISTS` |
+| `CREATE TABLE` | Use `CREATE TABLE IF NOT EXISTS` |
+| `ALTER TABLE ADD COLUMN` | Wrap in existence check or use `IF NOT EXISTS` (PG 9.6+) |
+
+**Why this matters:** A non-idempotent migration that was already applied manually (e.g., via Supabase SQL Editor during debugging) will fail on `db push`, blocking every migration file after it in the pipeline. This creates a cascade failure where Feature B's migration never runs because Feature A's policy migration throws `already exists`.
+
+**Validation before delivery:** Before marking a task with migrations as complete, scan all new `.sql` files for bare `CREATE POLICY`, `CREATE FUNCTION`, `ADD CONSTRAINT`, or `CREATE INDEX` statements without their idempotent guards. This is a blocking issue — do not deliver migrations that aren't idempotent.
+
 ---
 
 ## 5. Build Order

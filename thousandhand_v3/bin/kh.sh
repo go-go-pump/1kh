@@ -48,6 +48,21 @@ KH_TEMPLATES="${KH_HOME}/templates"
 KH_PROTOCOLS="${KH_HOME}/protocols"
 KH_DEFAULTS="${KH_HOME}/defaults"
 
+# Resolve claude binary — check PATH first, then known install locations
+CLAUDE_BIN="$(command -v claude 2>/dev/null || true)"
+if [[ -z "$CLAUDE_BIN" ]]; then
+  for candidate in \
+    "$HOME/Library/Application Support/Claude/claude-code"/*/claude \
+    "$HOME/.claude/local/claude" \
+    /usr/local/bin/claude; do
+    if [[ -x "$candidate" ]]; then
+      CLAUDE_BIN="$candidate"
+      break
+    fi
+  done
+fi
+[[ -z "$CLAUDE_BIN" ]] && { echo "Error: claude binary not found. Install Claude Code or set CLAUDE_BIN."; exit 1; }
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1119,7 +1134,7 @@ COMPLETE: DELIVERY_${feature_name}.md"
   start_phase_monitor "$id" "$stream_file"
 
   local exit_code=0
-  ( cd "$PROJECT_ROOT" && claude -p \
+  ( cd "$PROJECT_ROOT" && "$CLAUDE_BIN" -p \
     --model "$MODEL" \
     --dangerously-skip-permissions \
     --verbose --output-format stream-json \
@@ -1481,7 +1496,7 @@ When fully complete, output EXACTLY: COMPLETE: DELIVERY_${feature_name}.md" ;;
   start_phase_monitor "$safe_name" "$stream_file"
 
   local exit_code=0
-  ( cd "$PROJECT_ROOT" && claude --resume "$session_id" \
+  ( cd "$PROJECT_ROOT" && "$CLAUDE_BIN" --resume "$session_id" \
     -p \
     --dangerously-skip-permissions \
     --verbose --output-format stream-json \
@@ -1763,7 +1778,7 @@ COMPLETE: UAT_GUIDE${modifier:+_${modifier}}.md"
   start_phase_monitor "$safe_name" "$stream_file"
 
   local exit_code=0
-  ( cd "$PROJECT_ROOT" && claude -p \
+  ( cd "$PROJECT_ROOT" && "$CLAUDE_BIN" -p \
     --model "$MODEL" \
     --dangerously-skip-permissions \
     --verbose --output-format stream-json \
@@ -2210,7 +2225,7 @@ IMPORTANT:
   echo -e "  ${CYAN}Running AI analysis...${NC}"
 
   local output exit_code=0
-  output=$( cd "$PROJECT_ROOT" && claude -p \
+  output=$( cd "$PROJECT_ROOT" && "$CLAUDE_BIN" -p \
     --model "${MODEL}" \
     --max-turns 3 \
     < "$prompt_file" \

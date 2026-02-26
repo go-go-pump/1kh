@@ -78,9 +78,12 @@ environments, running offline tests, or migrating providers becomes a full-codeb
 
 ### RLS Policy Management
 
-**Standard: RLS policies are code, not dashboard clicks.**
+**Standard: RLS policies are code, not dashboard clicks. Authorization lives in the API layer.**
 
-- Define all RLS policies in migration files, never in the Supabase dashboard directly.
+With Cognito + API proxy (Lambda), the primary access control is in application code
+(JWT validation, role checks, query scoping). RLS is a defense-in-depth layer on the database.
+
+- Define all RLS policies in migration files, never in a database dashboard directly.
 - Every table touched by a task must have its RLS policies reviewed and tested.
 - Include RLS policy verification as part of the executor's delivery checklist.
 - Test RLS behavior explicitly: seed data for User A, attempt access as User B, assert denial.
@@ -107,23 +110,29 @@ environments, running offline tests, or migrating providers becomes a full-codeb
 
 | Concern | DEV | INTEGRATION | PRODUCTION |
 |---------|-----|-------------|------------|
-| **Database** | SQLite (via API proxy) | Cloud DB (e.g., Supabase, Aurora) | Production DB (Aurora, RDS, etc.) |
-| **File storage** | Local filesystem (`./test_fixtures/s3/`) | Cloud storage (real bucket, test prefix) | Cloud storage (prod bucket) |
-| **Functions** | SAM local / mock | Deployed (test data) | Deployed (prod) |
-| **Auth** | Mock (bypass token, hardcoded test users) | Real auth provider | Real auth |
+| **Orchestration** | docker-compose (Postgres, Redis, Node app) | SST v3 (`sst dev` — Live Lambda) | SST v3 (`sst deploy --stage prod`) |
+| **Database** | Postgres container (via docker-compose) | Aurora Serverless v2 (test stage) | Aurora Serverless v2 (prod stage) |
+| **File storage** | Local filesystem (`./test_fixtures/s3/`) | S3 (real bucket, test prefix) | S3 (prod bucket) |
+| **Functions** | Node.js local (or `sst dev`) | Lambda via SST v3 (test data) | Lambda via SST v3 (prod) |
+| **Auth** | Mock (bypass token, hardcoded test users) | Cognito (test user pool) | Cognito (prod user pool) |
 | **Messaging** | Write to local file | Sandbox (SES sandbox, Twilio test) | Production (SES, Twilio) |
 | **Payments** | Mock (fixture responses) | Sandbox (Square sandbox, Stripe test) | Production |
-| **UX hosting** | localhost | localhost | CDN / S3+CloudFront |
+| **UX hosting** | localhost | localhost | CloudFront + S3 |
+| **Queues/Events** | In-process / mock | SQS + EventBridge (test) | SQS + EventBridge (prod) |
+| **Secrets** | `.env` file | SSM Parameter Store (test) | SSM Parameter Store (prod) |
 | **Workflows** | Skip — seed state directly | Temporal/Step Functions (test namespace) | Temporal/Step Functions (prod namespace) |
 
 **Key principle: DEV is fast + isolated, INTEGRATION proves real services, PRODUCTION is live.**
 
-- **DEV**: Zero external dependencies. Build and validate features offline. SQLite requires the
-  API proxy layer (see Data Access Layer standard). Full UX implementation against mock data.
+- **DEV**: Zero external dependencies. `docker-compose up` starts Postgres, Redis, and the Node
+  app locally. Full UX implementation against local data. API proxy routes to local Postgres.
   Unit tests and Playwright e2e tests run here. Fastest feedback loop.
-- **INTEGRATION**: Real cloud services with test data. Validates that real infrastructure behaves
-  the same as mocks. UAT happens here. Testing dashboard seeds to any journey step.
-- **PRODUCTION**: Everything real. Test data clearly identifiable and removable.
+- **INTEGRATION**: Real AWS services with test data via `sst dev` (Live Lambda Development).
+  Aurora Serverless v2 test stage, Cognito test user pool, S3 test buckets. Validates that real
+  infrastructure behaves the same as local dev. UAT happens here. Testing dashboard seeds to
+  any journey step.
+- **PRODUCTION**: Everything real via `sst deploy --stage prod`. Test data clearly identifiable
+  and removable.
 
 **Mapping to Executor Standards contexts:**
 - DEV = LOCAL context (Executor Standards Section 2.1)
@@ -132,42 +141,58 @@ environments, running offline tests, or migrating providers becomes a full-codeb
 
 **Infrastructure progression:**
 ```
-DEV (build fast)  →  INTEGRATION (prove it works)  →  PRODUCTION (ship it)
-SQLite + mocks        Real DB + sandboxes               Real everything
-Fast, offline         Real services, localhost           Live deployment
+DEV (build fast)           →  INTEGRATION (prove it works)     →  PRODUCTION (ship it)
+docker-compose + local PG      Aurora + Cognito via sst dev        sst deploy --stage prod
+Fast, offline                  Real services, localhost             Live deployment
 ```
 
-### Preferred Tech Stack (Production-Grade)
+**Deployment workflow:**
+```
+docker-compose up  →  Claude Code builds features  →  sst dev (test against real AWS)  →  sst deploy --stage prod
+```
 
-**Standard: API proxy + managed PostgreSQL + serverless functions + CDN.**
+### Preferred Tech Stack — The Founder's Playbook (Production-Grade)
 
-This is the recommended production architecture for projects that outgrow BaaS providers
-(Supabase, Firebase, etc.) or that need full infrastructure control from the start.
+**Standard: Full AWS-native stack via SST v3 + Aurora Serverless v2 + Cognito + CDN.**
+
+This is the recommended production architecture. For projects with compliance requirements
+(EHR, HIPAA, SOC2, etc.), use this stack from day one — do not start with a BaaS.
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| **Database** | Aurora PostgreSQL (AWS) | Managed, scalable, no vendor lock-in, full SQL |
-| **API Proxy** | Express/Fastify (Node.js) | Environment-swappable backend, auth middleware, caching |
-| **Functions** | AWS Lambda (via SAM) | Full language support, VPC access, longer timeouts |
+| **Local Dev** | docker-compose (Postgres, Redis, Node app) | Zero cloud dependency, instant reset, full offline dev |
+| **Database** | Aurora Serverless v2 (PostgreSQL) | Scales to zero, pay-per-use, managed, no vendor lock-in, full SQL |
+| **Data Access** | Raw SQL via `pg` client (no ORM) | Full control, no abstraction leaks, query-level optimization |
+| **API + Functions** | Lambda + API Gateway via **SST v3 (Ion)** | Live Lambda Dev, instant deploys, IaC in TypeScript |
+| **Auth** | AWS Cognito | Managed auth, MFA/OTP built-in, JWT native, HIPAA-eligible |
 | **File Storage** | S3 | Standard, cheap, pre-signed URLs |
-| **Auth** | Custom (bearer token + validator) | Simple, portable, no vendor dependency |
 | **Email** | SES | Cost-effective, AWS-native |
 | **SMS** | Twilio | Best delivery, A2P compliance |
-| **Frontend** | Vanilla HTML/CSS/JS or lightweight framework | No build step for MVP, S3+CloudFront for hosting |
+| **Queues/Events** | SQS + EventBridge | Decoupled async processing, cron jobs via EventBridge+Lambda |
+| **Secrets** | SSM Parameter Store | Free, encrypted, Lambda-native access |
+| **Frontend** | Vanilla HTML/CSS/JS or lightweight framework | No build step for MVP |
+| **CDN/Hosting** | CloudFront + S3 | AWS-native, S3 origin, edge caching |
+| **Monitoring** | CloudWatch | Unified logs, metrics, alarms, dashboards |
 | **Workflows** | Temporal | Long-running orchestration, complex state machines, escalation paths |
-| **CDN** | CloudFront | AWS-native, S3 origin |
 
-**When to use this stack:** When starting a new project, or when migrating away from a BaaS
-after proving the product. The API proxy is the keystone — it enables environment switching
-(DEV → INTEGRATION → PRODUCTION) without changing frontend code.
+**Why SST v3 (Ion):** SST replaces SAM/CDK/Serverless Framework as the deployment layer.
+It provides Live Lambda Development (`sst dev`) for instant feedback during INTEGRATION,
+infrastructure-as-code in TypeScript (not YAML), and single-command deployment to any stage.
+All AWS resources (Aurora, Cognito, S3, SQS, etc.) are defined as SST constructs.
 
-**Acceptable BaaS starting point:** Supabase or Firebase are fine for early development
-(INTEGRATION-first strategy). When you hit these triggers, migrate to the preferred stack:
-- Outage sensitivity (free/shared tier instability)
-- RLS policy complexity exceeding application logic
-- Need for offline development (DEV stage)
-- Edge function limitations vs Lambda capabilities
-- Vendor lock-in concern for core data
+**When to use this stack:** Any new project, especially those with compliance or data
+sovereignty requirements. The API proxy (Lambda behind API Gateway) is the keystone — it
+enables environment switching (DEV → INTEGRATION → PRODUCTION) without changing frontend code.
+
+**BaaS exception:** Supabase or Firebase are acceptable ONLY for non-regulated prototypes
+or throwaway MVPs where speed-to-first-demo matters more than infrastructure control.
+For anything touching health data, financial data, or user PII at scale, start with the
+preferred stack. The migration tax from BaaS to AWS-native is real and grows with time.
+
+**The workflow:**
+```
+docker-compose up → Claude Code + Cursor IDE build features → sst dev (live test) → sst deploy --stage prod
+```
 
 ### Journey Testing Dashboard Pattern
 

@@ -1768,6 +1768,41 @@ Shared components are reusable units (UI tools, Temporal workflows, lambdas, pat
 
 ---
 
+---
+
+## System Config, Product Config, and the Road Ahead
+
+### System Config (SC) & Product Config (PC)
+
+v3 introduces a generative layer above the Executor: **System Config (SC)** — a declarative JSON specification describing business capabilities that the SC Builder processes into complete Journey Mappings.
+
+The hierarchy: **PC → SC(s) → JM(s) → UF(s)**. Each layer has its own configuration format and lifecycle. SC speaks the language of business capabilities, not infrastructure. The builder infers infrastructure from the Founder's Playbook tech stack (see `ARCHITECTURE_TEMPLATE.md`).
+
+Full specification: `docs/SYSTEM_CONFIG.md`
+
+### The Five-Loop Orchestrator (North Star)
+
+The Orchestrator — originally designed in v2 as a five-loop cognitive system (REFLECTION → IMAGINATION → INTENT → WORK → EXECUTION) — remains the north star for 1KH. In the full vision, the Orchestrator ingests Foundation documents (Oracle, North Star, Context, Seeds), runs the planning loops, and *automatically produces* System Configs. The SC Builder and Executor handle everything downstream.
+
+Today the founder performs the Orchestrator's cognitive work manually. The system matures bottom-up: Executor (working) → SC Builder (designed) → Monitoring Platform (designed) → Orchestrator (north star).
+
+### Monitoring, Jam Session, and Futures
+
+The Monitoring Platform (Prometheus-inspired, time-series metrics across site health, analytics, hypotheses, campaigns, escalations, work completion, and founder input) and Jam Session (mobile voice/text input channel with triage routing to KH commands) are documented as future capabilities with tiered buildability.
+
+Full vision document: `docs/KH_FUTURES.md`
+
+### Updated Document Map
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| ARCH_V3 | `docs/ARCH_V3.md` | Current v3 architecture — layers, loops, execution pipeline |
+| SYSTEM_CONFIG | `docs/SYSTEM_CONFIG.md` | System Config and Product Config specification, SC Builder design, intake-portal flavor |
+| KH_FUTURES | `docs/KH_FUTURES.md` | Vision roadmap — Orchestrator (v2 history + north star), Monitoring Platform, Jam Session, tiered buildability |
+| ARCHITECTURE_TEMPLATE | `templates/ARCHITECTURE_TEMPLATE.md` | Project architecture template — Founder's Playbook tech stack, stage architecture |
+
+---
+
 *This is the v3 architecture. No blocking open questions remain. Implementation begins when the founder approves.*
 
-*Last Updated: 2026-02-13*
+*Last Updated: 2026-02-25*

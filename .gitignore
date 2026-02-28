@@ -43,9 +43,23 @@ htmlcov/
 .env.local
 .env.*.local
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
 # OS
 .DS_Store
 Thumbs.db
 
+# Node (if any tooling is added)
+node_modules/
+
 # Project-specific
 *.log
+
+# Archives stay local — v0-v3 reference only, not published
+archive/
+
+# v3 CLI (retired, archived in archive/thousandhand_v3_archived/)
+thousandhand_v3/

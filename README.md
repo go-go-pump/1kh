@@ -2,11 +2,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Standards](https://img.shields.io/badge/version-v4-green)](./thousandhand_v4/)
-[![Part of PUMP](https://img.shields.io/badge/ecosystem-PUMP-blue)](https://github.com/pump-engine)
+[![Part of PUMP](https://img.shields.io/badge/ecosystem-PUMP-blue)](https://github.com/go-go-pump)
 
 **Design-first AI governance standards for autonomous development.**
 
-1KH is the standards engine that powers [PUMP](https://github.com/pump-engine/god-mode). It provides the protocols, templates, patterns, and staging documents that transform a raw prompt into a supercharged PUMP — a prompt pre-loaded with business context, execution standards, quality gates, and shared component awareness.
+1KH is the standards engine that powers [PUMP (Pure Momentum Prompts)](https://github.com/go-go-pump/god-mode). It provides the protocols, templates, patterns, and staging documents that transform a raw prompt into a supercharged PUMP — a prompt pre-loaded with business context, execution standards, quality gates, and shared component awareness.
 
 > **Open source.** These standards benefit everyone. If you're an indy founder using AI to build systems, use them freely.
 
@@ -15,7 +15,7 @@
 ## Installation
 
 ```bash
-git clone git@github.com:pump-engine/1kh.git
+git clone git@github.com:go-go-pump/1kh.git
 ```
 
 No build step. 1KH is a spec repo — protocols and templates consumed by the PUMP pipeline and by humans directly.
@@ -69,9 +69,9 @@ OpenClaw (executes with governance)
 
 | Repo | Purpose | Visibility |
 |------|---------|-----------|
-| [god-mode](https://github.com/pump-engine/god-mode) | Entry point + PUMP master spec | Private |
+| [god-mode](https://github.com/go-go-pump/god-mode) | Entry point + PUMP master spec | Private |
 | **1kh** (this repo) | Standards engine | Public |
-| [greenspaces](https://github.com/pump-engine/greenspaces) | Shared components + services | Public |
+| [greenspaces](https://github.com/go-go-pump/greenspaces) | Shared components + services | Public |
 
 ---
 
@@ -105,7 +105,7 @@ Start with the journey, derive the features. Every line of code traces back to a
 
 This repo is public because the standards benefit everyone. If you're an indy founder using AI to build systems, these protocols and templates will help you ship faster with fewer feedback loops.
 
-The MilliPrime Co-Op is a network of operators sharing primitives, infrastructure, and culture. Read the [Manifesto](https://github.com/pump-engine/god-mode) to understand the philosophy. Read the [Greenspaces catalog](https://github.com/pump-engine/greenspaces) to see what shared components exist.
+The MilliPrime Co-Op is a network of operators sharing primitives, infrastructure, and culture. Read the [Manifesto](https://github.com/go-go-pump/god-mode) to understand the philosophy. Read the [Greenspaces catalog](https://github.com/go-go-pump/greenspaces) to see what shared components exist.
 
 The thesis: **Co-ops beat empires when creation is cheap.** Shared primitives create leverage. That's what this repo provides.
 

@@ -105,8 +105,26 @@ These components are included in **every new project** unless explicitly exclude
 | `email-send` | Project sends any emails |
 | `vidgen-pipeline` | Project generates or publishes video content |
 | `vidpub` | Project publishes to YouTube |
+| `vid-campaign` | Project runs multi-video content campaigns |
 | `llm-tagger` | Project classifies or categorizes content via LLM |
 | `browser-watcher` | Project needs browser automation (scraping, testing external sites) |
+
+### Platform Qualification
+
+When a project's domain aligns with an existing Greenspaces **platform** (see `greenspaces/platforms/`), the platform's full component set should be evaluated as a group:
+
+| Platform | Trigger | Components to Evaluate |
+|----------|---------|----------------------|
+| `video-platform` | Project creates or publishes video content | vidgen-pipeline, vidpub, vid-campaign |
+| `social-dm-platform` | Project engages audiences on social media | fb-auth, fb-graphql-scraper, browser-watcher |
+| `cold-email-platform` | Project sends mass or drip email campaigns | email-campaign-core, contact-store, email-send |
+| `monitoring-platform` | Always (see Default Inclusions) | metric-beacon, metric-snapshot |
+
+**Platform evaluation rules:**
+1. If a platform is relevant, evaluate ALL its core components (not just individual ones)
+2. Platform components that pass individual qualification get classified as `INCLUDE`
+3. Components that are `CANDIDATE` (not yet extracted) get classified as `DEFER` with a note to revisit when they reach `AVAILABLE`
+4. Document the platform alignment in the project's ARCHITECTURE.md
 
 ---
 
@@ -148,6 +166,7 @@ GREENSPACES QUALIFICATION
 ─────────────────────────
 Default inclusions: metric-beacon, metric-snapshot, seed-manager
 Evaluate from catalog: [list components with AVAILABLE/CANDIDATE status]
+Evaluate platform alignment: [check greenspaces/platforms/ for domain matches]
 Output: TMP_PRELAUNCH_CHECKLIST.md with INCLUDE/DEFER/SKIP classifications
 ```
 
@@ -174,6 +193,7 @@ The executor:
 | Document | Relationship |
 |----------|-------------|
 | **Greenspaces CATALOG.md** | Source of truth for available components. This standard defines WHEN and HOW to evaluate them. |
+| **Greenspaces platforms/** | Reference architectures for domain-specific component assemblies. This standard defines how to evaluate platform alignment. |
 | **Executor Standards** | Defines build order (§5), TDD (§4), migration idempotency (§4). This standard adds the Greenspaces evaluation step to the DATA layer. |
 | **Grooming Standards** | Grooming produces the handoff that includes Greenspaces integration tasks identified by this standard. |
 | **PUMP.md (god-mode)** | Supercharging pipeline adds Greenspaces qualification section for first-build PUMPs. |
